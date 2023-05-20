@@ -1,0 +1,18 @@
+server:
+   port: 1025
+   
+spring:
+   cloud:
+      config:
+         server:
+            git:
+               uri: https://github.com/satyamgj/configuration-server.git
+               clone-on-start: true
+               default-label: main
+               username: satyamgj
+               password: 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
+               basedir: file:///${user.home}/config-repo-tradekafka
+   security:
+     user:
+       name: root
+       password: s3cr3t
