@@ -4,15 +4,13 @@ import java.util.List;
 import java.util.Map;
 
 import com.finmamba.entities.staticdata.InstitutionalEntity;
-import com.finmamba.entities.transaction.Daddy;
 import com.finmamba.entities.transaction.RequestQuote;
-import com.finmamba.models.dto.DaddyDto;
+import com.finmamba.entities.transaction.TransactionDetail;
 import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SuperInstitutionalEntityDto;
 import com.finmamba.models.request.RecordProcessedStatusDetail;
 import com.finmamba.models.request.UserProfileModel;
-import com.finmamba.models.transaction.FXRequestModel;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.models.transaction.SourceDestination;
 import com.finmamba.resolver.exception.EntityNotFound;
@@ -23,6 +21,9 @@ public interface TransactionServiceDal {
 	 */
 
 	public List<QuoteRequestDto> saveRequest(QuoteRequestModel quoteRequestModel) throws EntityNotFound;
+	
+	public List<InstitutionalEntity> findEligibleBrokers(long sourceId) throws EntityNotFound;
+
 	
 	public List<RequestQuote> saveRequestFromBroker(RequestQuote request) throws EntityNotFound, IllegalArgumentException;
 	public RequestQuote saveCounterpartyResponse(RequestQuote request) throws EntityNotFound, IllegalArgumentException;
@@ -41,7 +42,6 @@ public interface TransactionServiceDal {
 	
 	public List<InstitutionalEntity> findEligibleCounterparties(SourceDestination sourceDestination) throws EntityNotFound;
 	
-	public List<InstitutionalEntity> findEligibleBrokers(long sourceId) throws EntityNotFound;
 	
 	public boolean expireOrderRequest(Long parentId, String reasonForExpiry) throws EntityNotFound, IllegalArgumentException;
 	
@@ -72,7 +72,7 @@ public interface TransactionServiceDal {
 	List<RequestQuote> findConfirmedRequestsForInstitution(long institutionId) throws EntityNotFound;
 	public InstitutionalEntityDto findInstitutionalEntityFromUserProfile(UserProfileModel userProfileModel) throws EntityNotFound ;
 
-	public Daddy findDaddyRequestByTransactionId(String transactionId) ;
+	public TransactionDetail findDaddyRequestByTransactionId(String transactionId) ;
 
 
 

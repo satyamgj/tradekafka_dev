@@ -37,6 +37,7 @@ public class NewBrokerRequestEventListener implements ApplicationListener<NewBro
 		log.info("Inside NewBrokerRequest for: " + event.getDaddyDto().getSource().getRealmName());
 		
 		DaddyDto daddyDto = event.getDaddyDto();
+		
 		log.info(daddyDto.toString());
 		
 		// This parameter to be used to resolve JPA entity class

@@ -85,6 +85,7 @@ public interface InstitutionalEntityOperations {
 	 * 3 -> 2 | 1 -> 2
 	 */
 	public SuperInstitutionalEntityDto insertInReject(DaddyDto daddyDto);
+	
 	public SuperInstitutionalEntityDto insertInReject(SuperInstitutionalEntityDto entityDto);
 	
 	public SuperInstitutionalEntityDto insertInNegotiation(SuperInstitutionalEntityDto entityDto);

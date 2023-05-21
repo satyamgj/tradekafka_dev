@@ -74,19 +74,7 @@ public class TransactionServiceImpl implements TransactionService {
 			 */
 			List<QuoteRequestDto> requests = dal.saveRequest(quoteRequestModel);
 
-			// log.info("No of Requests saved: " + requests.size());
-
-			// Return with the saved request
-
-			/**
-			 * Forward request to all eligible brokers
-			 */
-			// forwardRequestToBroker(fxModel, requests);
-
-			/**
-			 * Return the list of quote requests for this user to frontend
-			 */
-			log.info("processQuoteRequest | END" + Instant.now());
+		log.info("processQuoteRequest | END" + Instant.now());
 
 			return requests;
 		} catch (Exception e) {
@@ -98,6 +86,7 @@ public class TransactionServiceImpl implements TransactionService {
 
 	@Override
 	public boolean processBrokerRequest(DaddyDto request, String callerRealmName) throws EntityNotFound {
+		
 		log.info("processBrokerRequest | START | " + Instant.now());
 		try {
 			/**

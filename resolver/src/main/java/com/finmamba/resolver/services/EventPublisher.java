@@ -30,10 +30,6 @@ public class EventPublisher {
 	}
 	
 	
-	public void publishNewQuoteRequestEvent(final SuperInstitutionalEntityDto entityDto) {
-		applicationEventPublisher.publishEvent(new NewQuoteRequest(this, entityDto));
-	}
-	
 	public void publishNewBrokerRequestEvent(final DaddyDto daddyDto, final String callerRealmName) {
 		applicationEventPublisher.publishEvent(new NewBrokerRequest(this, daddyDto, callerRealmName));
 	}
@@ -51,11 +47,6 @@ public class EventPublisher {
 	}
 	
 	
-	
-
-	public void publishEvent(final KotakWorldDto kotakWorldDto) {
-		applicationEventPublisher.publishEvent(new NewQuoteRequest(this, kotakWorldDto));
-	}
 	
 //	public void publishEvent(final KanjiWorldDto kanjiWorldDto) {
 //		applicationEventPublisher.publishEvent(new NewBrokerRequest(this, kanjiWorldDto));

@@ -1,0 +1,19 @@
+package com.finmamba.kafka.starter;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+import org.springframework.context.annotation.Import;
+
+import com.finmamba.kafka.starter.autoconfigure.rest.KafkaRestMarkerConfiguration;
+
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@Import(KafkaRestMarkerConfiguration.class)
+public @interface EnableKafkaRest {
+
+}

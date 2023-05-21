@@ -866,8 +866,6 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			throw new EntityNotFound("No associations found for source: " + sourceEntity.getShortName());
 		}
 		// TODO: Need to check failure
-		// institutionalEntityAssociations.forEach(entity ->
-		// eligibleSellers.add(entity.getDestinationEntity()));
 		for (InstitutionalEntityAssociation association : institutionalEntityAssociations) {
 			eligibleSellers.add(association.getDestinationEntity());
 		}
@@ -923,10 +921,11 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	}
 
 	@Override
-	public Daddy findDaddyRequestByTransactionId(String transactionId) {
+	public TransactionDetail findDaddyRequestByTransactionId(String transactionId) {
 		// Use model mapper to expose only relevant fields in the service and
 		// presentation layer
-		return daddyRepository.findByTransactionId(transactionId);
+		return null;
+		//return daddyRepository.findByTransactionId(transactionId);
 
 	}
 

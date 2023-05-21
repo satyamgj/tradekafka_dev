@@ -106,6 +106,9 @@ private static final long serialVersionUID = 1L;
 	
 	@Column(name = "bank_sell_amount")
 	private BigDecimal bankSellAmount;
+	
+	@Column(name= "client_outright")
+	private BigDecimal clientOutright;
 		
 	@OneToOne
 	@JoinColumn(name = "created_by", nullable = false)

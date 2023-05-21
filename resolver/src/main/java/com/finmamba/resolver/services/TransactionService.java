@@ -21,6 +21,14 @@ public interface TransactionService {
 	
 	
 	public boolean processBrokerRequest(DaddyDto request, String callerRealmName) throws EntityNotFound;
+
+	
+	
+	
+	
+	
+	
+	
 	public boolean processCounterpartyResponse(DaddyDto request, int responseType, String callerRealmName, String sendToRealmName) throws EntityNotFound;
 	public boolean processBrokerResponse(DaddyDto request, String callerRealmName, int responseType, String sendToRealmName ) throws EntityNotFound;
 	public boolean processBrokerResponse(DaddyDto request, String callerRealmName) throws EntityNotFound;
