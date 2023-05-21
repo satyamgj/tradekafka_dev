@@ -30,12 +30,12 @@
 		<module>static-data-microservice</module>
 		<module>entities</module>
 		<module>resolver</module>
-		<module>rate-simulator</module>
-		<module>notification</module>
 		<module>reports-microservice</module>
+		<!--module>rate-simulator</module-->
+		<!--module>notification</module>
 		<module>custom-data-microservice</module>
 		<module>mintingmachine</module>
-		<module>nonflow-microservice</module>
+		<module>nonflow-microservice</module-->
 	</modules>
 
 	<dependencies>

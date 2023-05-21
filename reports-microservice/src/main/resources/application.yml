@@ -1,0 +1,44 @@
+server:
+  port: 1032
+  servlet:
+    context-path: /reports-microservice
+  
+logging:
+  level:
+    root: info
+    org.springframework: INFO
+    org.apache: OFF
+    kafka: OFF
+#  file:
+#    name: logfile.log
+    
+  
+spring:
+  config:
+    import:
+    - configserver:http://root:s3cr3t@localhost:1025
+  application:
+    name: broker-service
+  cloud:
+    config:
+      profile: test
+  mvc:
+    pathmatch:
+      matching-strategy: ant-path-matcher
+  jpa:
+    properties:
+      hibernate:
+        enable_lazy_load_no_trans: true
+  main:
+    allow-bean-definition-overriding: true
+    allow-circular-references: true
+app:
+  consumer-topic-name: reports-microservice-response
+  producer-topic-name: reports-microservice-request
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  use-fqn: true
+  
+stream-interval: 1000
