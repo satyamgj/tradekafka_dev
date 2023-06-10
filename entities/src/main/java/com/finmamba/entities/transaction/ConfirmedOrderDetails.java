@@ -39,6 +39,17 @@ private static final long serialVersionUID = 1L;
 	@JoinColumn(name = "broker_id", nullable = false)
 	private InstitutionalEntity brokerId;
 	
+	@Column(name="transactionId")
+	private String transactionId;
+	
+	@OneToOne
+	@JoinColumn(name = "buy_side_id", nullable = false)
+	private InstitutionalEntity buySideId;
+
+	@OneToOne
+	@JoinColumn(name = "sell_side_id", nullable = false)
+	private InstitutionalEntity sellSideId;
+	
 	
 	@OneToOne
 	@JoinColumn(name = "buy_side_counterparty_transaction_id", nullable = false)

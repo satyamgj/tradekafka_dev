@@ -7,9 +7,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,66 +15,53 @@ import javax.transaction.Transactional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
 
 import com.finmamba.entities.staticdata.Currency;
-import com.finmamba.entities.staticdata.CurrencyPairDetails;
 import com.finmamba.entities.staticdata.Direction;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
 import com.finmamba.entities.staticdata.Product;
-import com.finmamba.entities.staticdata.RequestType;
 import com.finmamba.entities.staticdata.Tenor;
+import com.finmamba.entities.transaction.ConfirmedOrderDetails;
+import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
 import com.finmamba.entities.transaction.Customer;
-import com.finmamba.entities.transaction.Daddy;
 import com.finmamba.entities.transaction.InstitutionalEntityAssociation;
-import com.finmamba.entities.transaction.KotakWorld;
-import com.finmamba.entities.transaction.RequestQuote;
 import com.finmamba.entities.transaction.TransactionDetail;
 import com.finmamba.entities.transaction.User;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.bus.EventType;
+import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.bus.SerialDataBusModel;
-import com.finmamba.models.dto.DaddyDto;
-import com.finmamba.models.dto.InstitutionalEntityDto;
-import com.finmamba.models.dto.KotakWorldDto;
+import com.finmamba.models.dto.BuySideTransactionDto;
 import com.finmamba.models.dto.QuoteRequestDto;
-import com.finmamba.models.dto.SuperInstitutionalEntityDto;
-import com.finmamba.models.request.RecordProcessedStatusDetail;
-import com.finmamba.models.request.UserProfileModel;
-import com.finmamba.models.transaction.FXRequestModel;
-import com.finmamba.models.transaction.Outright;
+import com.finmamba.models.dto.SellSideConfirmationDto;
+import com.finmamba.models.dto.SellSideTransactionDto;
+import com.finmamba.models.dto.buySideConfirmDto;
 import com.finmamba.models.transaction.QuoteRequestModel;
-import com.finmamba.models.transaction.SourceDestination;
-import com.finmamba.models.transaction.SpotRate;
-import com.finmamba.models.transaction.SwapPoint;
 import com.finmamba.resolver.exception.EntityNotFound;
+import com.finmamba.resolver.repositories.ConfirmationRepostory;
+import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 import com.finmamba.resolver.repositories.CurrencyPairDetailsRepository;
 import com.finmamba.resolver.repositories.CurrencyRepository;
 import com.finmamba.resolver.repositories.CustomerRepository;
 import com.finmamba.resolver.repositories.CustomerSegmentRepository;
-import com.finmamba.resolver.repositories.DaddyRepository;
 import com.finmamba.resolver.repositories.DirectionRepository;
 import com.finmamba.resolver.repositories.EntityDetailsRepository;
+import com.finmamba.resolver.repositories.EventTypeRepository;
 import com.finmamba.resolver.repositories.InstitutionalEntityAssociationRepository;
 import com.finmamba.resolver.repositories.InstitutionalEntityRepository;
-import com.finmamba.resolver.repositories.KotakWorldRepository;
 import com.finmamba.resolver.repositories.ProductRepository;
 import com.finmamba.resolver.repositories.QuoteRequestRepository;
 import com.finmamba.resolver.repositories.RecordStatusRepository;
-import com.finmamba.resolver.repositories.RequestQuoteRepository;
 import com.finmamba.resolver.repositories.RequestTypeRepository;
 import com.finmamba.resolver.repositories.TenorRepository;
+import com.finmamba.resolver.repositories.TransactionRepository;
 import com.finmamba.resolver.repositories.UserRepository;
-import com.finmamba.resolver.util.ApplicationConstants;
-import com.finmamba.resolver.util.ApplicationConstants.RecordStatus;
 import com.finmamba.resolver.util.UniqueIdentifierGenerator;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 
 import lombok.extern.slf4j.Slf4j;
@@ -85,11 +70,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class TransactionServiceDalImpl implements TransactionServiceDal {
 
-//	@Value("${app.producer-topic-name}")
-//	private String responseTopic;
-//
-//	@Value("${app.time-to-live}")
-//	private int ttl;
 
 	@Autowired
 	ProductRepository productRepository;
@@ -113,9 +93,6 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	CurrencyRepository currencyRepository;
 
 	@Autowired
-	RequestQuoteRepository requestQuoteRepository;
-
-	@Autowired
 	UserRepository userRepository;
 
 	@Autowired
@@ -132,15 +109,9 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 	@Autowired
 	RecordStatusRepository recordStatusRepository;
-
-	@Autowired
-	DaddyRepository daddyRepository; //will be obseleted
 	
 	@Autowired
 	QuoteRequestRepository quoteRequestRepository;
-
-	@Autowired
-	KotakWorldRepository kotakWorldRepository;;
 
 	@Autowired
 	KafkaProducerService kafkaProducerService;
@@ -153,26 +124,42 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 	@Autowired
 	ModelMapper modelMapper;
+	
+	@Autowired
+	TransactionRepository transactionRepository;
+	
+	@Autowired
+	EventTypeRepository eventTypeRepository;
+	
+	@Autowired
+	CounterPartyTransactionRepository counterPartyTransactionRepository;
+	
+	@Autowired
+	ConfirmationRepostory confirmationRepostory;
 
 //	@Autowired
 //	HistoryWriter historyWriter;
-
-	@Override
-	public Boolean updateRecordProcessedStatus(RecordProcessedStatusDetail processedStatusDetail)
-			throws EntityNotFound {
-		// Find the record entity object
-		RequestQuote record = requestQuoteRepository.findById(processedStatusDetail.getRecordId())
-				.orElseThrow(() -> new EntityNotFound("Record npt fpund"));
-
-		// Set request processed flag
-		record.setRecordProcessed(processedStatusDetail.getProcessedStatus());
-
-		// Save record
-		requestQuoteRepository.save(record);
-
-		// return status
-		return Boolean.TRUE;
+	
+	
+	private org.springframework.data.domain.Sort.Direction getDirection(String direction){
+		if(direction.equalsIgnoreCase("ASC")) {
+			return org.springframework.data.domain.Sort.Direction.ASC;
+		}else {
+			return org.springframework.data.domain.Sort.Direction.DESC;
+		}
 	}
+	
+	
+	private Pageable preparePageRequest(int start, int end, org.springframework.data.domain.Sort.Direction direction, String parameter) {
+		return PageRequest.of(start, end, Sort.by(direction, parameter));
+	}
+	
+	
+	public InstitutionalEntity findInstitutionalEntityFromId(long id) throws EntityNotFound {
+		return institutionalEntityRepository.findById(id)
+				.orElseThrow(() -> new EntityNotFound("Institutional Entity not found"));
+	}
+
 
 	@Override
 	public List<QuoteRequestDto> saveRequest(QuoteRequestModel quoteRequestModel) throws EntityNotFound {
@@ -189,7 +176,8 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 				.orElseThrow(() -> new EntityNotFound("quoteCurrency  not found"));
 
 
-		long customerId = quoteRequestModel.getCustomerId();
+		Long customerId = quoteRequestModel.getCustomerId();
+		
 		Customer customer = customerRepository.findById(customerId)
 				.orElseThrow(() -> new EntityNotFound("customer  not found"));
 
@@ -234,6 +222,8 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 				.transactionId(UniqueIdentifierGenerator.unique()).buySellDirection(direction)
 				.createdAt(Instant.now())
 				.createdBy(userId)
+				.isPartial(quoteRequestModel.getIsPartial())
+				.isConfirmed(false)
 				.build();
 
 		TransactionDetail savedRequest = quoteRequestRepository.save(quoteRequest);
@@ -251,156 +241,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		return listQuoteRequest;
 	}
 
-	@Override
-	public List<RequestQuote> saveRequestFromBroker(RequestQuote request)
-			throws EntityNotFound, IllegalArgumentException {
-		// Get parent id saved id
-		long parentId = request.getId();
 
-		// Update request record status flag to INTRANSIT
-		request.setRecordStatus(recordStatusRepository.getById(RecordStatus.INTRANSIT.getAction()));
-		requestQuoteRepository.save(request);
-		//
-
-		SourceDestination sourceDestinationModel = SourceDestination.builder()
-				.sourceEntityId(request.getDestination().getId()).prevSourceEntityId(request.getSource().getId())
-				.build();
-
-		/*
-		 * Make a new entity object by setting id = null
-		 */
-		request.setId(null);
-
-		/*
-		 * Parent is the id of request from initiator
-		 */
-		request.setParentId(parentId);
-		/*
-		 * Destination of the request initiator now becomes the source Flow: 1 -> 2 -> 3
-		 * Request from initiator: 1 -> 2 Request from the broker: 2 -> 3
-		 */
-		request.setSource(request.getDestination());
-
-		// request.setTimeToLive(ttl);
-
-		request.setRequestActive(true);
-
-		request.setRecordStatus(recordStatusRepository.getById(RecordStatus.ACTIVE.getAction()));
-
-		/*
-		 * Persist broker request for all eligible counter parties Each request will be
-		 * shown on the accordion
-		 */
-
-		List<InstitutionalEntity> listEligibleCounterparties = findEligibleCounterparties(sourceDestinationModel);
-		List<RequestQuote> listRequests = new ArrayList<>();
-		List<SourceDestination> listSourceDestination = new ArrayList<>();
-		listEligibleCounterparties.forEach(counterparty -> {
-			try {
-				RequestQuote clonedRequest = (RequestQuote) request.clone();
-				clonedRequest.setDestination(counterparty);
-				listRequests.add(clonedRequest);
-				listSourceDestination.add(SourceDestination.builder().sourceEntityId(clonedRequest.getSource().getId())
-						.destinationEntityId(counterparty.getId()).build());
-			} catch (CloneNotSupportedException e) {
-				e.printStackTrace();
-			}
-		});
-		List<RequestQuote> savedBrokerRequest = requestQuoteRepository.saveAllAndFlush(listRequests);
-		List<RequestQuote> returnableBrokerRequest = new ArrayList<RequestQuote>();
-
-		savedBrokerRequest.stream().forEach((savedRequest) -> {
-			returnableBrokerRequest.add(requestQuoteRepository.findById(savedRequest.getId()).get());
-		});
-
-		Assert.isTrue(savedBrokerRequest.size() != -0, "The broker request could not be saved");
-		return returnableBrokerRequest;
-	}
-
-	@Override
-	public RequestQuote saveCounterpartyResponse(RequestQuote request) throws EntityNotFound, IllegalArgumentException {
-		// Get parent id saved id
-		long parentId = request.getId();
-
-		/*
-		 * Make a new entity object by setting id = null
-		 */
-		request.setId(null);
-
-		/*
-		 * Parent is the id of request from initiator
-		 */
-		request.setParentId(parentId);
-		/*
-		 * Destination of the request initiator now becomes the source Flow: 1 -> 2 -> 3
-		 * Request from initiator: 1 -> 2 Request from the broker: 2 -> 3
-		 */
-		InstitutionalEntity source = request.getSource();
-		InstitutionalEntity destination = request.getDestination();
-		request.setSource(destination);
-		request.setDestination(source);
-
-		// request.setTimeToLive(ttl);
-
-		request.setRequestActive(true);
-
-		// Decide whether confirm or negotiation
-		request.setRecordStatus(recordStatusRepository.getById(RecordStatus.CONFIRMED.getAction()));
-		/*
-		 * Persist counterparty response
-		 */
-
-		RequestQuote savedCounterpartyResponse = requestQuoteRepository.save(request);
-		Assert.isTrue(savedCounterpartyResponse.getId() != -1, "The quote could not be saved");
-		return savedCounterpartyResponse;
-	}
-
-	@Override
-	public RequestQuote saveBrokerResponse(RequestQuote request) throws EntityNotFound, IllegalArgumentException {
-		// Get parent id saved id
-		long parentId = request.getId();
-
-		/*
-		 * Make a new entity object by setting id = null
-		 */
-		request.setId(null);
-
-		/*
-		 * Parent is the id of the previous record in the transaction chain The entire
-		 * transaction can be traced back to the initiator by transaction id and parent
-		 * ids
-		 */
-		request.setParentId(parentId);
-
-		// Find the initiator request to obtain the destination. This completed the
-		// request response loop for happy flow
-		InstitutionalEntity destination = requestQuoteRepository
-				.findByTransactionIdAndParentId(request.getTransactionId(), -1L).getSource();
-
-		/*
-		 * Destination of this record becomes the source of next record in the flow 2 ->
-		 * 1
-		 */
-		InstitutionalEntity source = request.getDestination();
-
-		request.setSource(source);
-		request.setDestination(destination);
-
-		// request.setTimeToLive(ttl);
-
-		request.setRequestActive(true);
-
-		// Decide whether confirm or negotiation
-		request.setRecordStatus(recordStatusRepository.getById(RecordStatus.CONFIRMED.getAction()));
-
-		/*
-		 * Persist broker response
-		 */
-
-		RequestQuote savedBrokerResponse = requestQuoteRepository.save(request);
-		Assert.isTrue(savedBrokerResponse.getId() != -1, "The quote could not be saved");
-		return savedBrokerResponse;
-	}
 
 	/******************************************
 	 * FIND START
@@ -408,128 +249,85 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 	@Override
 	@Transactional
-	public Map<String, Object> findActiveRequestsForInstitution(String institutionName, int page, int pageSize)
+	public HttpResponseModel findActiveRequestsForInstitution(String institutionId, int page, int pageSize)
 			throws EntityNotFound {
 
-//		List<Daddy> listRequestByUser = daddyRepository.findActiveRequestForInstitutionsWithValidity(institutionId,
-//				RecordStatus.ACTIVE.getAction());
 
-		List<Daddy> listRequestByUser = daddyRepository.findActiveRequestForInstitutionsWithValidity(institutionName);
+		InstitutionalEntity institutionalEntity = institutionalEntityRepository.findById(Long.valueOf(institutionId)).get();
+		
+		List<TransactionDetail> activeTransactions = transactionRepository.findAllBySourceAndIsConfirmed(institutionalEntity, false,
+				preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC, "id")
+				);
+		
+		return HttpResponseModel.builder()
+				.data(activeTransactions)
+				.total(transactionRepository.countBySourceAndIsConfirmed(institutionalEntity, false))
+				.build();
 
-		List<String> sortOrder = daddyRepository.getSortOrderForInstitutionName(institutionName);
-
-		List<String> listRequestNoDuplicates = Lists.newArrayList(Sets.newLinkedHashSet(sortOrder));
-
-		List<Daddy> customSortedList = new ArrayList<>();
-
-		listRequestNoDuplicates.stream().forEach(transactionId -> {
-			customSortedList.add(listRequestByUser.stream()
-					.filter(daddyRequest -> daddyRequest.getTransactionId().equalsIgnoreCase(transactionId)).findFirst()
-					.orElse(null));
-		});
-
-		// Implement pagination like logic
-		int fromIndex = (page - 1) * pageSize;
-		List<Daddy> customSortedSubList = new ArrayList<>();
-		if (fromIndex < customSortedList.size()) {
-			customSortedSubList = customSortedList.subList(fromIndex,
-					Math.min(fromIndex + pageSize, customSortedList.size()));
-		}
-
-		customSortedSubList.removeAll(Collections.singletonList(null));
-
-		Type listType = new TypeToken<List<DaddyDto>>() {
-		}.getType();
-		List<DaddyDto> daddyDtoList = modelMapper.map(customSortedSubList, listType);
-
-		/*
-		 * To store total count of records fetched in the list
-		 */
-		Map<String, Object> responseMap = new LinkedHashMap<>();
-		responseMap.put("totalCount", listRequestByUser.size());
-		responseMap.put("data", daddyDtoList);
-
-		// Publish request to be displayed on broker view
-		return responseMap;
+		
+		
 	}
-
+	
 	@Override
 	@Transactional
-	public Map<String, Object> findConfirmedOrdersForInstitution(String institutionName, int page, int pageSize)
-			throws EntityNotFound {
-
-		List<Daddy> listRequestConfirmed = daddyRepository.findConfirmedOrderForInstitution(institutionName);
-
-//		log.info(listRequestConfirmed.get(0).toString());
+	public HttpResponseModel findInOutForTransaction(String transactionId,
+			String institutionId) throws EntityNotFound {
 		
-		// Implement pagination like logic
-		int fromIndex = (page - 1) * pageSize;
-		List<Daddy> customSortedSubList = new ArrayList<>();
-		if (fromIndex < listRequestConfirmed.size()) {
-			customSortedSubList = listRequestConfirmed.subList(fromIndex,
-					Math.min(fromIndex + pageSize, listRequestConfirmed.size()));
+		Type listType ;
+		
+		List<CounterpartyTransactionDetails> listRequestIn = new ArrayList<>();
+		List<CounterpartyTransactionDetails> listRequestOut = new ArrayList<>();
+		List<CounterpartyTransactionDetails> listRequestConfirmed = new ArrayList<>();
+		List<CounterpartyTransactionDetails> listRequestReject = new ArrayList<>();
+		List<CounterpartyTransactionDetails> listAwaitingOrders = new ArrayList<>();
+
+
+		
+		
+		List<CounterpartyTransactionDetails> allTransactions = counterPartyTransactionRepository.findAllByDestinationIdOrSourceIdAndIsRequestActiveAndTransactionId(
+																		institutionalEntityRepository.getById(Long.valueOf(institutionId))	
+																		,institutionalEntityRepository.getById(Long.valueOf(institutionId))		
+																		, true
+																		, transactionId);
+
+		
+		TransactionDetail parentTransaction = transactionRepository.findByTransactionId(transactionId);
+		
+		if(parentTransaction.getSource().getId() == Long.valueOf(institutionId)) {
+			//BuySide
+			listType = new TypeToken<List<BuySideTransactionDto>>() {
+			}.getType();
+		}else {
+			//SellSide
+			listType = new TypeToken<List<SellSideTransactionDto>>() {
+			}.getType();
+		}
+		
+		for(CounterpartyTransactionDetails transaction:allTransactions) {
+			if(transaction.getEventType().getId() == 1L ||  
+					transaction.getEventType().getId() == 5L ) {
+			
+				listRequestIn.add(transaction);			
+			}
+			else if(transaction.getEventType().getId() == 2L ||  
+					transaction.getEventType().getId() == 6L ) {
+				listRequestOut.add(transaction);
+			}
+			else if(transaction.getEventType().getId() == 7L ||
+					transaction.getEventType().getId() == 8L) {
+				listRequestReject.add(transaction);	
+				}
+			
+			else if(transaction.getEventType().getId() == 3L ||
+					transaction.getEventType().getId() == 4L ){
+				listRequestConfirmed.add(transaction);
+				}
+			else {
+				listAwaitingOrders.add(transaction);
+				}
 		}
 
-		Type listType = new TypeToken<List<DaddyDto>>() {
-		}.getType();
-		List<DaddyDto> listRequestConfirmedDtoList = modelMapper.map(customSortedSubList, listType);
-
-		/*
-		 * To store total count of records fetched in the list
-		 */
-		Map<String, Object> responseMap = new LinkedHashMap<>();
-		responseMap.put("totalCount", listRequestConfirmedDtoList.size());
-		responseMap.put("data", listRequestConfirmedDtoList);
-
-		// Publish request to be displayed on broker view
-		return responseMap;
-	}
-
-	@Override
-	@Transactional
-	public Map<String, List<SuperInstitutionalEntityDto>> findInOutForTransaction(String transactionId,
-			String institutionName) throws EntityNotFound {
-		
-		// Applicable to all realms
-		// Kotak world used only as placeholder
-		List<KotakWorld> listRequestIn = kotakWorldRepository.findInForTransactionId(transactionId, institutionName);
-
-		List<KotakWorld> listRequestOut = kotakWorldRepository.findOutForTransactionId(transactionId, institutionName);
-
-		List<KotakWorld> listRequestConfirmed = kotakWorldRepository.findConfirmedOrderForTransactionId(transactionId,
-				institutionName);
-
-		List<KotakWorld> listRequestReject = kotakWorldRepository.findRejectedOrderForTransactionId(transactionId,
-				institutionName);
-		
-		List<KotakWorld> listAwaitingOrders = kotakWorldRepository.findAwaitingOrderForTransactionId(transactionId, institutionName);
-
-		Type listType = new TypeToken<List<SuperInstitutionalEntityDto>>() {
-		}.getType();
-//		List<DaddyDto> daddyInDtoList = modelMapper.map(listRequestIn, listType);
-//		List<DaddyDto> daddyOutDtoList = modelMapper.map(listRequestOut, listType);
-
-		/**
-		 * Sort the collection basis id descending
-		 */
-//		Collections.sort(daddyInDtoList, new Comparator<DaddyDto>() {
-//			@Override
-//			public int compare(final DaddyDto object1, final DaddyDto object2) {
-//				return object2.getId().compareTo(object1.getId());
-//			}
-//		});
-
-		/**
-		 * Sort the collection basis id descending
-		 */
-//		Collections.sort(daddyOutDtoList, new Comparator<DaddyDto>() {
-//			@Override
-//			public int compare(final DaddyDto object1, final DaddyDto object2) {
-//				return object2.getId().compareTo(object1.getId());
-//			}
-//		});
-
-		Map<String, List<SuperInstitutionalEntityDto>> mapInOut = new HashMap<>();
+		Map<String, Object> mapInOut = new HashMap<>();
 
 		mapInOut.put("in", modelMapper.map(listRequestIn, listType));
 		mapInOut.put("out", modelMapper.map(listRequestOut, listType));
@@ -538,244 +336,104 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		mapInOut.put("awaiting", modelMapper.map(listAwaitingOrders,listType));
 
 		// Publish request to be displayed on broker view
-		return mapInOut;
+		return HttpResponseModel.builder()
+				.data(mapInOut).build();
 	}
 
 	@Override
-	public List<RequestQuote> findInTransitRequestsForInstitution(long institutionId) throws EntityNotFound {
-
-		List<RequestQuote> listInTransitRequest = requestQuoteRepository
-				.findInTransitRequestForSourceInstitutionsWithValidity(institutionId);
-
-//		List<RequestQuote> listRequestByDestinationAndStatus =
-//				 requestQuoteRepository.findInTransitRequestForDestinationInstitutionsWithValidity(institutionId, RecordStatus.INTRANSIT.getAction());
-
-//		listInTransitRequest.addAll(listRequestByDestinationAndStatus);
-
-		// Group by transaction id
-
-//		Map<String, List<RequestQuote>> studlistGrouped =
-//				listInTransitRequest.stream().collect(Collectors.groupingBy(w -> w.getTransactionId()));
-
-		// prepare placeholder list
-//		List<RequestQuote> placeHolderList = new ArrayList<>();
-//		studlistGrouped.forEach((k, v) -> {
-//			placeHolderList.add(v.get(0));
-//		});
-
-		// then sort groups by minimum id in each of them
-//		List<RequestQuote> sorted = studlistGrouped.entrySet().stream()
-//		        .sorted(Comparator.comparing(e -> e.getValue().stream().map(RequestQuote::getId).min(Comparator.naturalOrder()).orElse(0)))
-//		        .flatMap(e -> e.getValue().stream().sorted(Comparator.comparing(RequestQuote::getId))).collect(Collectors.toList());
-
-		/**
-		 * Sort the collection basis id descending
-		 */
-		/*
-		 * Collections.sort(listRequestByUser, new Comparator<RequestQuote>() {
-		 * 
-		 * @Override public int compare(final RequestQuote object1, final RequestQuote
-		 * object2) { return object2.getId().compareTo(object1.getId()); } });
-		 */
-
-		// Publish request to be displayed on broker view
-		return listInTransitRequest;
-	}
-
-	@Override
-	public List<RequestQuote> findInTransitRequestsForTransaction(Double institutionId, String transactionId)
+	@Transactional
+	public HttpResponseModel findConfirmedOrdersForInstitution(String institutionId, int page, int pageSize)
 			throws EntityNotFound {
 
-		List<RequestQuote> listInTransitRequest = requestQuoteRepository
-				.findInTransitRequestForSourceInstitutionsAndTransactionWithValidity(institutionId.longValue(),
-						transactionId);
+		Map<String, Object> mapConfirmOrders = new HashMap<>();
 
-		List<RequestQuote> listRequestByDestinationAndStatus = requestQuoteRepository
-				.findInTransitRequestForDestinationAndTransactionInstitutionsWithValidity(institutionId.longValue(),
-						RecordStatus.INTRANSIT.getAction(), transactionId);
+		
+		try {
+			InstitutionalEntity entity = findInstitutionalEntityFromId(Long.valueOf(institutionId));
+			
+			List<ConfirmedOrderDetails> buySideConfirmationList = confirmationRepostory.findAllBybuySideId(entity);
+			
+			List<ConfirmedOrderDetails> sellSideConfirmationList = confirmationRepostory.findAllBysellSideId(entity);
+			
+			Type buySide = new TypeToken<List<buySideConfirmDto>>() {
+			}.getType(); 
 
-		listInTransitRequest.addAll(listRequestByDestinationAndStatus);
 
-		return listInTransitRequest;
+			Type sellSide = new TypeToken<List<SellSideConfirmationDto>>() {
+			}.getType(); 
+			
+			mapConfirmOrders.put("buySide", modelMapper.map(buySideConfirmationList, buySide));	
+			mapConfirmOrders.put("sellSide", modelMapper.map(sellSideConfirmationList, sellSide));		
+			
+			return HttpResponseModel.builder()
+					.data(mapConfirmOrders)
+					.build();
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			mapConfirmOrders.put("buySide", Collections.emptyList());	
+			mapConfirmOrders.put("sellSide", Collections.emptyList());
+			
+			return HttpResponseModel.builder()
+					.data(mapConfirmOrders)
+					.message("Error occured inside findConfirmedOrdersForInstitution " + e.getMessage())
+					.status(500)
+					.build();
+			
+		} catch (EntityNotFound e) {
+			mapConfirmOrders.put("buySide", Collections.emptyList());	
+			mapConfirmOrders.put("sellSide", Collections.emptyList());
+			
+			return HttpResponseModel.builder()
+					.data(mapConfirmOrders)
+					.message("Error occured inside findConfirmedOrdersForInstitution " + e.getMessage())
+					.status(500)
+					.build();
+		}
+
 	}
 
+	
 	@Override
-	public List<RequestQuote> findExpiredRequestsForInstitution(long institutionId) throws EntityNotFound {
+	@Transactional
+	public HttpResponseModel findConfirmedOrdersForBroker(String institutionId, int page, int pageSize)
+			throws EntityNotFound {
 
-		List<RequestQuote> listRequestByUser = requestQuoteRepository
-				.findExpiredRequestForInstitutionsWithValidity(institutionId, RecordStatus.EXPIRED.getAction());
 
-		/**
-		 * Sort the collection basis id descending
-		 */
-		Collections.sort(listRequestByUser, new Comparator<RequestQuote>() {
-			@Override
-			public int compare(final RequestQuote object1, final RequestQuote object2) {
-				return object2.getId().compareTo(object1.getId());
-			}
-		});
+		
+		try {
+			InstitutionalEntity entity = findInstitutionalEntityFromId(Long.valueOf(institutionId));
+			
+			List<ConfirmedOrderDetails> ConfirmationList = confirmationRepostory.findAllBybrokerId(entity);
+				
+			
+			return HttpResponseModel.builder()
+					.data(ConfirmationList)
+					.build();
+		} catch (NumberFormatException e) {
+			
+			
+			return HttpResponseModel.builder()
+					.data(Collections.emptyList())
+					.message("Error occured inside findConfirmedOrdersForInstitution " + e.getMessage())
+					.status(500)
+					.build();
+			
+		} catch (EntityNotFound e) {
+			return HttpResponseModel.builder()
+					.data(Collections.emptyList())
+					.message("Error occured inside findConfirmedOrdersForInstitution " + e.getMessage())
+					.status(500)
+					.build();
+		}
 
-		// Publish request to be displayed on broker view
-		return listRequestByUser;
 	}
 
-	@Override
-	public List<RequestQuote> findConfirmedRequestsForInstitution(long institutionId) throws EntityNotFound {
-
-		List<RequestQuote> listRequestByUser = requestQuoteRepository
-				.findConfirmedRequestForInstitutionsWithValidity(institutionId, RecordStatus.CONFIRMED.getAction());
-
-		/**
-		 * Sort the collection basis id descending
-		 */
-		Collections.sort(listRequestByUser, new Comparator<RequestQuote>() {
-			@Override
-			public int compare(final RequestQuote object1, final RequestQuote object2) {
-				return object2.getId().compareTo(object1.getId());
-			}
-		});
-
-		// Publish request to be displayed on broker view
-		return listRequestByUser;
-	}
 
 	/******************************************
 	 * FIND END
 	 **************************************/
 
-	@Override
-	public RequestQuote findQuoteRequestById(long requestId) throws EntityNotFound {
-		// Find request by id
-		RequestQuote request = requestQuoteRepository.findById(requestId)
-				.orElseThrow(() -> new EntityNotFound("Request not found"));
-
-		// Publish request to be displayed on broker view
-		return request;
-	}
-
-	@Override
-	public boolean findStatusOfTransaction(long requestId) throws EntityNotFound {
-		// Find request by id
-		RequestQuote request = requestQuoteRepository.findById(requestId)
-				.orElseThrow(() -> new EntityNotFound("Request not found"));
-
-		// Publish request to be displayed on broker view
-
-		return request.isRequestActive();
-	}
-
-	@Override
-	public List<RequestQuote> findQuoteRequestByUserId(long userId, boolean requestStatusFlag) throws EntityNotFound {
-		// Find user
-		// User user = userRepository.findById(userId).orElseThrow(() -> new
-		// EntityNotFound("User not found"));
-
-		// Find request by user
-//		List<RequestQuote> listRequestByUser = requestQuoteRepository.findByUserAndIsRequestActive(user,
-//				requestStatusFlag);
-		List<RequestQuote> listRequestByUser = requestQuoteRepository.findByUserAndIsRequestActiveWithValidity(userId,
-				requestStatusFlag);
-
-		/**
-		 * Sort the collection basis id descending
-		 */
-		Collections.sort(listRequestByUser, new Comparator<RequestQuote>() {
-			@Override
-			public int compare(final RequestQuote object1, final RequestQuote object2) {
-				return object2.getId().compareTo(object1.getId());
-			}
-		});
-
-		// Publish request to be displayed on broker view
-		log.info("Publishing request Object");
-		return listRequestByUser;
-	}
-
-	@Override
-	public List<RequestQuote> findQuoteRequestByBrokerId(long brokerId) throws EntityNotFound {
-		// Find user
-		InstitutionalEntity broker = institutionalEntityRepository.findById(brokerId)
-				.orElseThrow(() -> new EntityNotFound("Broker not found"));
-
-		// Find request by user
-		// List<RequestQuote> listRequestByBroker =
-		// requestQuoteRepository.findByDestination(broker);
-		// To find all the requests by brokers
-		List<RequestQuote> listRequestByBroker = requestQuoteRepository.findBySource(broker);
-
-		/**
-		 * Sort the collection basis id descending
-		 */
-		Collections.sort(listRequestByBroker, new Comparator<RequestQuote>() {
-			@Override
-			public int compare(final RequestQuote object1, final RequestQuote object2) {
-				return object2.getId().compareTo(object1.getId());
-			}
-		});
-
-		// Publish request to be displayed on broker view
-		log.info("Publishing request Object");
-		return listRequestByBroker;
-	}
-
-	@Override
-	public List<RequestQuote> findQuoteRequestForBrokerId(long brokerId, boolean recordProcessedStatus)
-			throws EntityNotFound {
-		// Find user
-		InstitutionalEntity broker = institutionalEntityRepository.findById(brokerId)
-				.orElseThrow(() -> new EntityNotFound("Broker not found"));
-
-		// Find request by user
-		// List<RequestQuote> listRequestByBroker =
-		// requestQuoteRepository.findByDestination(broker);
-		// To find all the requests by brokers
-		// List<RequestQuote> listRequestByBroker =
-		// requestQuoteRepository.findByDestination(broker);
-		List<RequestQuote> listRequestByBroker = requestQuoteRepository.findByDestinationAndIsRecordProcessed(broker,
-				recordProcessedStatus);
-		/**
-		 * Sort the collection basis id descending
-		 */
-		Collections.sort(listRequestByBroker, new Comparator<RequestQuote>() {
-			@Override
-			public int compare(final RequestQuote object1, final RequestQuote object2) {
-				return object2.getId().compareTo(object1.getId());
-			}
-		});
-
-		// Publish request to be displayed on broker view
-		log.info("Publishing request Object");
-		return listRequestByBroker;
-	}
-
-	@Override
-	public List<RequestQuote> findExpiredQuoteRequestForBrokerId(long brokerId) throws EntityNotFound {
-		// Find user
-//		InstitutionalEntity broker = institutionalEntityRepository.findById(brokerId)
-//				.orElseThrow(() -> new EntityNotFound("Broker not found"));
-
-		// Find request by user
-		// List<RequestQuote> listRequestByBroker =
-		// requestQuoteRepository.findByDestination(broker);
-		// To find all the requests by brokers
-		// List<RequestQuote> listRequestByBroker =
-		// requestQuoteRepository.findByDestination(broker);
-		List<RequestQuote> listRequestByBroker = requestQuoteRepository
-				.findByBrokerAndIsRequestActiveWithValidity(brokerId, false);
-		/**
-		 * Sort the collection basis id descending
-		 */
-		Collections.sort(listRequestByBroker, new Comparator<RequestQuote>() {
-			@Override
-			public int compare(final RequestQuote object1, final RequestQuote object2) {
-				return object2.getId().compareTo(object1.getId());
-			}
-		});
-
-		// Publish request to be displayed on broker view
-		log.info("Publishing request Object");
-		return listRequestByBroker;
-	}
+	
 
 	private SerialDataBusModel serialDataBusModelBuilder(Object payload, EventType eventType) {
 		// @// @formatter:off
@@ -784,53 +442,19 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		// @formatter:on
 	}
 
-	@Override
-	public boolean forwardRequestToCounterparties(long requestId) throws EntityNotFound {
-
-		RequestQuote request = requestQuoteRepository.findById(requestId)
-				.orElseThrow(() -> new EntityNotFound("Request with id: " + requestId + " not found"));
-
-		// Run this logic on button click
-		// Broker to add spread then release to mapped banks.
-		// ConfigureTopicName and publish request
-		log.info("Publishing request ...");
-
-		Message<String> requestMessage = MessageBuilder.withPayload(request.toString()).build();
-
-		List<InstitutionalEntityAssociation> willingToBuy = Collections.emptyList();
-		String directionString = request.getBuySellDirection().getName();
-		InstitutionalEntity source = request.getSource();
-		if (directionString.equalsIgnoreCase("BUY")) {
-			// Calculate customer rate
-			// CustomerRate = BankRate + Spread
-			// customerRate = bankRate.add(spread);
-
-			willingToBuy = institutionalEntityAssociationRepository
-					.findDestinationEntityByWillingToBuyAndSourceEntityAndDestinationEntityNot(true, source, source);
-			log.info(willingToBuy.toString());
-		}
-
-		willingToBuy.forEach(seller -> kafkaProducerService.send(
-				serialDataBusModelBuilder(requestMessage, EventType.REQUEST),
-				ApplicationConstants.BROKER_TO_COUNTERPARTY_PREFIX + seller.getDestinationEntity().getShortName(), null,
-				null));
-		log.info("Request published to banks");
-		return true;
-
-	}
 
 	@Override
-	public List<InstitutionalEntity> findEligibleCounterparties(SourceDestination sourceDestinationModel)
+	public List<InstitutionalEntity> findEligibleCounterparties(long source)
 			throws EntityNotFound {
 
 		List<InstitutionalEntity> eligibleSellers = new ArrayList<>();
 
 		InstitutionalEntity sourceEntity = institutionalEntityRepository
-				.findById(sourceDestinationModel.getSourceEntityId())
+				.findById(source)
 				.orElseThrow(() -> new EntityNotFound("Source not found"));
 
 		InstitutionalEntity prevSourceEntity = institutionalEntityRepository
-				.findById(sourceDestinationModel.getPrevSourceEntityId())
+				.findById(source)
 				.orElseThrow(() -> new EntityNotFound("prevSourceEntity not found"));
 
 		List<InstitutionalEntityAssociation> institutionalEntityAssociations = institutionalEntityAssociationRepository
@@ -848,6 +472,10 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		}
 
 		return eligibleSellers;
+		
+		/**
+		 * Need to write logic
+		 * */
 	}
 
 	@Override
@@ -873,94 +501,68 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		return eligibleSellers;
 	}
 
-	@Override
+	
 	public InstitutionalEntity findInstitutionEntity(long institutionalEntityId) throws EntityNotFound {
 
 		return institutionalEntityRepository.findById(institutionalEntityId)
 				.orElseThrow(() -> new EntityNotFound("Institutional Entity not found"));
 	}
 
-	@Override
-	public boolean expireOrderRequest(Long parentId, String reasonForExpiry)
-			throws EntityNotFound, IllegalArgumentException {
-		RequestQuote quoteRequest = requestQuoteRepository.findById(parentId)
-				.orElseThrow(() -> new EntityNotFound("Request not found"));
 
-		quoteRequest.setRequestActive(false);
-
-		log.info("Request expired");
-
-		requestQuoteRepository.save(quoteRequest);
-
-		return true;
-	}
-
-	@Override
-	public boolean expireOrderRequest(String transactionId, String reasonForExpiry)
-			throws EntityNotFound, IllegalArgumentException {
-		log.info("Expire transaction with tid: " + transactionId);
-		Daddy daddyRequest = daddyRepository.findByTransactionId(transactionId);
-		daddyRequest.setRequestActive(false);
-		daddyRepository.save(daddyRequest);
-		log.info("Request expired");
-		return true;
-	}
-
-	@Override
-	public InstitutionalEntityDto findInstitutionalEntityFromUserProfile(UserProfileModel userProfileModel)
-			throws EntityNotFound {
-		// Use model mapper to expose only relevant fields in the service and
-		// presentation layer
-
-		return modelMapper.map(
-				institutionalEntityRepository.findByRealmNameAndClientRoleNameAndClientNameAndGroupName(
-						userProfileModel.getRealmName(), userProfileModel.getClientRoleName(),
-						userProfileModel.getClientName(), userProfileModel.getGroupName()),
-				InstitutionalEntityDto.class);
-
-	}
-
-	@Override
-	public TransactionDetail findDaddyRequestByTransactionId(String transactionId) {
-		// Use model mapper to expose only relevant fields in the service and
-		// presentation layer
-		return null;
-		//return daddyRepository.findByTransactionId(transactionId);
-
-	}
-
-	@Override
-	public InstitutionalEntity findInstitutionalEntityFromId(long id) throws EntityNotFound {
-		return institutionalEntityRepository.findById(id)
-				.orElseThrow(() -> new EntityNotFound("Institutional Entity not found"));
-	}
-
+	
 	@Transactional
 	@Override
-	public Map<String, Object> findInForInstitution(String institutionName, int page, int pageSize)
+	public HttpResponseModel findInForInstitution(String institutionId, int page, int pageSize)
 			throws EntityNotFound {
-		Type listType = new TypeToken<List<KotakWorldDto>>() {
-		}.getType();
 
-		List<KotakWorld> kotakWorldList = kotakWorldRepository.getInEventForInstitution(institutionName);
-		List<KotakWorld> kotakWorldSubList = new ArrayList<>();
+		try {
+			
+			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(institutionId)).get();
+			
+			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+			
+			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+			
+			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
 
-		// Implement pagination like logic
-		int fromIndex = (page - 1) * pageSize;
-		if (fromIndex < kotakWorldList.size()) {
-			kotakWorldSubList = kotakWorldList.subList(fromIndex,
-					Math.min(fromIndex + pageSize, kotakWorldList.size()));
+			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
+			
+			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
+
+			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
+			
+			events.add(inEventType);
+			
+			events.add(inResponse);
+			
+			events.add(inNegotiation);
+			
+			events.add(inReject);
+			
+			events.add(inAwait);
+
+			
+			return HttpResponseModel.builder()
+					.data(counterPartyTransactionRepository.findAllByDestionationIdAndEventTypeIn(destination, 
+																								  events,
+																								  preparePageRequest(page,
+																										  pageSize,
+																										  org.springframework.data.domain.Sort.Direction.ASC,
+																										  institutionId)))
+					.build();
+			
+			
+		} catch (Exception e) {
+			return HttpResponseModel.builder()
+					.data(Collections.emptyList())
+					.message("Exception Occured inside method findInForInstitution: " + e.getMessage())
+					.build();
 		}
-		List<KotakWorldDto> kotakWorldDtoList = modelMapper.map(kotakWorldSubList, listType);
-
-		/*
-		 * To store total count of records fetched in the list
-		 */
-		Map<String, Object> responseMap = new LinkedHashMap<>();
-		responseMap.put("totalCount", kotakWorldDtoList.size());
-		responseMap.put("data", kotakWorldDtoList);
-
-		// kotakWorldDtoList.get(0).setTotalCount(kotakWorldList.size());
-		return responseMap;
+		
+		
+		
+		
+		
 	}
+
 }

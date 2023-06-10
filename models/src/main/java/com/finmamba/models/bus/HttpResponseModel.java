@@ -35,5 +35,7 @@ public class HttpResponseModel {
 	 */
 	private Object data;
 	
+	private int total;
+	
 	private int status;
 }

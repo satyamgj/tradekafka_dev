@@ -1,5 +1,6 @@
 package com.finmamba.models.dto;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 import lombok.AllArgsConstructor;
@@ -15,7 +16,9 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @Builder
-public class QuoteRequestDto implements Cloneable {
+public class QuoteRequestDto implements Serializable, Cloneable {
+
+	private static final long serialVersionUID = 1L;
 
 	private Long id;
 
@@ -43,11 +46,13 @@ public class QuoteRequestDto implements Cloneable {
 
 	private InstitutionalEntityDto source;
 
-	private boolean isRequestActive;
+	private Boolean isRequestActive;
 
 	private String transactionId;
 
 	private CustomerDto customer;
+	
+	private Boolean isPartial;
 	
 	private int httpStatus;
 	

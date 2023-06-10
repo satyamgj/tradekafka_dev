@@ -9,11 +9,8 @@ import org.springframework.stereotype.Component;
 
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.dto.QuoteRequestDto;
-import com.finmamba.models.dto.SuperInstitutionalEntityDto;
 import com.finmamba.resolver.event.NewQuoteRequest;
 import com.finmamba.resolver.operations.CounterPartyOperation;
-import com.finmamba.resolver.operations.InstitutionalEntityOperations;
-import com.finmamba.resolver.operations.InstitutionalEntityResolver;
 import com.finmamba.resolver.services.EventPublisher;
 import com.google.gson.Gson;
 
@@ -35,8 +32,6 @@ public class NewQuoteRequestEventListener implements ApplicationListener<NewQuot
 	@Autowired
 	Gson gson;
 
-	@Autowired
-	InstitutionalEntityResolver entityResolver;
 	
 	@Autowired
 	CounterPartyOperation counterPartyOperation;

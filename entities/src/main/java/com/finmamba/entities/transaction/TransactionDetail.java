@@ -94,8 +94,8 @@ public class TransactionDetail implements Serializable, Cloneable {
 	@JoinColumn(name = "source_id", nullable = false)
 	private InstitutionalEntity source;
 
-	@Column(name = "is_confirmed", nullable = true)
-	private boolean isConfirmed;
+	@Column(name = "is_confirmed", nullable = false)
+	private Boolean isConfirmed;
 	
 	@Column(name = "transaction_id", nullable = false)
 	private String transactionId;
@@ -104,15 +104,6 @@ public class TransactionDetail implements Serializable, Cloneable {
 	@JoinColumn(name = "customer_id", nullable = false)
 	private Customer customer;
 
-	
-//	@PostLoad
-//	private void postLoad() {
-//		if (this.quoteValidityCalculated != null) {
-//			this.timeToLive = (int) LocalDateTime.now().until(this.quoteValidityCalculated.toLocalDateTime(),
-//					ChronoUnit.SECONDS);
-//		}
-//
-//	}
 	
 	@Column(name="is_partial")
 	private Boolean isPartial;

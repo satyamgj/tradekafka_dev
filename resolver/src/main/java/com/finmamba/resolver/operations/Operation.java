@@ -1,7 +1,7 @@
 package com.finmamba.resolver.operations;
 
 import com.finmamba.models.dto.QuoteRequestDto;
-import com.finmamba.models.dto.SuperInstitutionalEntityDto;
+import com.finmamba.models.transaction.TransactionRequest;
 
 public interface Operation {
 
@@ -19,4 +19,12 @@ public interface Operation {
 	 * 2 -> 3
 	 */
 	public Boolean dispatchRequestToBrokers(QuoteRequestDto entityDto);
+	
+	public Boolean dispatchRequestToCounterparties(TransactionRequest brokerDispatchRequest, Long source);
+	
+	public void insertOutResponse(TransactionRequest request);
+	
+	public void insertOutNegotiation(TransactionRequest request);
+	
+	public void insertOutReject(TransactionRequest request);
 }

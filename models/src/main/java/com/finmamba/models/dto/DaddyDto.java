@@ -33,21 +33,18 @@ public class DaddyDto implements Cloneable {
 
 	private BigDecimal sellAmount;
 
-	// Matrix of 3X3 (9 entries) for spot, spread and outright
-
-	// All Spot Values
-	private BigDecimal sourceSpotRate;
-	private BigDecimal sourceSpotSpread;
-	private BigDecimal destinationSpotRate;
-	private BigDecimal sourceSwapPoints;
-	private BigDecimal sourceSwapSpread;
-	private BigDecimal destinationSwapRate;
 	private BigDecimal sourceOutright;
+
 	private BigDecimal spreadOutright;
+	
 	private BigDecimal destinationOutright;
+	
 	private BigDecimal buySideSpread;
+	
 	private BigDecimal sellSideSpread;
+	
 	private BigDecimal calculatedBuyCommission;
+	
 	private BigDecimal calculatedSellCommission;
 
 	private TenorDto tenorUnit;
@@ -56,7 +53,7 @@ public class DaddyDto implements Cloneable {
 
 	private InstitutionalEntityDto source;
 
-	private boolean isRequestActive;
+	private Boolean isRequestActive;
 
 	private String transactionId;
 

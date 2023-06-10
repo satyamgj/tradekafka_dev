@@ -2,7 +2,7 @@ package com.finmamba.resolver.event;
 
 import org.springframework.context.ApplicationEvent;
 
-import com.finmamba.models.dto.DaddyDto;
+import com.finmamba.models.transaction.TransactionRequest;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,14 +16,11 @@ public class NewBrokerRequest extends ApplicationEvent {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private transient DaddyDto daddyDto;
-	
-	private transient String callerRealmName;
+	private transient TransactionRequest brokerDispatchRequest;
 
-	public NewBrokerRequest(Object object, DaddyDto daddyDto, String callerRealmName) {
+	public NewBrokerRequest(Object object, TransactionRequest brokerDispatchRequest) {
 		super(object);
-		this.daddyDto = daddyDto;
-		this.callerRealmName = callerRealmName;
+		this.brokerDispatchRequest = brokerDispatchRequest;
 	}
 
 }

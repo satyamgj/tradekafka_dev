@@ -3,6 +3,7 @@ package com.finmamba.resolver.event;
 import org.springframework.context.ApplicationEvent;
 
 import com.finmamba.models.dto.DaddyDto;
+import com.finmamba.models.transaction.TransactionRequest;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,20 +17,14 @@ public class NewCounterpartyResponse extends ApplicationEvent {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private DaddyDto daddyDto;
-	
+	private TransactionRequest request;
+
 	private int responseType;
 	
-	private String callerRealmName;
-	
-	private String sendToRealmName;
-
-	public NewCounterpartyResponse(Object object, DaddyDto daddyDto, int responseType, String callerRealmName,String sendToRealmName) {
+	public NewCounterpartyResponse(Object object, TransactionRequest request, int responseType) {
 		super(object);
-		this.callerRealmName = callerRealmName;
-		this.daddyDto = daddyDto;
+		this.request = request;
 		this.responseType = responseType;
-		this.sendToRealmName = sendToRealmName;
 	}
 
 }

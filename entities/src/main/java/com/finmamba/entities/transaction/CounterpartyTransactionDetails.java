@@ -109,7 +109,16 @@ private static final long serialVersionUID = 1L;
 	
 	@Column(name= "client_outright")
 	private BigDecimal clientOutright;
-		
+	
+	@Column(name="is_partial")
+	private Boolean isPartial;
+	
+	@Column(name="response_initiated_by")
+	private InstitutionalEntity responseInitiatedBy;
+	
+	@Column(name="request_initiated_by")
+	private InstitutionalEntity requestInitiatedBy;
+	
 	@OneToOne
 	@JoinColumn(name = "created_by", nullable = false)
 	private User createdBy;

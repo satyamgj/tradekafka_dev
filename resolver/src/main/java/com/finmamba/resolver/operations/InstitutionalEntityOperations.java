@@ -1,6 +1,5 @@
 package com.finmamba.resolver.operations;
 
-import com.finmamba.entities.transaction.SuperInstitutionalEntity;
 import com.finmamba.models.dto.DaddyDto;
 import com.finmamba.models.dto.SuperInstitutionalEntityDto;
 
@@ -90,10 +89,7 @@ public interface InstitutionalEntityOperations {
 	
 	public SuperInstitutionalEntityDto insertInNegotiation(SuperInstitutionalEntityDto entityDto);
 
-	
-	
-	public SuperInstitutionalEntity getInstitutionalEntityInstance();
-	
+		
 	public InstitutionalEntityOperations getInstitutionalEntityOperationsInstance();
 	
 

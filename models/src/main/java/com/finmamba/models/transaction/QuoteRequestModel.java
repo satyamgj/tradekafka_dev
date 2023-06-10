@@ -16,7 +16,7 @@ public class QuoteRequestModel implements Serializable{
 	private String userId;
 	
 	
-	private long institutionalEntityId;
+	private Long institutionalEntityId;
 	
 	// Non Null because the RM may place OBO the customer
 	private Long customerId;
@@ -62,8 +62,8 @@ public class QuoteRequestModel implements Serializable{
 	@NonNull
 	private Long tenorUnitId;
 	
-
 	@NonNull
-	private Long entityId;
+	private Boolean isPartial;
+	
 
 }
