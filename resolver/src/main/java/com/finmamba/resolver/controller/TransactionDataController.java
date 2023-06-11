@@ -13,12 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.finmamba.entities.staticdata.EventType;
-import com.finmamba.entities.staticdata.InstitutionalEntity;
 import com.finmamba.models.request.UserProfileModel;
-import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
-import com.finmamba.resolver.repositories.InstitutionalEntityRepository;
-import com.finmamba.resolver.repositories.TransactionRepository;
 import com.finmamba.resolver.services.TransactionService;
 
 @RestController

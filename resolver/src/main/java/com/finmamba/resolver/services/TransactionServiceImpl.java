@@ -15,7 +15,6 @@ import com.finmamba.kafka.starter.util.ApplicationProperties;
 import com.finmamba.models.bus.EventType;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.bus.SerialDataBusModel;
-import com.finmamba.models.dto.DaddyDto;
 import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.request.UserProfileModel;
