@@ -20,27 +20,27 @@ public class CounterpartyTransactionDto implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private Long id;
 	
-	private ProductDto product;
+	private TransactionDto transactionId; //While fetching its null
 	
-	private DirectionDto buySellDirection;
+//	private ProductDto product;
 	
-	private CurrencyDto baseCurrency;
+//	private DirectionDto buySellDirection;
 	
-	private CurrencyDto quoteCurrency;
+//	private CurrencyDto baseCurrency;
+//	
+//	private CurrencyDto quoteCurrency;
 	
-	private BigDecimal buyAmount;
+//	private BigDecimal buyAmount;
+//
+//	private BigDecimal sellAmount;
+	
+	private BigDecimal clientOutright;
 
-	private BigDecimal sellAmount;
-	
-	private BigDecimal destinationOutright;
-
-	private TenorDto tenorUnit;
+//	private TenorDto tenorUnit;
 	
 	private InstitutionalEntityDto source;
 	
 	private boolean isRequestActive;
-	
-	private String transactionId;
 	
 	private EventTypeDto eventType;
 		

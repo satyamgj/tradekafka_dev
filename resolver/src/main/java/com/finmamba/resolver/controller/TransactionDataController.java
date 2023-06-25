@@ -1,5 +1,6 @@
 package com.finmamba.resolver.controller;
 
+import java.time.Instant;
 import java.util.Collections;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,12 +14,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.request.UserProfileModel;
 import com.finmamba.resolver.services.TransactionService;
+
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/transaction-data")
 @CrossOrigin(origins = "*")
+@Slf4j
 public class TransactionDataController {
 
 	@Autowired
@@ -52,16 +57,15 @@ public class TransactionDataController {
 	 * @param transactionID and institutionId
 	 * @return
 	 */
-	@GetMapping("/getInOutConfirmedForBank/{transactionId}")
+	@GetMapping("/getInOutConfirmedForInstitution/{transactionId}")
 	public ResponseEntity<Object> getInOutForTransaction(
 			@PathVariable(name = "transactionId", required = true) String transactionId,
-			@RequestParam(name = "institutionName", required = true) String institutionId) {
+			@RequestParam(name = "institutionId", required = true) String institutionId) {
 		
 		try {
 			return new ResponseEntity<>(transactionService.findInOutForTransaction(transactionId, institutionId),
 					HttpStatus.OK);
 		} catch (Exception e) {
-			
 			e.getStackTrace();
 			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
 		
@@ -75,18 +79,27 @@ public class TransactionDataController {
 	 * @return
 	 */
 	@GetMapping("/getInForInst/{institutionId}")
-	public ResponseEntity<Object> getInForInstitution(
+	public Object getInForInstitution(
 			@PathVariable(name = "institutionId", required = true) String institutionId,
 			@RequestParam(name = "page", required = false, defaultValue = "1") int page,
 			@RequestParam(name = "pageSize", required = false, defaultValue = "10") int pageSize
 			) {
 
 		try {
-			return new ResponseEntity<>(transactionService.findInRequestsForInstitution(institutionId, page, pageSize),
-					HttpStatus.OK);
+			logTimeUpdate("getInForInstitution", "START");
+			
+			HttpResponseModel response = transactionService.findInRequestsForInstitution(institutionId, page, pageSize);
+			
+			logTimeUpdate("getInForInstitution", "END");
+
+			
+			
+			return response.getData();
+			
 		} catch (Exception e) {
 			e.printStackTrace();
-			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
+			log.info("Error inside getInForInstitution " + e.getMessage());
+			return HttpResponseModel.builder().data(Collections.emptyList()).status(500).build();
 		}
 	}
 	
@@ -137,4 +150,12 @@ public class TransactionDataController {
 		}
 	}
 
+	
+	private void logTimeUpdate(String functionName, String status) {
+		log.info(functionName + " " + status + " " + Instant.now());
+	}
+
+	private void logException(String functionName, String exceptionMessage) {
+		log.info("Exception occurred " + functionName + " " + exceptionMessage);
+	}
 }

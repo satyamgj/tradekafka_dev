@@ -14,7 +14,7 @@ private Long id;
 
 private ProductDto product;
 
-private DirectionDto buySellDirection;
+private DirectionDto direction;
 
 private CurrencyDto baseCurrency;
 
@@ -30,9 +30,11 @@ private TenorDto tenorUnit;
 
 private InstitutionalEntityDto source;
 
+private InstitutionalEntityDto destinationId;
+
 private boolean isRequestActive;
 
-private String transactionId;
+private TransactionDto transactionId;
 
 private EventTypeDto eventType;
 	

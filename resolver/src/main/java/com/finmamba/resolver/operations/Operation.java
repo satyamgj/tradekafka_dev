@@ -1,6 +1,7 @@
 package com.finmamba.resolver.operations;
 
 import com.finmamba.models.dto.QuoteRequestDto;
+import com.finmamba.models.transaction.ConfirmRequest;
 import com.finmamba.models.transaction.TransactionRequest;
 
 public interface Operation {
@@ -27,4 +28,8 @@ public interface Operation {
 	public void insertOutNegotiation(TransactionRequest request);
 	
 	public void insertOutReject(TransactionRequest request);
+	
+	public Boolean confirmRequest(ConfirmRequest confirmRequest);
+	
+	public Boolean confirmRecursiveBrokerRequest(ConfirmRequest confirmRequest);
 }

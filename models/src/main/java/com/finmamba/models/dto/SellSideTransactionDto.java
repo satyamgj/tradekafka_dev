@@ -12,17 +12,6 @@ import lombok.Data;
 public class SellSideTransactionDto implements Serializable{private static final long serialVersionUID = 1L;
 private Long id;
 
-private ProductDto product;
-
-private DirectionDto buySellDirection;
-
-private CurrencyDto baseCurrency;
-
-private CurrencyDto quoteCurrency;
-
-private BigDecimal buyAmount;
-
-private BigDecimal sellAmount;
 
 private BigDecimal destinationOutright;
 
@@ -30,9 +19,11 @@ private TenorDto tenorUnit;
 
 private InstitutionalEntityDto source;
 
+private InstitutionalEntityDto destinationId;
+
 private boolean isRequestActive;
 
-private String transactionId;
+private TransactionDto transactionId;
 
 private EventTypeDto eventType;
 	
@@ -59,5 +50,8 @@ private BigDecimal sellSideBaseAmount;
 @JsonProperty("brokerageConversionRate")
 private BigDecimal sellSideConversionRate;
 
-private Instant createdAt;
+//private Instant createdAt;
+
+//@JsonProperty("direction")
+//private DirectionDto direction;
 }

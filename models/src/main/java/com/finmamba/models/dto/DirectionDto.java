@@ -9,6 +9,6 @@ import lombok.Setter;
 @Setter
 public class DirectionDto implements Serializable{
 	private static final long serialVersionUID = 1L;
-	private long id;
+	private Long id;
 	private String name;
 }

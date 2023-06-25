@@ -29,7 +29,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @Entity
-@Table(name = "entityconfigsettings", schema = "configuration")
+@Table(name = "entity_config_settings", schema = "configuration")
 @Builder
 public class EntityConfigurationSettings implements Serializable {
 

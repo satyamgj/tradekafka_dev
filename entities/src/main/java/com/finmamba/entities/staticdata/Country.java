@@ -32,21 +32,9 @@ public class Country implements Serializable {
     @Column(name="iso3")
     private String iso3;
     
-    @Column(name="iso_numeric")
-    private int isoNumeric;
     
     @Column(name="name")
     private String name;
-    
-    @Column(name="capital")
-    private String capital;
-    
-    @Column(name="continent_code")
-    private String continentCode;
-    
-    
-    @OneToOne
-    @JoinColumn(name="currency_code_id")
-    private Currency currency;
+
 
 }

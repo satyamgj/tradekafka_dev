@@ -5,9 +5,11 @@ import org.springframework.stereotype.Component;
 
 import com.finmamba.models.dto.DaddyDto;
 import com.finmamba.models.dto.QuoteRequestDto;
+import com.finmamba.models.transaction.ConfirmRequest;
 import com.finmamba.models.transaction.TransactionRequest;
 import com.finmamba.resolver.event.NewBrokerRequest;
 import com.finmamba.resolver.event.NewBrokerResponse;
+import com.finmamba.resolver.event.NewConfirmRequest;
 import com.finmamba.resolver.event.NewCounterpartyResponse;
 import com.finmamba.resolver.event.NewQuoteRequest;
 
@@ -39,6 +41,11 @@ public class EventPublisher {
 	
 	public void publishNewBrokerResponseEvent(final DaddyDto daddyDto, final String callerRealmName, int responseType, String sendToRealmName) {
 		applicationEventPublisher.publishEvent(new NewBrokerResponse(this, daddyDto, callerRealmName, responseType,sendToRealmName));
+	}
+	
+	//Confirm order
+	public void publishConfirmRequest(final ConfirmRequest confirmRequest) {
+		applicationEventPublisher.publishEvent(new NewConfirmRequest(this, confirmRequest));
 	}
 	
 }

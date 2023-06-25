@@ -36,6 +36,8 @@ import com.finmamba.models.bus.EventType;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.bus.SerialDataBusModel;
 import com.finmamba.models.dto.BuySideTransactionDto;
+import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
+import com.finmamba.models.dto.CounterpartyTransactionDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SellSideConfirmationDto;
 import com.finmamba.models.dto.SellSideTransactionDto;
@@ -217,9 +219,10 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 				
 				.sourceOutright(bankOutright).spreadOutright(spreadOutright).destinationOutright(clientOutright)
 				.tenorUnit(tenorUnit).source(findInstitutionalEntityFromId(quoteRequestModel.getInstitutionalEntityId()))
-				.transactionId(UniqueIdentifierGenerator.unique())
+				//.transactionId(UniqueIdentifierGenerator.unique())
 				.baseCurrency(baseCurrency).quoteCurrency(quoteCurrency).customer(customer)
-				.transactionId(UniqueIdentifierGenerator.unique()).buySellDirection(direction)
+				.transactionId(UniqueIdentifierGenerator.unique()) //Saved by Db halted
+				.buySellDirection(direction)
 				.createdAt(Instant.now())
 				.createdBy(userId)
 				.isPartial(quoteRequestModel.getIsPartial())
@@ -273,25 +276,81 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	public HttpResponseModel findInOutForTransaction(String transactionId,
 			String institutionId) throws EntityNotFound {
 		
+		logTimeUpdate("findInOutForTransaction", "START");
+		
 		Type listType ;
 		
-		List<CounterpartyTransactionDetails> listRequestIn = new ArrayList<>();
-		List<CounterpartyTransactionDetails> listRequestOut = new ArrayList<>();
-		List<CounterpartyTransactionDetails> listRequestConfirmed = new ArrayList<>();
-		List<CounterpartyTransactionDetails> listRequestReject = new ArrayList<>();
+		
 		List<CounterpartyTransactionDetails> listAwaitingOrders = new ArrayList<>();
 
+		com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+		
+		com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+		
+		com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
 
+		com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
 		
+		com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
 		
-		List<CounterpartyTransactionDetails> allTransactions = counterPartyTransactionRepository.findAllByDestinationIdOrSourceIdAndIsRequestActiveAndTransactionId(
-																		institutionalEntityRepository.getById(Long.valueOf(institutionId))	
-																		,institutionalEntityRepository.getById(Long.valueOf(institutionId))		
-																		, true
-																		, transactionId);
 
+		com.finmamba.entities.staticdata.EventType outEventType = eventTypeRepository.getById(2L);
 		
-		TransactionDetail parentTransaction = transactionRepository.findByTransactionId(transactionId);
+		com.finmamba.entities.staticdata.EventType outResponse = eventTypeRepository.getById(4L);
+		
+		com.finmamba.entities.staticdata.EventType outNegotiation = eventTypeRepository.getById(6L);
+
+		com.finmamba.entities.staticdata.EventType outReject = eventTypeRepository.getById(8L);
+
+		List<com.finmamba.entities.staticdata.EventType> inEvents = new ArrayList<>();
+		
+		inEvents.add(inEventType);
+		
+		inEvents.add(inNegotiation);
+		
+		List<com.finmamba.entities.staticdata.EventType> outEvents = new ArrayList<>();
+		
+		outEvents.add(outEventType);
+				
+		outEvents.add(outNegotiation);
+		
+		outEvents.add(outReject);
+		
+		outEvents.add(outResponse);
+		
+		List<com.finmamba.entities.staticdata.EventType> rejects = new ArrayList<>();
+				
+		rejects.add(inReject);
+		
+		List<com.finmamba.entities.staticdata.EventType> confirmed = new ArrayList<>();
+		
+		confirmed.add(inResponse);
+		
+		List<CounterpartyTransactionDetails> inTransactions = counterPartyTransactionRepository.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
+				institutionalEntityRepository.getById(Long.valueOf(institutionId)), 
+				 inEvents,
+				 true);
+		
+		
+		List<CounterpartyTransactionDetails> outTransactions = counterPartyTransactionRepository.findAllBySourceIdAndEventTypeInAndIsRequestActive(
+				institutionalEntityRepository.getById(Long.valueOf(institutionId)), 
+				 outEvents,
+				 true);
+		
+		
+		List<CounterpartyTransactionDetails> rejectedTransactions = counterPartyTransactionRepository.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
+				 institutionalEntityRepository.getById(Long.valueOf(institutionId)), 
+				 rejects,
+				 true );
+		
+		List<CounterpartyTransactionDetails> confirmedTransactions = counterPartyTransactionRepository.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
+				 institutionalEntityRepository.getById(Long.valueOf(institutionId)), 
+				 confirmed,
+				 true);
+	
+		
+		
+		TransactionDetail parentTransaction = transactionRepository.findById(Long.valueOf(transactionId)).get();
 		
 		if(parentTransaction.getSource().getId() == Long.valueOf(institutionId)) {
 			//BuySide
@@ -303,41 +362,22 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			}.getType();
 		}
 		
-		for(CounterpartyTransactionDetails transaction:allTransactions) {
-			if(transaction.getEventType().getId() == 1L ||  
-					transaction.getEventType().getId() == 5L ) {
-			
-				listRequestIn.add(transaction);			
-			}
-			else if(transaction.getEventType().getId() == 2L ||  
-					transaction.getEventType().getId() == 6L ) {
-				listRequestOut.add(transaction);
-			}
-			else if(transaction.getEventType().getId() == 7L ||
-					transaction.getEventType().getId() == 8L) {
-				listRequestReject.add(transaction);	
-				}
-			
-			else if(transaction.getEventType().getId() == 3L ||
-					transaction.getEventType().getId() == 4L ){
-				listRequestConfirmed.add(transaction);
-				}
-			else {
-				listAwaitingOrders.add(transaction);
-				}
-		}
 
 		Map<String, Object> mapInOut = new HashMap<>();
 
-		mapInOut.put("in", modelMapper.map(listRequestIn, listType));
-		mapInOut.put("out", modelMapper.map(listRequestOut, listType));
-		mapInOut.put("confirm", modelMapper.map(listRequestConfirmed, listType));
-		mapInOut.put("reject", modelMapper.map(listRequestReject, listType));
+		mapInOut.put("in", modelMapper.map(inTransactions, listType));
+		mapInOut.put("out", modelMapper.map(outTransactions, listType));
+		mapInOut.put("confirm", modelMapper.map(confirmedTransactions, listType));
+		mapInOut.put("reject", modelMapper.map(rejectedTransactions, listType));
 		mapInOut.put("awaiting", modelMapper.map(listAwaitingOrders,listType));
+		
+		logTimeUpdate("findInOutForTransaction", "END");
 
 		// Publish request to be displayed on broker view
 		return HttpResponseModel.builder()
 				.data(mapInOut).build();
+		
+
 	}
 
 	@Override
@@ -461,6 +501,8 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 				.findDestinationEntityByWillingToBuyAndSourceEntityAndDestinationEntityNot(true, sourceEntity,
 						prevSourceEntity);
 
+		log.info("Fetched all associations for " + sourceEntity.getRealmName());
+		
 		if (institutionalEntityAssociations.isEmpty()) {
 			throw new EntityNotFound("No associations found for source: " + sourceEntity.getShortName());
 		}
@@ -491,7 +533,8 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 				.findDestinationEntityByWillingToBuyAndSourceEntity(true, sourceEntity);
 
 		if (institutionalEntityAssociations.isEmpty()) {
-			throw new EntityNotFound("No associations found for source: " + sourceEntity.getShortName());
+			log.info("No associations found for source: " + sourceEntity.getShortName());
+			return Collections.emptyList(); //returning empty list as no associations found.
 		}
 		// TODO: Need to check failure
 		for (InstitutionalEntityAssociation association : institutionalEntityAssociations) {
@@ -541,14 +584,25 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			
 			events.add(inAwait);
 
+			List<CounterpartyTransactionDetails> transactions = counterPartyTransactionRepository.findAllByDestinationIdAndEventTypeIn(destination, 
+					  events,
+					  
+					  preparePageRequest(page,
+							  pageSize,
+							  org.springframework.data.domain.Sort.Direction.ASC,
+							  "id"));
+			
+			List<CounterPartyTransactionFetchingDto> allTransactions = new ArrayList();
+			
+			for (CounterpartyTransactionDetails transaction : transactions) {
+				
+				allTransactions.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
+				
+			}
+			
 			
 			return HttpResponseModel.builder()
-					.data(counterPartyTransactionRepository.findAllByDestionationIdAndEventTypeIn(destination, 
-																								  events,
-																								  preparePageRequest(page,
-																										  pageSize,
-																										  org.springframework.data.domain.Sort.Direction.ASC,
-																										  institutionId)))
+					.data(allTransactions)
 					.build();
 			
 			
@@ -561,8 +615,10 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		
 		
 		
-		
-		
+	}
+	
+	private void logTimeUpdate(String functionName, String status) {
+		log.info(functionName + " " + status + " " + Instant.now());
 	}
 
 }

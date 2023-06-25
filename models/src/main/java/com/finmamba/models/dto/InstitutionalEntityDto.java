@@ -21,19 +21,19 @@ public class InstitutionalEntityDto implements Serializable{
 
 	private String shortName;
 
-	private String realmId;
+//	private String realmId;
 
 	private String realmName;
+//
+//	private String groupId;
+//
+//	private String groupName;
 
-	private String groupId;
+//	private String clientId;
+//
+//	private String clientName;
 
-	private String groupName;
-
-	private String clientId;
-
-	private String clientName;
-
-	private String clientRoleName;
-
-	private String clientRoleId;
+//	private String clientRoleName;
+//
+//	private String clientRoleId;
 }

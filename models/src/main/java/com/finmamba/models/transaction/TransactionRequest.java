@@ -14,21 +14,12 @@ public class TransactionRequest implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 
-	private Long product;
-
-	private Long buySellDirection;
-
-	private Long baseCurrency;
-
-	private Long quoteCurrency;
 
 	private BigDecimal buyAmount;
 
 	private BigDecimal sellAmount;
 
 	private BigDecimal sourceOutright;
-
-	private BigDecimal spreadOutright;
 	
 	private BigDecimal destinationOutright;
 	
@@ -40,17 +31,11 @@ public class TransactionRequest implements Serializable{
 	
 	private BigDecimal calculatedSellCommission;
 
-	private Long tenorUnit;
-
 	private Long source;
 	
 	private Long destination;
-
-	private Boolean isRequestActive;
 	
-	private Boolean isPartial;
-
-	private String transactionId;
+	private Long transactionId;
 	
 	private Long createdBy;
 	
@@ -76,5 +61,9 @@ public class TransactionRequest implements Serializable{
 
 	private Long responseInitiatedBy;
 	
-	private Long requestInitiatedBy;
+	private Long requestInitiatedBy; //Transaction
+	
+	private Long legInitiatedBy; //counterpartyTransactionDetails
+	
+	private Long direction;
 }

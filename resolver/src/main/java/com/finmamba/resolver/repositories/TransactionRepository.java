@@ -13,11 +13,12 @@ import com.finmamba.entities.transaction.TransactionDetail;
 @Repository
 public interface TransactionRepository extends JpaRepository<TransactionDetail, Long>, PagingAndSortingRepository<TransactionDetail, Long> {
 
-	TransactionDetail findByTransactionIdAndIsConfirmed(String transactionId, Boolean isConfirmed);
+	TransactionDetail findByIdAndIsConfirmed(Long Id, Boolean isConfirmed);
 	
 	TransactionDetail findByTransactionId(String transactionId);
 	
 	List<TransactionDetail> findAllBySourceAndIsConfirmed(InstitutionalEntity source, Boolean isConfirmed, Pageable pageRequest);
 	
 	int countBySourceAndIsConfirmed(InstitutionalEntity source, Boolean isConfirmed);
+	
 }

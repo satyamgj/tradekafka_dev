@@ -15,6 +15,7 @@ import javax.persistence.Table;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -26,6 +27,7 @@ import lombok.NoArgsConstructor;
 		schema = "transaction",
 		name = "confirmed_order_details"
 		)
+@Builder
 public class ConfirmedOrderDetails implements Serializable {
 private static final long serialVersionUID = 1L;
 	
@@ -39,8 +41,9 @@ private static final long serialVersionUID = 1L;
 	@JoinColumn(name = "broker_id", nullable = false)
 	private InstitutionalEntity brokerId;
 	
-	@Column(name="transactionId")
-	private String transactionId;
+	@OneToOne
+	@JoinColumn(name="transactionId")
+	private TransactionDetail transactionId;
 	
 	@OneToOne
 	@JoinColumn(name = "buy_side_id", nullable = false)
@@ -64,7 +67,7 @@ private static final long serialVersionUID = 1L;
 	@JoinColumn(name = "created_by", nullable = false)
 	private User createdBy;
 	
-	@Column(name = "created_at", nullable = false)
+	@Column(name = "created_at", nullable = false, insertable = false)
 	private Instant createdAt;
 	
 	

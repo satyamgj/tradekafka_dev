@@ -4,11 +4,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.finmamba.entities.configuration.EntityConfigurationSettings;
+import com.finmamba.entities.staticdata.InstitutionalEntity;
 
 @Repository
 public interface EntityConfigurationRepository extends JpaRepository<EntityConfigurationSettings, Long>{
 
-	EntityConfigurationSettings findByEntityId(Long entityId);
+	EntityConfigurationSettings findByEntityId(InstitutionalEntity entityId);
 	
 }
 

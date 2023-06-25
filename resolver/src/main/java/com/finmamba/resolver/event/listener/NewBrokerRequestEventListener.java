@@ -37,7 +37,7 @@ public class NewBrokerRequestEventListener implements ApplicationListener<NewBro
 		
 		
 		Boolean result = counterPartyOperation.dispatchRequestToCounterparties(event.getBrokerDispatchRequest()
-				, event.getBrokerDispatchRequest().getSource() );
+				, event.getBrokerDispatchRequest().getRequestInitiatedBy() );
 		
 		
 		log.info("NewBrokerRequest end with status: " + result );

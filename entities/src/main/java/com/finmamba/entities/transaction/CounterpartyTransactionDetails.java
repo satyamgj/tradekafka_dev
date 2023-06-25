@@ -14,7 +14,10 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.Type;
+
 import com.finmamba.entities.staticdata.Currency;
+import com.finmamba.entities.staticdata.Direction;
 import com.finmamba.entities.staticdata.EventType;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
 
@@ -33,15 +36,17 @@ import lombok.NoArgsConstructor;
 		)
 @Builder
 public class CounterpartyTransactionDetails implements Serializable {
-private static final long serialVersionUID = 1L;
+
+	private static final long serialVersionUID = 1L;
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")
 	private Long id;
 
-	@Column(name = "transaction_id", nullable = false)
-	private String transactionId;
+	@OneToOne
+	@JoinColumn(name = "transaction_id", nullable = false)
+	private TransactionDetail transactionId;
 	
 	@OneToOne
 	@JoinColumn(name = "source_id", nullable = false)
@@ -51,7 +56,7 @@ private static final long serialVersionUID = 1L;
 	@JoinColumn(name = "destination_id", nullable = false)
 	private InstitutionalEntity destinationId;
 	
-	@OneToOne(fetch = FetchType.EAGER)
+	@OneToOne
 	@JoinColumn(name = "event_type_id", nullable = false)
 	private EventType eventType;
 	
@@ -110,22 +115,31 @@ private static final long serialVersionUID = 1L;
 	@Column(name= "client_outright")
 	private BigDecimal clientOutright;
 	
-	@Column(name="is_partial")
-	private Boolean isPartial;
+//	@Column(name="is_partial")
+//	private Boolean isPartial;
 	
-	@Column(name="response_initiated_by")
+	@OneToOne
+	@JoinColumn(name="response_initiated_by")
 	private InstitutionalEntity responseInitiatedBy;
 	
-	@Column(name="request_initiated_by")
+	@OneToOne
+	@JoinColumn(name="request_initiated_by")
 	private InstitutionalEntity requestInitiatedBy;
+	
+	@OneToOne
+	@JoinColumn(name="leg_initiated_by")
+	private InstitutionalEntity legInitiatedBy;
 	
 	@OneToOne
 	@JoinColumn(name = "created_by", nullable = false)
 	private User createdBy;
 	
-	@Column(name = "created_at", nullable = false)
+	@Column(name = "created_at", nullable = false, insertable = false)
 	private Instant createdAt;
 	
+	@OneToOne
+	@JoinColumn(name="direction", nullable = false)
+	private Direction direction;
 	
 	
 	
