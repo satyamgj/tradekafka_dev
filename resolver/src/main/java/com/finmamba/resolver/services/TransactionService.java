@@ -30,6 +30,9 @@ public interface TransactionService {
 
 	public HttpResponseModel findInRequestsForInstitution(String institutionId, int page, int pageSize); //visited
 	
+	public HttpResponseModel findInRequestsForBroker(String institutionId, int page, int pageSize); //visited
+
+	
 	public InstitutionalEntityDto findInstitutionalEntityFromUserProfile(UserProfileModel userProfileModel); //visited
 	
 	

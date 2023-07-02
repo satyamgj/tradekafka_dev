@@ -1,6 +1,7 @@
 package com.finmamba.resolver.operations;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,8 +17,11 @@ import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
 import com.finmamba.entities.transaction.TransactionDetail;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.dto.CounterpartyTransactionDto;
+import com.finmamba.models.dto.CurrencyDto;
+import com.finmamba.models.dto.DirectionDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SellSideTransactionDto;
+import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.transaction.ConfirmRequest;
 import com.finmamba.models.transaction.TransactionRequest;
 import com.finmamba.resolver.repositories.ConfirmationRepostory;
@@ -31,6 +35,7 @@ import com.finmamba.resolver.repositories.QuoteRequestRepository;
 import com.finmamba.resolver.repositories.TransactionRepository;
 import com.finmamba.resolver.repositories.UserRepository;
 import com.finmamba.resolver.services.EventPublisher;
+import com.finmamba.resolver.services.Matching;
 import com.finmamba.resolver.services.TransactionServiceDal;
 import com.finmamba.resolver.util.ApplicationConstants;
 
@@ -81,6 +86,9 @@ public class CounterPartyOperation implements Operation {
 
 	@Autowired
 	ConfirmationRepostory confirmationRepostory;
+	
+	@Autowired
+	Matching matching;
 
 	String spread = "0.0001"; // Default: HARDCODED
 
@@ -128,7 +136,7 @@ public class CounterPartyOperation implements Operation {
 
 						.destinationId(institutionalEntityRepository.getById(broker.getId()))
 
-						.direction(directionRepository.findById(quoteRequestDto.getBuySellDirection().getId()).get())
+						.directionId(directionRepository.findById(quoteRequestDto.getBuySellDirection().getId()).get())
 
 						.eventType(eventTypeRepository.getById(ApplicationConstants.Event.IN_REQUEST.getEventId()))
 
@@ -256,7 +264,21 @@ public class CounterPartyOperation implements Operation {
 
 				CounterpartyTransactionDetails transaction = counterPartyTransactionRepository
 						.save(counterPartyOperation);
-
+				
+				//initiate Matching algo
+				NewOrder newOrder = NewOrder.builder().askingRate(counterPartyOperation.getClientOutright())
+									.orderId(transaction.getId())
+									.isPartial(counterPartyOperation.getTransactionId().getIsPartial())
+									.buyAmount(counterPartyOperation.getBankBuyAmount())
+									.sellAmount(counterPartyOperation.getBankSellAmount())
+									.direction(modelMapper.map(counterPartyOperation.getDirectionId(), DirectionDto.class))
+									.buyCurrency(modelMapper.map(counterPartyOperation.getTransactionId().getBaseCurrency(), CurrencyDto.class))
+									.sellCurrency(modelMapper.map(counterPartyOperation.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
+									.insertionTime(new Timestamp(System.currentTimeMillis()))
+									.build();
+				
+				matching.initiateMatchingAlgorithm(newOrder);
+				
 				// Publish on kafka topic
 				String kafkaTopic = broker.getRealmName() + "." + broker.getClientName() + "."
 						+ broker.getClientRoleName() + "." + broker.getGroupName();
@@ -394,7 +416,7 @@ public class CounterPartyOperation implements Operation {
 
 		CounterpartyTransactionDetails newTransactionDetails = CounterpartyTransactionDetails.builder()
 
-				.direction(directionRepository.getById(counterpartyTransactionDetails.getDirection()))
+				.directionId(directionRepository.getById(counterpartyTransactionDetails.getDirection()))
 
 				.transactionId(transactionRepository.findById(counterpartyTransactionDetails.getTransactionId()).get())
 
@@ -538,6 +560,20 @@ public class CounterPartyOperation implements Operation {
 
 			CounterpartyTransactionDetails transactionForBroker = addToCounterPartyTransactionTable(
 					ApplicationConstants.Event.IN_RESPONSE.getEventId(), request);
+			
+			//initiate Matching algo
+			NewOrder newOrder = NewOrder.builder().askingRate(transactionForBroker.getClientOutright())
+								.isPartial(transactionForBroker.getTransactionId().getIsPartial())
+								.orderId(transactionForBroker.getId())
+								.buyAmount(transactionForBroker.getBankBuyAmount())
+								.sellAmount(transactionForBroker.getBankSellAmount())
+								.direction(modelMapper.map(transactionForBroker.getDirectionId(), DirectionDto.class))
+								.buyCurrency(modelMapper.map(transactionForBroker.getTransactionId().getBaseCurrency(), CurrencyDto.class))
+								.sellCurrency(modelMapper.map(transactionForBroker.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
+								.insertionTime(new Timestamp(System.currentTimeMillis()))
+								.build();
+			
+			matching.initiateMatchingAlgorithm(newOrder);
 
 			counterPartyTransactionRepository.save(transactionForBroker);
 
@@ -663,6 +699,21 @@ public class CounterPartyOperation implements Operation {
 
 			CounterpartyTransactionDetails transactionForBroker = addToCounterPartyTransactionTable(
 					ApplicationConstants.Event.IN_NEGOTIATION.getEventId(), request);
+			
+
+			//initiate Matching algo
+			NewOrder newOrder = NewOrder.builder().askingRate(transactionForBroker.getClientOutright())
+								.orderId(transactionForBroker.getId())
+								.isPartial(transactionForBroker.getTransactionId().getIsPartial())
+								.buyAmount(transactionForBroker.getBankBuyAmount())
+								.sellAmount(transactionForBroker.getBankSellAmount())
+								.direction(modelMapper.map(transactionForBroker.getDirectionId(), DirectionDto.class))
+								.buyCurrency(modelMapper.map(transactionForBroker.getTransactionId().getBaseCurrency(), CurrencyDto.class))
+								.sellCurrency(modelMapper.map(transactionForBroker.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
+								.insertionTime(new Timestamp(System.currentTimeMillis()))
+								.build();
+			
+			matching.initiateMatchingAlgorithm(newOrder);
 
 			counterPartyTransactionRepository.save(transactionForBroker);
 
@@ -871,7 +922,7 @@ public class CounterPartyOperation implements Operation {
 						.quoteCurrency(buySideCounterPartyTransaction.getTransactionId().getQuoteCurrency())
 						.buyAmount(buySideCounterPartyTransaction.getBankBuyAmount())
 						.sellAmount(buySideCounterPartyTransaction.getBankSellAmount())
-						.buySellDirection(buySideCounterPartyTransaction.getDirection())
+						.buySellDirection(buySideCounterPartyTransaction.getDirectionId())
 						.createdBy(buySideCounterPartyTransaction.getCreatedBy())
 						.destinationOutright(buySideCounterPartyTransaction.getClientOutright()).isConfirmed(true)
 						.isPartial(buySideCounterPartyTransaction.getTransactionId().getIsPartial()).build();
@@ -881,7 +932,7 @@ public class CounterPartyOperation implements Operation {
 						.quoteCurrency(sellSideCounterPartyTransaction.getTransactionId().getQuoteCurrency())
 						.buyAmount(sellSideCounterPartyTransaction.getBankBuyAmount())
 						.sellAmount(sellSideCounterPartyTransaction.getBankSellAmount())
-						.buySellDirection(sellSideCounterPartyTransaction.getDirection())
+						.buySellDirection(sellSideCounterPartyTransaction.getDirectionId())
 						.createdBy(sellSideCounterPartyTransaction.getCreatedBy())
 						.destinationOutright(sellSideCounterPartyTransaction.getClientOutright()).isConfirmed(true)
 						.isPartial(sellSideCounterPartyTransaction.getTransactionId().getIsPartial()).build();

@@ -139,7 +139,7 @@ public class CounterpartyTransactionDetails implements Serializable {
 	
 	@OneToOne
 	@JoinColumn(name="direction", nullable = false)
-	private Direction direction;
+	private Direction directionId;
 	
 	
 	

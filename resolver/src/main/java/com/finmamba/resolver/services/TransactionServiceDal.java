@@ -30,5 +30,7 @@ public interface TransactionServiceDal {
 			throws EntityNotFound; // visited
 
 	HttpResponseModel findConfirmedOrdersForBroker(String institutionId, int page, int pageSize) throws EntityNotFound; // visited
+	
+	HttpResponseModel findInOrdersForBroker(String brokerId,int page, int pageSize) throws EntityNotFound;
 
 }

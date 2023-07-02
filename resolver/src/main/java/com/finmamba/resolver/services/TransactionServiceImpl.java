@@ -3,18 +3,22 @@ package com.finmamba.resolver.services;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.kafka.starter.autoconfigure.rest.KafkaRestService;
 import com.finmamba.kafka.starter.util.ApplicationProperties;
 import com.finmamba.models.bus.EventType;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.bus.SerialDataBusModel;
+import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
 import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.request.UserProfileModel;
@@ -222,6 +226,35 @@ public class TransactionServiceImpl implements TransactionService {
 		}
 		log.info("processCounterpartyResponse | END with false");
 		return false;
+	}
+
+	@Override
+	public HttpResponseModel findInRequestsForBroker(String institutionId, int page, int pageSize) {
+		try {
+			return dal.findInOrdersForBroker(institutionId, page, pageSize);
+			
+		} catch (EntityNotFound e) {
+			
+			Map<String, Object> requests = new HashMap<>() ;
+			requests.put("BUY", Collections.emptyList());
+			requests.put("SELL", Collections.emptyList());
+
+			e.printStackTrace();
+			return HttpResponseModel.builder()
+					.data(requests)
+					.message(e.getMessage())
+					.build();
+		} catch (Exception e) {
+			Map<String, Object> requests = new HashMap<>() ;
+			requests.put("BUY", Collections.emptyList());
+			requests.put("SELL", Collections.emptyList());
+
+			e.printStackTrace();
+			return HttpResponseModel.builder()
+					.data(requests)
+					.message(e.getMessage())
+					.build();		}
+		
 	}
 
 
