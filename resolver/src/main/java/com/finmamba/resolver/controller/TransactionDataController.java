@@ -1,6 +1,5 @@
 package com.finmamba.resolver.controller;
 
-import java.lang.reflect.Type;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,10 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
+import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.request.UserProfileModel;
 import com.finmamba.resolver.services.TransactionService;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,6 +39,16 @@ public class TransactionDataController {
 	@Autowired
 	ModelMapper modelMapper;
 	
+
+	@PostMapping("/getInstitutionalEntity")
+	public InstitutionalEntityDto getInstitutionalEntity(@RequestBody UserProfileModel userProfileModel) {
+		try {
+			return transactionService.findInstitutionalEntityFromUserProfile(userProfileModel);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
 	
 	/**
 	 * Get all active requests for the Institution 
@@ -151,17 +159,6 @@ public class TransactionDataController {
 		}
 	}
 	
-
-	@GetMapping("/getInstitutionalEntity")
-	public ResponseEntity<Object> getInstitutionalEntity(@RequestBody UserProfileModel userProfileModel) {
-		try {
-			return new ResponseEntity<>(transactionService.findInstitutionalEntityFromUserProfile(userProfileModel),
-					HttpStatus.OK);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
 
 	
 	@GetMapping("/getConfirmedOrdersForBank/{institutionId}")
