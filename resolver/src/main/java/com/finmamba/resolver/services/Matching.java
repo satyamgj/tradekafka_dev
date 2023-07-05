@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
+import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.matching.NewOrder;
 import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 
@@ -25,6 +26,9 @@ public class Matching {
 	@Autowired
 	CounterPartyTransactionRepository counterPartyTransactionRepository;
 
+	@Autowired
+	KafkaProducerService kafkaProducerService;
+	
 	BigDecimal zero = new BigDecimal(0);
 
 	Map<BigDecimal, List<NewOrder>> buyOrders;
@@ -86,13 +90,19 @@ public class Matching {
 
 						// Case 1: both isPartial true
 						if (newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-
-							log.info("Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-									+ oppositeOrder.getAskingRate());
 							
-							log.info("Sending to " + newOrderTransaction.getDestinationId().getRealmName());
+							String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+									+ oppositeOrder.getAskingRate();
 
+							String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+							
+							log.info(matchMessage);
+							
+							log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+							kafkaProducerService.send(matchMessage, topic, null, null);
+							
 							iterator.remove();
 							matchedOrders.add(oppositeOrder);
 
@@ -116,11 +126,17 @@ public class Matching {
 								// i.e match -> if buy amount equals with sell order buy amount
 								// & if buy amt is greater than sell order amount
 
-								log.info("Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate());
+										+ oppositeOrder.getAskingRate();
 
-								log.info("Sending to " + newOrderTransaction.getDestinationId().getRealmName());
+								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+								
+								log.info(matchMessage);
+								
+								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+								kafkaProducerService.send(matchMessage, topic, null, null);
 
 								
 								iterator.remove();
@@ -147,11 +163,17 @@ public class Matching {
 								// i.e match -> if buy amount equals with sell order buy amount
 								// & if buy amt is less than sell order amount
 
-								log.info("Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate());
+										+ oppositeOrder.getAskingRate();
 
-								log.info("Sending to " + newOrderTransaction.getDestinationId().getRealmName());
+								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+								
+								log.info(matchMessage);
+								
+								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+								kafkaProducerService.send(matchMessage, topic, null, null);
 
 								
 								iterator.remove();
@@ -175,11 +197,17 @@ public class Matching {
 							if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0) {
 								// i.e match -> if buy amount equals with sell order buy amount
 
-								log.info("Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate());
+										+ oppositeOrder.getAskingRate();
 
-								log.info("Sending to " + newOrderTransaction.getDestinationId().getRealmName());
+								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+								
+								log.info(matchMessage);
+								
+								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+								kafkaProducerService.send(matchMessage, topic, null, null);
 
 								
 								iterator.remove();
@@ -212,11 +240,17 @@ public class Matching {
 						// Case 1: both isPartial true
 						if (newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
 
-							log.info("Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+							String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-									+ oppositeOrder.getAskingRate());
+									+ oppositeOrder.getAskingRate();
+
+							String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
 							
-							log.info("Sending to " + newOrderTransaction.getDestinationId().getRealmName());
+							log.info(matchMessage);
+							
+							log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+							kafkaProducerService.send(matchMessage, topic, null, null);
 
 
 							iterator.remove();
@@ -242,12 +276,17 @@ public class Matching {
 								// i.e match -> if buy amount equals with sell order buy amount
 								// & if buy amt is greater than sell order amount
 
-								log.info("Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate());
-								
-								log.info("Sending to " + newOrderTransaction.getDestinationId().getRealmName());
+										+ oppositeOrder.getAskingRate();
 
+								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+								
+								log.info(matchMessage);
+								
+								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+								kafkaProducerService.send(matchMessage, topic, null, null);
 
 								iterator.remove();
 								matchedOrders.add(oppositeOrder);
@@ -273,11 +312,17 @@ public class Matching {
 								// i.e match -> if buy amount equals with sell order buy amount
 								// & if buy amt is less than sell order amount
 
-								log.info("Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate());
+										+ oppositeOrder.getAskingRate();
+
+								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
 								
-								log.info("Sending to " + newOrderTransaction.getDestinationId().getRealmName());
+								log.info(matchMessage);
+								
+								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+								kafkaProducerService.send(matchMessage, topic, null, null);
 
 
 								iterator.remove();
@@ -301,11 +346,17 @@ public class Matching {
 							if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0) {
 								// i.e match -> if buy amount equals with sell order buy amount
 
-								log.info("Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate());
+										+ oppositeOrder.getAskingRate();
+
+								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
 								
-								log.info("Sending to " + newOrderTransaction.getDestinationId().getRealmName());
+								log.info(matchMessage);
+								
+								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+								kafkaProducerService.send(matchMessage, topic, null, null);
 
 
 								iterator.remove();
