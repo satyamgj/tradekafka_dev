@@ -79,7 +79,8 @@ public class Matching {
 						.findById(oppositeOrder.getOrderId()).get();
 
 				if (newOrderTransaction.getDestinationId().getId() == oppositeOrderTransaction.getDestinationId()
-						.getId() && oppositeOrderTransaction.isRequestActive()) {
+						.getId() && oppositeOrderTransaction.isRequestActive()
+						&& newOrderTransaction.getSourceId().getId() != oppositeOrderTransaction.getSourceId().getId() ) {
 
 					// Check if new Order buy condition and asking rate comparison
 					if (newOrder.getDirection().getId() == 1
