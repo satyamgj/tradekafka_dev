@@ -14,9 +14,10 @@ import lombok.NoArgsConstructor;
 public class CounterPartyTransactionFetchingDto implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
+	
 	private Long id;
 	
-	private Object transactionId; //While fetching its null
+	private TransactionDto transactionId; //While fetching its null
 	
 //	private ProductDto product;
 	

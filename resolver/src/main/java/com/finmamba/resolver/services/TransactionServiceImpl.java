@@ -231,6 +231,8 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public HttpResponseModel findInRequestsForBroker(String institutionId, int page, int pageSize) {
 		try {
+			
+			logTimeUpdate("findInRequestsForBroker", "start");
 			return dal.findInOrdersForBroker(institutionId, page, pageSize);
 			
 		} catch (EntityNotFound e) {
@@ -258,6 +260,9 @@ public class TransactionServiceImpl implements TransactionService {
 	}
 
 
+	private void logTimeUpdate(String functionName, String status) {
+		log.info(functionName + " " + status + " " + Instant.now());
+	}
 
 
 }

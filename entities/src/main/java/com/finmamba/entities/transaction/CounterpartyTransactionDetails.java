@@ -141,12 +141,12 @@ public class CounterpartyTransactionDetails implements Serializable {
 	@JoinColumn(name="direction", nullable = false)
 	private Direction directionId;
 	
+	@OneToOne
+	@JoinColumn(name="bank_sell_ccy_id")
+	private Currency sellCcy;
 	
-	
-	
-	
-	
-	
-	
+	@OneToOne
+	@JoinColumn(name="bank_buy_ccy_id")
+	private Currency buyCcy;
 	
 }

@@ -45,11 +45,13 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 	List<CounterpartyTransactionDetails> findAllByDestinationId(InstitutionalEntity destination,
 			Pageable pageRequest);	
 	
-	List<CounterpartyTransactionDetails> findByDestinationIdAndDirectionIdAndIsRequestActive(InstitutionalEntity destination,
+	List<CounterpartyTransactionDetails> findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(InstitutionalEntity destination,
 			
 			Direction direction,
 			
 			Boolean isActive,
+			
+			Collection<EventType> events,
 			
 			Pageable pageRequest
 			

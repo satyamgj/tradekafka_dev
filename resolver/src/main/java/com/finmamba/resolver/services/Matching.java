@@ -56,7 +56,8 @@ public class Matching {
 			matchOrders(buyOrders, order);
 		}
 	}
-
+	
+	@Async
 	public void matchOrders(Map<BigDecimal, List<NewOrder>> oppositeOrders, NewOrder newOrder) {
 
 		List<BigDecimal> oppositePrices = new ArrayList<>(oppositeOrders.keySet());

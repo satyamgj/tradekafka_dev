@@ -23,6 +23,7 @@ import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
 import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.request.UserProfileModel;
+import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.resolver.services.TransactionService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -194,6 +195,13 @@ public class TransactionDataController {
 			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+	
+//	@GetMapping("/getDepth/{institutionId}")
+//	public ResponseEntity<Object> getMarketDepth(
+//			@PathVariable("institutionId") String institutionId,
+//			@RequestBody MarketDepthRequest marketDepthRequest
+//			)
+	
 
 	
 	private void logTimeUpdate(String functionName, String status) {

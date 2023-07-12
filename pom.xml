@@ -31,6 +31,7 @@
 		<module>entities</module>
 		<module>resolver</module>
 		<module>reports-microservice</module>
+		<module>nonflow-microservice</module>
 		<!--module>rate-simulator</module-->
 		<!--module>notification</module>
 		<module>custom-data-microservice</module>
