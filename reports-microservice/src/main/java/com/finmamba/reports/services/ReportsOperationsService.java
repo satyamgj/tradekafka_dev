@@ -6,7 +6,6 @@ import com.finmamba.models.dto.SavedNonFlowDto;
 import com.finmamba.models.dto.SuperInstitutionalEntityDto;
 import com.finmamba.models.reports.CommissionReport;
 import com.finmamba.models.reports.TradeReport;
-import com.finmamba.nonflow.NonFlowRequest;
 import com.finmamba.reports.exception.ReportNotFound;
 
 public interface ReportsOperationsService {
@@ -17,6 +16,6 @@ public interface ReportsOperationsService {
 
 	public List<SuperInstitutionalEntityDto> processCommissionReportRequest(CommissionReport commissionReport) throws ReportNotFound;
 
-	public List<SavedNonFlowDto> processNonFlowReportRequest(NonFlowRequest nonFlowReport) throws ReportNotFound;
+	//public List<SavedNonFlowDto> processNonFlowReportRequest(NonFlowRequest nonFlowReport) throws ReportNotFound;
 
 }

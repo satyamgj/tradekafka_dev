@@ -9,8 +9,6 @@
 	<artifactId>reports-microservice</artifactId>
 	<version>0.1-SNAPSHOT</version>
 	<name>Reports Microservice</name>
-
-
 	<dependencies>
 		<dependency>
 			<groupId>com.finmamba</groupId>
@@ -54,6 +52,5 @@
 			<artifactId>modelmapper</artifactId>
 			<version>2.4.5</version>
 		</dependency>
-
 	</dependencies>
 </project>

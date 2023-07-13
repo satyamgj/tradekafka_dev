@@ -27,7 +27,7 @@ import com.finmamba.entities.transaction.NonFlow;
 import com.finmamba.entities.transaction.User;
 import com.finmamba.models.dto.NonFlowDto;
 import com.finmamba.models.dto.SavedNonFlowDto;
-import com.finmamba.nonflow.NonFlowRequest;
+//import com.finmamba.nonflow.NonFlowRequest;
 import com.finmamba.nonflow.exception.CustomNonFlowException;
 import com.finmamba.nonflow.repositories.CurrencyRepository;
 import com.finmamba.nonflow.repositories.CustomerRepository;
@@ -185,38 +185,33 @@ public class NonFlowOperationsServiceDalImpl implements NonFlowOperationsService
 		return listNonFlowRequest;
 
 	}
-	
-	@Override
-	@Transactional
-	public List<NonFlow> getNonFlowRequest(NonFlowRequest nonFlowRequest) {
-		log.info("Inside get Non Flow Dal Implementation");
-		List<NonFlowDto> returnList = null;
-		int pageSize = nonFlowRequest.getPageSize().intValue();
-		int offSet = nonFlowRequest.getOffset().intValue();
-		String sortField = nonFlowRequest.getSortField();
-		BigInteger institutionId = nonFlowRequest.getEntityId();
-		String startDate = nonFlowRequest.getStartDate();
-		String endDate = nonFlowRequest.getEndDate();
-		
-		// Make Pageable request as per the sort order
-		Pageable pageableRequest = null;
-		if (nonFlowRequest.getSortOrder().equalsIgnoreCase("asc")) {
-			pageableRequest = PageRequest.of(offSet, pageSize,
-					Sort.Direction.ASC, sortField);
-		} else {
-			pageableRequest = PageRequest.of(offSet, pageSize,
-					Sort.Direction.DESC, sortField);
-		}
 
-		Type listType = new TypeToken<List<NonFlowDto>>() {
-		}.getType();
-		
-			List<NonFlow> nonFlowList = nonFlowRepository
-					.getNonFlowRequest(institutionId, startDate, endDate, pageableRequest);
-			log.info("return list of NonFlow requests" + nonFlowList);
-			//returnList = modelMapper.map(nonFlowList, listType);
-		
-		return nonFlowList;
-	}
 
+	/*
+	 * @Override
+	 * 
+	 * @Transactional public List<NonFlow> getNonFlowRequest(NonFlowRequest
+	 * nonFlowRequest) { log.info("Inside get Non Flow Dal Implementation");
+	 * List<NonFlowDto> returnList = null; int pageSize =
+	 * nonFlowRequest.getPageSize().intValue(); int offSet =
+	 * nonFlowRequest.getOffset().intValue(); String sortField =
+	 * nonFlowRequest.getSortField(); BigInteger institutionId =
+	 * nonFlowRequest.getEntityId(); String startDate =
+	 * nonFlowRequest.getStartDate(); String endDate = nonFlowRequest.getEndDate();
+	 * 
+	 * // Make Pageable request as per the sort order Pageable pageableRequest =
+	 * null; if (nonFlowRequest.getSortOrder().equalsIgnoreCase("asc")) {
+	 * pageableRequest = PageRequest.of(offSet, pageSize, Sort.Direction.ASC,
+	 * sortField); } else { pageableRequest = PageRequest.of(offSet, pageSize,
+	 * Sort.Direction.DESC, sortField); }
+	 * 
+	 * Type listType = new TypeToken<List<NonFlowDto>>() { }.getType();
+	 * 
+	 * List<NonFlow> nonFlowList = nonFlowRepository
+	 * .getNonFlowRequest(institutionId, startDate, endDate, pageableRequest);
+	 * log.info("return list of NonFlow requests" + nonFlowList); //returnList =
+	 * modelMapper.map(nonFlowList, listType);
+	 * 
+	 * return nonFlowList; }
+	 */
 }

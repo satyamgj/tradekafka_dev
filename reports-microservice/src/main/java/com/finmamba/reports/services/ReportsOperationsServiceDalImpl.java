@@ -2,6 +2,8 @@ package com.finmamba.reports.services;
 
 import java.lang.reflect.Type;
 import java.math.BigInteger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -13,14 +15,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import com.finmamba.entities.transaction.KanjiWorld;
-import com.finmamba.entities.transaction.NonFlow;
-import com.finmamba.entities.transaction.TransactionDetail;
-import com.finmamba.models.dto.SavedNonFlowDto;
+import com.finmamba.entities.transaction.ConfirmedOrderDetails;
 import com.finmamba.models.dto.SuperInstitutionalEntityDto;
 import com.finmamba.models.reports.CommissionReport;
 import com.finmamba.models.reports.TradeReport;
-import com.finmamba.nonflow.NonFlowRequest;
 import com.finmamba.reports.exception.ReportNotFound;
 import com.finmamba.reports.repositories.CommissionReportsRepository;
 import com.finmamba.reports.repositories.NonFlowReportRepository;
@@ -48,7 +46,7 @@ public class ReportsOperationsServiceDalImpl implements ReportsOperationsService
 	@Override
 	@Transactional
 	public List<SuperInstitutionalEntityDto> getTradeReport(TradeReport tradeReport) {
-		log.info("Inside getTradeReport Dal Implementation");
+		log.info("Inside getTradeReport Dal Implementation For Banks");
 		List<SuperInstitutionalEntityDto> returnList = null;
 		BigInteger reportId = tradeReport.getReportId();
 		int pageSize = tradeReport.getPageSize().intValue();
@@ -57,6 +55,20 @@ public class ReportsOperationsServiceDalImpl implements ReportsOperationsService
 		BigInteger institutionId = tradeReport.getEntityId();
 		String startDate = tradeReport.getStartDate();
 		String endDate = tradeReport.getEndDate();
+		SimpleDateFormat sdf1 = new SimpleDateFormat("dd-MM-yyyy");
+		
+		java.sql.Date sqlEndDate = null; 
+		java.sql.Date sqlStartDate = null; 
+		
+		try {
+			java.util.Date utilStartDate = sdf1.parse(startDate);
+			java.util.Date utilEndDate = sdf1.parse(endDate);
+			sqlEndDate = new java.sql.Date(utilEndDate.getTime()); 
+			sqlStartDate = new java.sql.Date(utilStartDate.getTime()); 
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		// Make Pageable request as per the sort order
 		Pageable pageableRequest = null;
@@ -71,11 +83,10 @@ public class ReportsOperationsServiceDalImpl implements ReportsOperationsService
 		Type listType = new TypeToken<List<SuperInstitutionalEntityDto>>() {
 		}.getType();
 		log.info("tradeReport.getReportId()" + reportId);
-		// <TODO:> Hardcoding of report type needs to change
-			List<TransactionDetail> kotakList = tradeReportsRepository
-					.getTradeReportFromEntity(reportId, institutionId, startDate, endDate, pageableRequest);
-			log.info("return list of Kotak world" + kotakList);
-			returnList = modelMapper.map(kotakList, listType);
+			List<ConfirmedOrderDetails> tradeReportList = tradeReportsRepository
+					.getAllBetweenDates( sqlStartDate, sqlEndDate,false, pageableRequest);
+			log.info("return list of Banks" + tradeReportList);
+			returnList = modelMapper.map(tradeReportList, listType);
 		
 		return returnList;
 	}
@@ -111,7 +122,7 @@ public class ReportsOperationsServiceDalImpl implements ReportsOperationsService
 //			log.info(tradeReportsRepository
 //					.getCommissionReportFromEntity(reportId, institutionId, startDate, endDate, pageableRequest).toString());
 			
-			List<KanjiWorld> kanjiList = commissionReportsRepository
+			List<ConfirmedOrderDetails> kanjiList = commissionReportsRepository
 					.getCommissionReportFromEntity(reportId, institutionId, startDate, endDate, pageableRequest);
 			log.info("return list of Kanji world" + kanjiList);
 			returnList = modelMapper.map(
@@ -121,36 +132,31 @@ public class ReportsOperationsServiceDalImpl implements ReportsOperationsService
 		return returnList;
 	}
 
-	@Override
-	@Transactional
-	public List<SavedNonFlowDto> getNonFlowReport(NonFlowRequest nonFlowRequest) throws ReportNotFound {
-		log.info("Inside get Non Flow Dal Implementation");
-		List<SavedNonFlowDto> returnList = null;
-		int pageSize = nonFlowRequest.getPageSize().intValue();
-		int offSet = nonFlowRequest.getOffset().intValue();
-		String sortField = nonFlowRequest.getSortField();
-		BigInteger institutionId = nonFlowRequest.getEntityId();
-		String startDate = nonFlowRequest.getStartDate();
-		String endDate = nonFlowRequest.getEndDate();
-		
-		// Make Pageable request as per the sort order
-		Pageable pageableRequest = null;
-		if (nonFlowRequest.getSortOrder().equalsIgnoreCase("asc")) {
-			pageableRequest = PageRequest.of(offSet, pageSize,
-					Sort.Direction.ASC, sortField);
-		} else {
-			pageableRequest = PageRequest.of(offSet, pageSize,
-					Sort.Direction.DESC, sortField);
-		}
-
-		Type listType = new TypeToken<List<SavedNonFlowDto>>() {
-		}.getType();
-		
-			List<NonFlow> nonFlowList = nonFlowReportsRepository
-					.getNonFlowRequest(institutionId, startDate, endDate, pageableRequest);
-			log.info("return list of NonFlow requests" + nonFlowList);
-			returnList = modelMapper.map(nonFlowList, listType);
-		
-		return returnList;
-	}
+	/*
+	 * @Override
+	 * 
+	 * @Transactional public List<SavedNonFlowDto> getNonFlowReport(NonFlowRequest
+	 * nonFlowRequest) throws ReportNotFound {
+	 * log.info("Inside get Non Flow Dal Implementation"); List<SavedNonFlowDto>
+	 * returnList = null; int pageSize = nonFlowRequest.getPageSize().intValue();
+	 * int offSet = nonFlowRequest.getOffset().intValue(); String sortField =
+	 * nonFlowRequest.getSortField(); BigInteger institutionId =
+	 * nonFlowRequest.getEntityId(); String startDate =
+	 * nonFlowRequest.getStartDate(); String endDate = nonFlowRequest.getEndDate();
+	 * 
+	 * // Make Pageable request as per the sort order Pageable pageableRequest =
+	 * null; if (nonFlowRequest.getSortOrder().equalsIgnoreCase("asc")) {
+	 * pageableRequest = PageRequest.of(offSet, pageSize, Sort.Direction.ASC,
+	 * sortField); } else { pageableRequest = PageRequest.of(offSet, pageSize,
+	 * Sort.Direction.DESC, sortField); }
+	 * 
+	 * Type listType = new TypeToken<List<SavedNonFlowDto>>() { }.getType();
+	 * 
+	 * List<NonFlow> nonFlowList = nonFlowReportsRepository
+	 * .getNonFlowRequest(institutionId, startDate, endDate, pageableRequest);
+	 * log.info("return list of NonFlow requests" + nonFlowList); returnList =
+	 * modelMapper.map(nonFlowList, listType);
+	 * 
+	 * return returnList; }
+	 */
 }

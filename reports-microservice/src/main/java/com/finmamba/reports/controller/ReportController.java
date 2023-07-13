@@ -23,7 +23,7 @@ import com.finmamba.models.dto.SavedNonFlowDto;
 import com.finmamba.models.dto.SuperInstitutionalEntityDto;
 import com.finmamba.models.reports.CommissionReport;
 import com.finmamba.models.reports.TradeReport;
-import com.finmamba.nonflow.NonFlowRequest;
+//import com.finmamba.nonflow.NonFlowRequest;
 import com.finmamba.report.util.CommissionReportExcelExporter;
 import com.finmamba.report.util.NonFlowReportExcelExporter;
 import com.finmamba.report.util.TradeReportExcelExporter;
@@ -47,7 +47,9 @@ public class ReportController {
 		try {
 			
 			returnList = reportsOperationsService.processTradeReportRequest(tradeReport);
+			if(returnList.size()>0) {
 			returnList.get(0).setTotal_count(Long.valueOf(returnList.size()));
+			}
 			log.info("Request received for getting trade reports");
 			// returnList.get(0).setHttpStatus(HttpStatus.OK.value());
 			return new ResponseEntity<>(returnList, HttpStatus.OK);
@@ -74,46 +76,42 @@ public class ReportController {
 		}
 	}
 	
-	@PostMapping("/getNonFlowReport")
-	public ResponseEntity<List<SavedNonFlowDto>> getNonFlowReport(@RequestBody NonFlowRequest nonFlowRequest) {
-		List<SavedNonFlowDto> returnList = new ArrayList<>();
-		try {
-			log.info("Request received for getting nonFlow reports");
-			returnList = reportsOperationsService.processNonFlowReportRequest(nonFlowRequest);
-			// returnList.get(0).setHttpStatus(HttpStatus.OK.value());
-			returnList.get(0).setTotal_count(Long.valueOf(returnList.size()));
-
-			return new ResponseEntity<>(returnList, HttpStatus.OK);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new ResponseEntity<>(returnList, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-	
-	@PostMapping("/export/nonFlowReport/downloadExcel")
-	public ResponseEntity<List<SavedNonFlowDto>> exportNonFlowReportToExcel(HttpServletResponse response, @RequestBody NonFlowRequest nonFlowRequest) {
-		List<SavedNonFlowDto> returnList = null;
-		response.setContentType("application/octet-stream");
-		DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-		String currentDateTime = dateFormatter.format(new Date());
-
-		String headerKey = "Content-Disposition";
-		String headerValue = "attachment; filename=nonflowreport_" + currentDateTime + ".xlsx";
-		response.setHeader(headerKey, headerValue);
-
-		try {
-			log.info("Request received for getting nonFlow reports");
-			returnList = reportsOperationsService.processNonFlowReportRequest(nonFlowRequest);
-			// returnList.get(0).setHttpStatus(HttpStatus.OK.value());
-			NonFlowReportExcelExporter excelExporter = new NonFlowReportExcelExporter(returnList);
-			excelExporter.export(response);
-			return new ResponseEntity<>(returnList, HttpStatus.OK);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new ResponseEntity<>(returnList, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-	}
-
+	/*
+	 * @PostMapping("/getNonFlowReport") public
+	 * ResponseEntity<List<SavedNonFlowDto>> getNonFlowReport(@RequestBody
+	 * NonFlowRequest nonFlowRequest) { List<SavedNonFlowDto> returnList = new
+	 * ArrayList<>(); try {
+	 * log.info("Request received for getting nonFlow reports"); returnList =
+	 * reportsOperationsService.processNonFlowReportRequest(nonFlowRequest); //
+	 * returnList.get(0).setHttpStatus(HttpStatus.OK.value());
+	 * returnList.get(0).setTotal_count(Long.valueOf(returnList.size()));
+	 * 
+	 * return new ResponseEntity<>(returnList, HttpStatus.OK); } catch (Exception e)
+	 * { e.printStackTrace(); return new ResponseEntity<>(returnList,
+	 * HttpStatus.INTERNAL_SERVER_ERROR); } }
+	 */	
+	/*
+	 * @PostMapping("/export/nonFlowReport/downloadExcel") public
+	 * ResponseEntity<List<SavedNonFlowDto>>
+	 * exportNonFlowReportToExcel(HttpServletResponse response, @RequestBody
+	 * NonFlowRequest nonFlowRequest) { List<SavedNonFlowDto> returnList = null;
+	 * response.setContentType("application/octet-stream"); DateFormat dateFormatter
+	 * = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss"); String currentDateTime =
+	 * dateFormatter.format(new Date());
+	 * 
+	 * String headerKey = "Content-Disposition"; String headerValue =
+	 * "attachment; filename=nonflowreport_" + currentDateTime + ".xlsx";
+	 * response.setHeader(headerKey, headerValue);
+	 * 
+	 * try { log.info("Request received for getting nonFlow reports"); returnList =
+	 * reportsOperationsService.processNonFlowReportRequest(nonFlowRequest); //
+	 * returnList.get(0).setHttpStatus(HttpStatus.OK.value());
+	 * NonFlowReportExcelExporter excelExporter = new
+	 * NonFlowReportExcelExporter(returnList); excelExporter.export(response);
+	 * return new ResponseEntity<>(returnList, HttpStatus.OK); } catch (Exception e)
+	 * { e.printStackTrace(); return new ResponseEntity<>(returnList,
+	 * HttpStatus.INTERNAL_SERVER_ERROR); } }
+	 */
 	@PostMapping("/export/tradeReport/downloadExcel")
 	public void exportToExcel(HttpServletResponse response, @RequestBody TradeReport tradeReport) throws IOException {
 		response.setContentType("application/octet-stream");

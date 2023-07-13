@@ -14,7 +14,6 @@ import com.finmamba.models.dto.SavedNonFlowDto;
 import com.finmamba.models.dto.SuperInstitutionalEntityDto;
 import com.finmamba.models.reports.CommissionReport;
 import com.finmamba.models.reports.TradeReport;
-import com.finmamba.nonflow.NonFlowRequest;
 import com.finmamba.reports.exception.ReportNotFound;
 import com.google.gson.Gson;
 
@@ -72,22 +71,18 @@ public class ReportsOperationsServiceImpl implements ReportsOperationsService {
 		return Collections.emptyList();
 	}
 
-	@Override
-	public List<SavedNonFlowDto> processNonFlowReportRequest(NonFlowRequest nonFlowReport) throws ReportNotFound {
-		// TODO Auto-generated method stub
-		log.info("new nonFlowReportRequest | START " + Instant.now());
-		try {
-			/**
-			 * Get NonFlow Report Request from database as per the filters
+	/*
+	 * @Override public List<SavedNonFlowDto>
+	 * processNonFlowReportRequest(NonFlowRequest nonFlowReport) throws
+	 * ReportNotFound { // TODO Auto-generated method stub
+	 * log.info("new nonFlowReportRequest | START " + Instant.now()); try {
+	 *//**
+		 * Get NonFlow Report Request from database as per the filters
+		 *//*
+			 * List<SavedNonFlowDto> requests = dal.getNonFlowReport(nonFlowReport);
+			 * 
+			 * return requests; } catch (Exception e) { e.printStackTrace(); }
+			 * log.info("new NonFlowReportRequest | END with empty list" + Instant.now());
+			 * return Collections.emptyList(); }
 			 */
-			List<SavedNonFlowDto> requests = dal.getNonFlowReport(nonFlowReport);
-
-			return requests;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		log.info("new NonFlowReportRequest | END with empty list" + Instant.now());
-		return Collections.emptyList();
-	}
-
 }

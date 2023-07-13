@@ -16,7 +16,7 @@ logging:
 spring:
   config:
     import:
-    - configserver:http://root:s3cr3t@localhost:1025
+      configserver:http://root:s3cr3t@localhost:1025
   application:
     name: broker-service
   cloud:

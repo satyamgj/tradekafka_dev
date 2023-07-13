@@ -111,8 +111,6 @@ public class NonFlowReportExcelExporter {
 			createCell(row, columnCount++, "NOT AVAILABLE", style);
 			//createCell(row, columnCount++, nonFlowReportRow.getTransactionId(), style);
 			createCell(row, columnCount++, "NOT AVAILABLE", style);
-			
-		
 
 		}
 	}
