@@ -687,6 +687,30 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		Map<String, Object> orders = new HashMap<>();
 		
 		try {
+			
+			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+
+			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+
+			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
+
+			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
+
+			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
+
+			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
+
+			events.add(inEventType);
+
+			events.add(inResponse);
+
+			events.add(inNegotiation);
+
+			events.add(inReject);
+
+			events.add(inAwait);
+//
+			
 			Type counterPartyTransaction = new TypeToken<List<CounterpartyTransactionDto>>() {
 			}.getType();
 			
@@ -694,12 +718,13 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			List<CounterPartyTransactionFetchingDto> sellTransactionList = new ArrayList();
 			
-			List<CounterpartyTransactionDetails> buyDepth = counterPartyTransactionRepository.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActive(
+			List<CounterpartyTransactionDetails> buyDepth = counterPartyTransactionRepository.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActiveAndEventTypeIn(
 					institutionalEntityRepository.getById(marketDepthRequest.getInstituionId()),
 					currencyRepository.getById(marketDepthRequest.getSellCurrencyId()), 
 					currencyRepository.getById(marketDepthRequest.getBuyCurrencyId()),
 					directionRepository.getById(1L)
-					, true);
+					, true
+					,events);
 			
 			for(CounterpartyTransactionDetails buyOrders:buyDepth){
 				buyTransactionList.add(modelMapper.map(buyOrders, CounterPartyTransactionFetchingDto.class));
@@ -708,12 +733,14 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			
 			orders.put("BUY", buyTransactionList);
 					
-			List<CounterpartyTransactionDetails> sellDepth = counterPartyTransactionRepository.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActive(
+			List<CounterpartyTransactionDetails> sellDepth = counterPartyTransactionRepository.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActiveAndEventTypeIn(
 					institutionalEntityRepository.getById(marketDepthRequest.getInstituionId()),
 					currencyRepository.getById(marketDepthRequest.getSellCurrencyId()), 
 					currencyRepository.getById(marketDepthRequest.getBuyCurrencyId()),
 					directionRepository.getById(2L)
-					, true);
+					, true
+					,events
+					);
 			
 			
 			for(CounterpartyTransactionDetails sellOrders:sellDepth){
