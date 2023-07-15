@@ -32,7 +32,10 @@ public interface TransactionServiceDal {
 
 	HttpResponseModel findConfirmedOrdersForBroker(String institutionId, int page, int pageSize) throws EntityNotFound; // visited
 	
-	HttpResponseModel findInOrdersForBroker(String brokerId,int page, int pageSize) throws EntityNotFound;
+	HttpResponseModel findBuyInOrdersForBroker(String brokerId,int page, int pageSize) throws EntityNotFound;
+	
+	HttpResponseModel findSellInOrdersForBroker(String brokerId,int page, int pageSize) throws EntityNotFound;
+
 	
 	HttpResponseModel findDepthOfCcyPairByInstituionId(MarketDepthRequest marketDepthRequest);
 

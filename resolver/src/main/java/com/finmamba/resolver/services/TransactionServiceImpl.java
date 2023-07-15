@@ -229,36 +229,36 @@ public class TransactionServiceImpl implements TransactionService {
 		return false;
 	}
 
-	@Override
-	public HttpResponseModel findInRequestsForBroker(String institutionId, int page, int pageSize) {
-		try {
-			
-			logTimeUpdate("findInRequestsForBroker", "start");
-			return dal.findInOrdersForBroker(institutionId, page, pageSize);
-			
-		} catch (EntityNotFound e) {
-			
-			Map<String, Object> requests = new HashMap<>() ;
-			requests.put("BUY", Collections.emptyList());
-			requests.put("SELL", Collections.emptyList());
-
-			e.printStackTrace();
-			return HttpResponseModel.builder()
-					.data(requests)
-					.message(e.getMessage())
-					.build();
-		} catch (Exception e) {
-			Map<String, Object> requests = new HashMap<>() ;
-			requests.put("BUY", Collections.emptyList());
-			requests.put("SELL", Collections.emptyList());
-
-			e.printStackTrace();
-			return HttpResponseModel.builder()
-					.data(requests)
-					.message(e.getMessage())
-					.build();		}
-		
-	}
+//	@Override
+//	public HttpResponseModel findInRequestsForBroker(String institutionId, int page, int pageSize) {
+//		try {
+//			
+//			logTimeUpdate("findInRequestsForBroker", "start");
+//			return dal.findInOrdersForBroker(institutionId, page, pageSize);
+//			
+//		} catch (EntityNotFound e) {
+//			
+//			Map<String, Object> requests = new HashMap<>() ;
+//			requests.put("BUY", Collections.emptyList());
+//			requests.put("SELL", Collections.emptyList());
+//
+//			e.printStackTrace();
+//			return HttpResponseModel.builder()
+//					.data(requests)
+//					.message(e.getMessage())
+//					.build();
+//		} catch (Exception e) {
+//			Map<String, Object> requests = new HashMap<>() ;
+//			requests.put("BUY", Collections.emptyList());
+//			requests.put("SELL", Collections.emptyList());
+//
+//			e.printStackTrace();
+//			return HttpResponseModel.builder()
+//					.data(requests)
+//					.message(e.getMessage())
+//					.build();		}
+//		
+//	}
 
 
 	private void logTimeUpdate(String functionName, String status) {
@@ -279,6 +279,32 @@ public class TransactionServiceImpl implements TransactionService {
 			e.printStackTrace();
 			return HttpResponseModel.builder()
 					.data(requests)
+					.message(e.getMessage())
+					.build();	
+		}
+	}
+
+	@Override
+	public HttpResponseModel findBuyInRequestsForBroker(String institutionId, int page, int pageSize) {
+		try {
+			return dal.findBuyInOrdersForBroker(institutionId, page, pageSize);
+			
+		} catch (Exception e) {
+			return HttpResponseModel.builder()
+					.data(Collections.emptyList())
+					.message(e.getMessage())
+					.build();	
+		}
+	}
+
+	@Override
+	public HttpResponseModel findSellInRequestsForBroker(String institutionId, int page, int pageSize) {
+		try {
+			return dal.findSellInOrdersForBroker(institutionId, page, pageSize);
+			
+		} catch (Exception e) {
+			return HttpResponseModel.builder()
+					.data(Collections.emptyList())
 					.message(e.getMessage())
 					.build();	
 		}

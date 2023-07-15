@@ -125,11 +125,11 @@ public class TransactionDataController {
 	}
 	
 	/**
-	 * Get all IN requests for the Institution
+	 * Get all BUY IN requests for the Institution
 	 * @param institutionId
 	 * @return
 	 */
-	@GetMapping("/getInForBroker/{institutionId}")
+	@GetMapping("/getBuyOrdersInForBroker/{institutionId}")
 	public HttpResponseModel getInForBroker(
 			@PathVariable(name = "institutionId", required = true) String institutionId,
 			@RequestParam(name = "page", required = false, defaultValue = "0") int page,
@@ -140,11 +140,11 @@ public class TransactionDataController {
 
 		
 		try {
-			logTimeUpdate("getInForBroker", "START");
+			logTimeUpdate("getBuyInForBroker", "START");
 			
-			HttpResponseModel response = transactionService.findInRequestsForBroker(institutionId, page, pageSize);
+			HttpResponseModel response = transactionService.findBuyInRequestsForBroker(institutionId, page, pageSize);
 			
-			logTimeUpdate("getInForBroker", "END");
+			logTimeUpdate("getBuyInForBroker", "END");
 
 			return response;
 			
@@ -161,6 +161,38 @@ public class TransactionDataController {
 	}
 	
 
+	/**
+	 * Get all BUY IN requests for the Institution
+	 * @param institutionId
+	 * @return
+	 */
+	@GetMapping("/getSellOrdersInForBroker/{institutionId}")
+	public HttpResponseModel getSellInForBroker(
+			@PathVariable(name = "institutionId", required = true) String institutionId,
+			@RequestParam(name = "page", required = false, defaultValue = "0") int page,
+			@RequestParam(name = "pageSize", required = false, defaultValue = "10") int pageSize
+			) {
+
+		Map<String, List<CounterPartyTransactionFetchingDto>> requests = new HashMap<>();
+
+		
+		try {
+			logTimeUpdate("getInForBroker", "START");
+			
+			HttpResponseModel response = transactionService.findSellInRequestsForBroker(institutionId, page, pageSize);
+			
+			logTimeUpdate("getInForBroker", "END");
+
+			return response;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		
+			
+			log.info("Error inside getSellInForInstitution " + e.getMessage());
+			return null;
+		}
+	}
 	
 	@GetMapping("/getConfirmedOrdersForBank/{institutionId}")
 	public ResponseEntity<Object> getConfirmedOrdersForInstitution(

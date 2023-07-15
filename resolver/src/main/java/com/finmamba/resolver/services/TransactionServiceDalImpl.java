@@ -559,125 +559,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		log.info(functionName + " " + status + " " + Instant.now());
 	}
 
-	// @Transactional
-	@Override
-	public HttpResponseModel findInOrdersForBroker(String brokerId, int page, int pageSize) throws EntityNotFound {
 
-		logTimeUpdate("findInOrdersForBroker", "START");
-
-		Map<String, Object> requests = new HashMap<>();
-
-		try {
-
-//			List<CounterPartyTransactionFetchingDto> buyTransaction = new ArrayList<>();
-
-			Direction buy = directionRepository.getById(1L);
-
-			Direction sell = directionRepository.getById(2L);
-
-			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(brokerId)).get();
-
-			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
-
-			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
-
-			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
-
-			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
-
-			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
-
-			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
-
-			events.add(inEventType);
-
-			events.add(inResponse);
-
-			events.add(inNegotiation);
-
-			events.add(inReject);
-
-			events.add(inAwait);
-//
-//			List<CounterpartyTransactionDetails> buyTransactions = counterPartyTransactionRepository
-//					.findAllByDestinationIdAndEventTypeInAndDirection(destination, events,
-//							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
-//									"id"),
-//							buy);
-//
-//			List<CounterpartyTransactionDetails> sellTransactions = counterPartyTransactionRepository
-//					.findAllByDestinationIdAndEventTypeInAndDirection(destination, events,
-//							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
-//									"id"),
-//							sell);
-//
-//			Type transaction = new TypeToken<List<CounterpartyTransactionDto>>() {
-//			}.getType();
-//			
-//
-//			for (CounterpartyTransactionDetails transactions : buyTransactions) {
-//
-//				buyTransaction.add(
-//						modelMapper.map(transactions, CounterPartyTransactionFetchingDto.class)
-//						);
-//
-//			}
-//			
-//			log.info(buyTransaction.toString());
-//			
-//			requests.put("BUY", modelMapper.map(buyTransactions, transaction) );
-//
-//			requests.put("SELL", modelMapper.map(sellTransactions, transaction));
-//			
-//			return HttpResponseModel.builder().data(buyTransaction) 
-//					.message("Sending active requests for broker ID: " + brokerId).build();
-
-//			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(brokerId)).get();
-
-			List<CounterpartyTransactionDetails> buyTransactions = counterPartyTransactionRepository
-					.findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, buy, true, events,
-							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
-									"id"));
-
-			List<CounterpartyTransactionDetails> sellTransactions = counterPartyTransactionRepository
-					.findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, sell, true, events,
-							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
-									"id"));
-
-			List<CounterPartyTransactionFetchingDto> buyTransactionList = new ArrayList();
-
-			List<CounterPartyTransactionFetchingDto> sellTransactionList = new ArrayList();
-
-			for (CounterpartyTransactionDetails transaction : buyTransactions) {
-
-				buyTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
-
-			}
-
-			for (CounterpartyTransactionDetails transaction : sellTransactions) {
-
-				sellTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
-
-			}
-
-			requests.put("BUY", buyTransactionList);
-			requests.put("SELL", sellTransactionList);
-
-			logTimeUpdate("findInOrdersForBroker", "END");
-
-			return HttpResponseModel.builder().data(requests).build();
-
-		} catch (Exception e) {
-			// TODO: handle exception
-
-			requests.put("BUY", Collections.emptyList());
-
-			requests.put("SELL", Collections.emptyList());
-
-			return HttpResponseModel.builder().data(requests)
-					.message("Exception Occured inside method findInOrdersForBroker: " + e.getMessage()).build();
-		}
-	}
 
 	@Override
 	public HttpResponseModel findDepthOfCcyPairByInstituionId(MarketDepthRequest marketDepthRequest) {
@@ -764,6 +646,138 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			return HttpResponseModel.builder().data(orders)
 					.message("Exception Occured inside method findDepthOfCcyPairByInstituionId: " + e.getMessage()).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel findBuyInOrdersForBroker(String brokerId, int page, int pageSize) throws EntityNotFound {
+		logTimeUpdate("findBuyInOrdersForBroker", "START");
+
+
+		try {
+
+//			List<CounterPartyTransactionFetchingDto> buyTransaction = new ArrayList<>();
+
+			Direction buy = directionRepository.getById(1L);
+
+			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(brokerId)).get();
+
+			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+
+			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+
+			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
+
+			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
+
+			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
+
+			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
+
+			events.add(inEventType);
+
+			events.add(inResponse);
+
+			events.add(inNegotiation);
+
+			events.add(inReject);
+
+			events.add(inAwait);
+
+			List<CounterpartyTransactionDetails> buyTransactions = counterPartyTransactionRepository
+					.findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, buy, true, events,
+							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
+									"id"));
+
+			List<CounterPartyTransactionFetchingDto> buyTransactionList = new ArrayList();
+
+
+			for (CounterpartyTransactionDetails transaction : buyTransactions) {
+
+				buyTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
+
+			}
+
+			logTimeUpdate("findBuyInOrdersForBroker", "END");
+
+			return HttpResponseModel.builder().data(buyTransactionList)
+					.total(Integer.valueOf(String.valueOf(counterPartyTransactionRepository.countByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, buy, true, events))))
+					.build();
+
+		} catch (Exception e) {
+			// TODO: handle exception
+
+			
+
+			return HttpResponseModel.builder().data(Collections.emptyList())
+					.message("Exception Occured inside method findBuyInOrdersForBroker: " + e.getMessage()).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel findSellInOrdersForBroker(String brokerId, int page, int pageSize) throws EntityNotFound {
+		logTimeUpdate("findSellInOrdersForBroker", "START");
+
+
+		try {
+
+
+			Direction sell = directionRepository.getById(2L);
+
+			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(brokerId)).get();
+
+			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+
+			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+
+			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
+
+			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
+
+			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
+
+			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
+
+			events.add(inEventType);
+
+			events.add(inResponse);
+
+			events.add(inNegotiation);
+
+			events.add(inReject);
+
+			events.add(inAwait);
+
+			List<CounterpartyTransactionDetails> sellTransactions = counterPartyTransactionRepository
+					.findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, sell, true, events,
+							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
+									"id"));
+
+
+			List<CounterPartyTransactionFetchingDto> sellTransactionList = new ArrayList();
+
+
+			for (CounterpartyTransactionDetails transaction : sellTransactions) {
+
+				sellTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
+
+			}
+
+			
+
+			logTimeUpdate("findSellInOrdersForBroker", "END");
+
+			return HttpResponseModel.builder().data(sellTransactionList)
+					.total(Integer.valueOf(String.valueOf(counterPartyTransactionRepository.countByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, sell, true, events))))
+					.build();
+
+		} catch (Exception e) {
+			// TODO: handle exception
+
+			
+
+			return HttpResponseModel.builder().data(Collections.emptyList())
+					.message("Exception Occured inside method findSellInOrdersForBroker: " + e.getMessage()).build();
 		}
 	}
 
