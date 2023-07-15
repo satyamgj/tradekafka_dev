@@ -23,6 +23,7 @@ import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.request.UserProfileModel;
 import com.finmamba.models.transaction.ConfirmRequest;
+import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.models.transaction.TransactionRequest;
 import com.finmamba.resolver.exception.EntityNotFound;
@@ -262,6 +263,25 @@ public class TransactionServiceImpl implements TransactionService {
 
 	private void logTimeUpdate(String functionName, String status) {
 		log.info(functionName + " " + status + " " + Instant.now());
+	}
+
+	@Override
+	public HttpResponseModel findDepthOfCurrenctByCounterParty(MarketDepthRequest marketDepthRequest) {
+		
+		try {
+			return dal.findDepthOfCcyPairByInstituionId(marketDepthRequest);
+			
+		} catch (Exception e) {
+			Map<String, Object> requests = new HashMap<>() ;
+			requests.put("BUY", Collections.emptyList());
+			requests.put("SELL", Collections.emptyList());
+
+			e.printStackTrace();
+			return HttpResponseModel.builder()
+					.data(requests)
+					.message(e.getMessage())
+					.build();	
+		}
 	}
 
 

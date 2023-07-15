@@ -5,6 +5,7 @@ import java.util.List;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.dto.QuoteRequestDto;
+import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.resolver.exception.EntityNotFound;
 
@@ -32,5 +33,7 @@ public interface TransactionServiceDal {
 	HttpResponseModel findConfirmedOrdersForBroker(String institutionId, int page, int pageSize) throws EntityNotFound; // visited
 	
 	HttpResponseModel findInOrdersForBroker(String brokerId,int page, int pageSize) throws EntityNotFound;
+	
+	HttpResponseModel findDepthOfCcyPairByInstituionId(MarketDepthRequest marketDepthRequest);
 
 }

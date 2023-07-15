@@ -7,6 +7,7 @@ import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.request.UserProfileModel;
 import com.finmamba.models.transaction.ConfirmRequest;
+import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.models.transaction.TransactionRequest;
 import com.finmamba.resolver.exception.EntityNotFound;
@@ -39,6 +40,8 @@ public interface TransactionService {
 	public HttpResponseModel findConfirmedOrdersForInstitution(String institutionName, int page, int pageSize); //visited
 	
 	public HttpResponseModel findConfirmedOrdersForBroker(String institutionName, int page, int pageSize); //visited
+	
+	public HttpResponseModel findDepthOfCurrenctByCounterParty(MarketDepthRequest marketDepthRequest);
 
 	
 }

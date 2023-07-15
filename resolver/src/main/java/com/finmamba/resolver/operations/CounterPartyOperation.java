@@ -131,6 +131,10 @@ public class CounterPartyOperation implements Operation {
 				CounterpartyTransactionDetails counterPartyOperation = CounterpartyTransactionDetails.builder()
 
 						.transactionId(transactionRepository.findByTransactionId(quoteRequestDto.getTransactionId()))
+						
+						.buyCcy(transactionRepository.findByTransactionId(quoteRequestDto.getTransactionId()).getBaseCurrency())
+						
+						.sellCcy(transactionRepository.findByTransactionId(quoteRequestDto.getTransactionId()).getQuoteCurrency())
 
 						.sourceId(institutionalEntityRepository.getById(quoteRequestDto.getSource().getId()))
 
@@ -420,6 +424,10 @@ public class CounterPartyOperation implements Operation {
 
 				.transactionId(transactionRepository.findById(counterpartyTransactionDetails.getTransactionId()).get())
 
+				.buyCcy(transactionRepository.findById(counterpartyTransactionDetails.getTransactionId()).get().getBaseCurrency())
+				
+				.sellCcy(transactionRepository.findById(counterpartyTransactionDetails.getTransactionId()).get().getQuoteCurrency())
+				
 				.sourceId(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()))
 
 				.destinationId(institutionalEntityRepository.getById(counterpartyTransactionDetails.getDestination()))

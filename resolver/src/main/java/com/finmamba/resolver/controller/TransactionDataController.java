@@ -196,11 +196,19 @@ public class TransactionDataController {
 		}
 	}
 	
-//	@GetMapping("/getDepth/{institutionId}")
-//	public ResponseEntity<Object> getMarketDepth(
-//			@PathVariable("institutionId") String institutionId,
-//			@RequestBody MarketDepthRequest marketDepthRequest
-//			)
+	@PostMapping("/getDepth")
+	public ResponseEntity<Object> getMarketDepth(
+			@RequestBody MarketDepthRequest marketDepthRequest
+			){
+		try {
+			return new ResponseEntity<>(transactionService.findDepthOfCurrenctByCounterParty(marketDepthRequest),
+					HttpStatus.OK);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 	
 
 	

@@ -13,4 +13,5 @@ public class MarketDepthRequest implements Serializable{
 
 	Long buyCurrencyId;
 	Long sellCurrencyId;
+	Long instituionId;
 }

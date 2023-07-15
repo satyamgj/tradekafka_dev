@@ -42,6 +42,7 @@ import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SellSideConfirmationDto;
 import com.finmamba.models.dto.SellSideTransactionDto;
 import com.finmamba.models.dto.buySideConfirmDto;
+import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.resolver.exception.EntityNotFound;
 import com.finmamba.resolver.repositories.ConfirmationRepostory;
@@ -675,6 +676,67 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			return HttpResponseModel.builder().data(requests)
 					.message("Exception Occured inside method findInOrdersForBroker: " + e.getMessage()).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel findDepthOfCcyPairByInstituionId(MarketDepthRequest marketDepthRequest) {
+		
+		logTimeUpdate("findDepthOfCcyPairByInstituionId", "START");
+
+		Map<String, Object> orders = new HashMap<>();
+		
+		try {
+			Type counterPartyTransaction = new TypeToken<List<CounterpartyTransactionDto>>() {
+			}.getType();
+			
+			List<CounterPartyTransactionFetchingDto> buyTransactionList = new ArrayList();
+
+			List<CounterPartyTransactionFetchingDto> sellTransactionList = new ArrayList();
+			
+			List<CounterpartyTransactionDetails> buyDepth = counterPartyTransactionRepository.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActive(
+					institutionalEntityRepository.getById(marketDepthRequest.getInstituionId()),
+					currencyRepository.getById(marketDepthRequest.getSellCurrencyId()), 
+					currencyRepository.getById(marketDepthRequest.getBuyCurrencyId()),
+					directionRepository.getById(1L)
+					, true);
+			
+			for(CounterpartyTransactionDetails buyOrders:buyDepth){
+				buyTransactionList.add(modelMapper.map(buyOrders, CounterPartyTransactionFetchingDto.class));
+			}
+			
+			
+			orders.put("BUY", buyTransactionList);
+					
+			List<CounterpartyTransactionDetails> sellDepth = counterPartyTransactionRepository.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActive(
+					institutionalEntityRepository.getById(marketDepthRequest.getInstituionId()),
+					currencyRepository.getById(marketDepthRequest.getSellCurrencyId()), 
+					currencyRepository.getById(marketDepthRequest.getBuyCurrencyId()),
+					directionRepository.getById(2L)
+					, true);
+			
+			
+			for(CounterpartyTransactionDetails sellOrders:sellDepth){
+				sellTransactionList.add(modelMapper.map(sellOrders, CounterPartyTransactionFetchingDto.class));
+			}
+			
+			orders.put("SELL", sellTransactionList);
+			
+			logTimeUpdate("findDepthOfCcyPairByInstituionId", "END");
+
+
+			return HttpResponseModel.builder().data(orders).build();
+
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+
+			orders.put("BUY", Collections.emptyList());
+
+			orders.put("SELL", Collections.emptyList());
+
+			return HttpResponseModel.builder().data(orders)
+					.message("Exception Occured inside method findDepthOfCcyPairByInstituionId: " + e.getMessage()).build();
 		}
 	}
 

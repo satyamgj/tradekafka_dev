@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
 import org.springframework.stereotype.Repository;
 
+import com.finmamba.entities.staticdata.Currency;
 import com.finmamba.entities.staticdata.Direction;
 import com.finmamba.entities.staticdata.EventType;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
@@ -50,5 +51,13 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 			Boolean isActive,
 			Collection<EventType> events,
 			Pageable pageRequest
-			);
-}
+			);	
+	
+	List<CounterpartyTransactionDetails> findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActive(
+						InstitutionalEntity destination,
+						Currency sellSide,
+						Currency buySide,
+						Direction direction,
+						Boolean isActive
+				);
+	}
