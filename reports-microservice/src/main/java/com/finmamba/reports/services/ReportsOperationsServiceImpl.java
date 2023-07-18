@@ -9,10 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
-import com.finmamba.models.dto.NonFlowDto;
-import com.finmamba.models.dto.SavedNonFlowDto;
-import com.finmamba.models.dto.SuperInstitutionalEntityDto;
-import com.finmamba.models.reports.CommissionReport;
+import com.finmamba.models.dto.ConfirmedOrderDto;
+import com.finmamba.models.dto.ReportsDto;
 import com.finmamba.models.reports.TradeReport;
 import com.finmamba.reports.exception.ReportNotFound;
 import com.google.gson.Gson;
@@ -35,15 +33,15 @@ public class ReportsOperationsServiceImpl implements ReportsOperationsService {
 	ModelMapper modelMapper;
 
 	@Override
-	public List<SuperInstitutionalEntityDto> processTradeReportRequest(TradeReport tradeReport) throws ReportNotFound {
+	public List<ReportsDto> processTradeReportRequest(TradeReport tradeReport) throws ReportNotFound {
 		// TODO Auto-generated method stub
 		log.info("new TradeReportRequest | START " + Instant.now());
 		try {
 			/**
 			 * Get Trade Report Request from database as per the filters
 			 */
-			List<SuperInstitutionalEntityDto> requests = dal.getTradeReport(tradeReport);
-
+			List<ReportsDto> requests = dal.getTradeReport(tradeReport);
+	
 			return requests;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -52,24 +50,6 @@ public class ReportsOperationsServiceImpl implements ReportsOperationsService {
 		return Collections.emptyList();
 	}
 
-	@Override
-	public List<SuperInstitutionalEntityDto> processCommissionReportRequest(CommissionReport commissionReport)
-			throws ReportNotFound {
-		// TODO Auto-generated method stub
-		log.info("new CommissionReportRequest | START " + Instant.now());
-		try {
-			/**
-			 * Get Commission Report Request from database as per the filters
-			 */
-			List<SuperInstitutionalEntityDto> requests = dal.getCommissionReport(commissionReport);
-
-			return requests;
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		log.info("new CommissionReportRequest | END with empty list" + Instant.now());
-		return Collections.emptyList();
-	}
 
 	/*
 	 * @Override public List<SavedNonFlowDto>

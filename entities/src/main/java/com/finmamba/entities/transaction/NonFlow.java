@@ -55,26 +55,26 @@ public class NonFlow implements Serializable, Cloneable {
 	@OneToOne
 	@JoinColumn(name = "customer_id", nullable = false)
 	private Customer customer;
-	
+
 	// productId - SPOT, FWD
 	@OneToOne
 	@JoinColumn(name = "product_id", nullable = false)
 	private Product product;
-	
+
 	@Column(name = "user_id", nullable = false)
-	private Integer userId ;
-	
+	private Integer userId;
+
 	@OneToOne
 	@JoinColumn(name = "institutional_id", nullable = false)
 	private InstitutionalEntity institutionalId;
-	
+
 	@OneToOne
 	@JoinColumn(name = "institutional_source_entity_id", nullable = false)
 	private InstitutionalEntity institutionalSourcEntityId;
-	
+
 	@Column(name = "institutional_source_entity_name", nullable = false)
 	private String institutionalSourceEntityName;
-	
+
 	@OneToOne
 	@JoinColumn(name = "institutional_destination_entity_id", nullable = false)
 	private InstitutionalEntity institutionalDestinationEntityId;
@@ -82,7 +82,6 @@ public class NonFlow implements Serializable, Cloneable {
 	@Column(name = "institutional_destination_entity_name", nullable = false)
 	private String institutionalDestinationEntityName;
 
-	
 	@OneToOne
 	@JoinColumn(name = "buy_sell_direction_id", nullable = false)
 	private Direction buySellDirection;
@@ -91,7 +90,7 @@ public class NonFlow implements Serializable, Cloneable {
 	@OneToOne
 	@JoinColumn(name = "base_currency_id", nullable = false)
 	private Currency baseCurrency;
-	
+
 	// Maps to bankSellCCyID
 	@OneToOne
 	@JoinColumn(name = "quote_currency_id", nullable = false)
@@ -110,63 +109,61 @@ public class NonFlow implements Serializable, Cloneable {
 	// All Spot Values
 	@Column(name = "spot_rate", nullable = true)
 	private BigDecimal spotRate;
-	
+
 	@Column(name = "outright", nullable = true)
 	private BigDecimal outright;
-	
+
 	@Column(name = "tenor_value", nullable = false)
 	private Long tenorValue;
 
-	
 	@OneToOne
 	@JoinColumn(name = "tenor_unit_id", nullable = false)
 	private Tenor tenorUnit;
 
 	@Column(name = "ui_request_timestamp", nullable = false)
 	private Date uiRequestTimestamp;
-	
 
-	@Column(name = "db_request_timestamp", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP" ,nullable = false)
+	@Column(name = "db_request_timestamp", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", nullable = false)
 	private Date dbRequestTimestamp;
-	
+
 	@OneToOne
 	@JoinColumn(name = "customer_segment_id", nullable = false)
 	private CustomerSegment customerSegmentId;
-	
-	@Column(name = "is_pip_or_absolute", nullable =false)
+
+	@Column(name = "is_pip_or_absolute", nullable = false)
 	private boolean isPipOrAbsolute;
-	
-	@Column(name = "buy_side_absolute_commision", nullable =false)
+
+	@Column(name = "buy_side_absolute_commision", nullable = false)
 	private BigDecimal buySideAbsoluteCommision;
-	
-	@Column(name = "sell_side_absolute_commision", nullable =false)
+
+	@Column(name = "sell_side_absolute_commision", nullable = false)
 	private BigDecimal sellSideAbsoluteCommision;
-	
+
 	@OneToOne
 	@JoinColumn(name = "per_base_buy_currency", nullable = false)
 	private Currency perBaseBuyCurrency;
-	
+
 	@OneToOne
 	@JoinColumn(name = "per_base_sell_currency", nullable = false)
 	private Currency perBaseSellCurrency;
-	
+
 	@OneToOne
 	@JoinColumn(name = "buy_side_currency_id", nullable = false)
 	private Currency buySideCurrencyId;
-	
+
 	@OneToOne
 	@JoinColumn(name = "sell_side_currency_id", nullable = false)
 	private Currency sellSideCurrencyId;
-	
-	@Column(name = "per_base_buy_currency_amount", nullable =false)
+
+	@Column(name = "per_base_buy_currency_amount", nullable = false)
 	private BigDecimal perBaseBuyCurrencyAmount;
-	
-	@Column(name = "per_base_sell_currency_amount", nullable =false)
+
+	@Column(name = "per_base_sell_currency_amount", nullable = false)
 	private BigDecimal perBaseSellCurrencyAmount;
-	
-	@Column(name = "buy_side_commision_rate", nullable =false)
+
+	@Column(name = "buy_side_commision_rate", nullable = false)
 	private BigDecimal buySideCommisionRate;
-	
-	@Column(name = "sell_side_commision_rate", nullable =false)
+
+	@Column(name = "sell_side_commision_rate", nullable = false)
 	private BigDecimal sellSideCommisionRate;
 }

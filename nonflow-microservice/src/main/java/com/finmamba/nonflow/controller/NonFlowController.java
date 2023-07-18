@@ -26,13 +26,16 @@ public class NonFlowController {
 
 	@Autowired
 	NonFlowOperationsService nonFlowOperationsService;
-	
+
 	@PostMapping("/saveNonFlowTrade")
 	public ResponseEntity<List<SavedNonFlowDto>> processQuoteRequest(@RequestBody NonFlowDto nonFlowModel) {
 
 		try {
 			List<SavedNonFlowDto> returnList = nonFlowOperationsService.saveNonFlowTrade(nonFlowModel);
-			returnList.get(0).setHttpStatus(HttpStatus.OK.value());
+
+			if (returnList.size() > 0) {
+				returnList.get(0).setHttpStatus(HttpStatus.OK.value());
+			}
 			return new ResponseEntity<>(returnList, HttpStatus.OK);
 
 		} catch (Exception e) {
@@ -40,7 +43,7 @@ public class NonFlowController {
 			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-	
+
 	/*
 	 * @PostMapping("/getNonFlowTrades") public ResponseEntity<List<NonFlow>>
 	 * getNonFlowTrades(@RequestBody NonFlowRequest nonFlowRequest) { List<NonFlow>
