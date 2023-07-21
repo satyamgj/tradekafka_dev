@@ -3,6 +3,7 @@ package com.finmamba.resolver.services;
 import java.util.List;
 
 import com.finmamba.entities.staticdata.InstitutionalEntity;
+import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.transaction.MarketDepthRequest;
@@ -38,5 +39,7 @@ public interface TransactionServiceDal {
 
 	
 	HttpResponseModel findDepthOfCcyPairByInstituionId(MarketDepthRequest marketDepthRequest);
+	
+	HttpResponseModel intiateMatchingAlgorithms(MatchingTable order);
 
 }

@@ -29,6 +29,7 @@ import com.finmamba.entities.transaction.ConfirmedOrderDetails;
 import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
 import com.finmamba.entities.transaction.Customer;
 import com.finmamba.entities.transaction.InstitutionalEntityAssociation;
+import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.entities.transaction.TransactionDetail;
 import com.finmamba.entities.transaction.User;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
@@ -42,6 +43,7 @@ import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SellSideConfirmationDto;
 import com.finmamba.models.dto.SellSideTransactionDto;
 import com.finmamba.models.dto.buySideConfirmDto;
+import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.resolver.exception.EntityNotFound;
@@ -138,6 +140,9 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 	@Autowired
 	ConfirmationRepostory confirmationRepostory;
+	
+	@Autowired
+	OrderMatch match;
 
 //	@Autowired
 //	HistoryWriter historyWriter;
@@ -779,6 +784,22 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			return HttpResponseModel.builder().data(Collections.emptyList())
 					.message("Exception Occured inside method findSellInOrdersForBroker: " + e.getMessage()).build();
 		}
+	}
+
+	@Override
+	public HttpResponseModel intiateMatchingAlgorithms(MatchingTable order) {
+		try {
+			match.matchRequest(order);
+			
+			return HttpResponseModel.builder()
+					.message("Matching all your buy sell orders. Please wait ... ")
+					.build();
+
+		} catch (Exception e) {
+			return HttpResponseModel.builder().data(Collections.emptyList())
+					.message("Exception Occured inside method intiateMatchingAlgorithms: " + e.getMessage()).build();
+		}
+		
 	}
 
 }

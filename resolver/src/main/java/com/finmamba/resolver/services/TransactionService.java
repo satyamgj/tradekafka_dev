@@ -2,6 +2,7 @@ package com.finmamba.resolver.services;
 
 import java.util.List;
 
+import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.dto.QuoteRequestDto;
@@ -44,6 +45,8 @@ public interface TransactionService {
 	public HttpResponseModel findConfirmedOrdersForBroker(String institutionName, int page, int pageSize); //visited
 	
 	public HttpResponseModel findDepthOfCurrenctByCounterParty(MarketDepthRequest marketDepthRequest);
+	
+	public HttpResponseModel intiateMatching(MatchingTable newOrder);
 
 	
 }

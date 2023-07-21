@@ -51,8 +51,26 @@ public class Matching {
 		if (order.getDirection().getId() == 1) {
 			buyOrders.computeIfAbsent(order.getAskingRate(), k -> new ArrayList<>()).add(order);
 			matchOrders(sellOrders, order);
+			
+			
 		} else {
 			sellOrders.computeIfAbsent(order.getAskingRate(), k -> new ArrayList<>()).add(order);
+			matchOrders(buyOrders, order);
+		}
+	}
+	
+	@Async
+	public void matchRequest(NewOrder order) {
+		
+		log.info("Received a new request for matching");
+
+		if (order.getBuyAmount().compareTo(zero) <= 0 || order.getSellAmount().compareTo(zero) <= 0) {
+			return;
+		}
+
+		if (order.getDirection().getId() == 1) {
+			matchOrders(sellOrders, order);
+		} else {
 			matchOrders(buyOrders, order);
 		}
 	}
@@ -61,7 +79,7 @@ public class Matching {
 	public void matchOrders(Map<BigDecimal, List<NewOrder>> oppositeOrders, NewOrder newOrder) {
 
 		List<BigDecimal> oppositePrices = new ArrayList<>(oppositeOrders.keySet());
-		List<NewOrder> matchedOrders = new ArrayList<>();
+//		List<NewOrder> matchedOrders = new ArrayList<>();
 
 		CounterpartyTransactionDetails newOrderTransaction = counterPartyTransactionRepository
 				.findById(newOrder.getOrderId()).get();
@@ -78,55 +96,173 @@ public class Matching {
 				// checking whether destination is same then only matching
 				CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 						.findById(oppositeOrder.getOrderId()).get();
+				
+				if(!oppositeOrderTransaction.isRequestActive()) {
+					iterator.remove();
+				}
+				else {
+					if (newOrderTransaction.getDestinationId().getId() == oppositeOrderTransaction.getDestinationId()
+							.getId() && oppositeOrderTransaction.isRequestActive()
+							&& newOrderTransaction.getSourceId().getId() != oppositeOrderTransaction.getSourceId().getId() ) {
 
-				if (newOrderTransaction.getDestinationId().getId() == oppositeOrderTransaction.getDestinationId()
-						.getId() && oppositeOrderTransaction.isRequestActive()
-						&& newOrderTransaction.getSourceId().getId() != oppositeOrderTransaction.getSourceId().getId() ) {
+						// Check if new Order buy condition and asking rate comparison
+						if (newOrder.getDirection().getId() == 1
+								&& (newOrder.getBuyCurrency().getId() == oppositeOrder.getBuyCurrency().getId()
+										&& newOrder.getSellCurrency().getId() == oppositeOrder.getSellCurrency().getId())
+								&& (oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == -1
+										|| oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == 0)) {
 
-					// Check if new Order buy condition and asking rate comparison
-					if (newOrder.getDirection().getId() == 1
-							&& (newOrder.getBuyCurrency().getId() == oppositeOrder.getBuyCurrency().getId()
-									&& newOrder.getSellCurrency().getId() == oppositeOrder.getSellCurrency().getId())
-							&& (oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == -1
-									|| oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == 0)) {
+							// Case 1: both isPartial true
+							if (newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
+								
+								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+										+ oppositeOrder.getAskingRate();
 
-						// Case 1: both isPartial true
-						if (newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-							
-							String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-									+ oppositeOrder.getAskingRate();
+								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+								
+								log.info(matchMessage);
+								
+								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
-							String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-							
-							log.info(matchMessage);
-							
-							log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+								kafkaProducerService.send(matchMessage, topic, null, null);
+								
+//								iterator.remove();
+//								matchedOrders.add(oppositeOrder);
+	//
+//								List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+	//
+//								if (orderList != null) {
+//									orderList.remove(newOrder);
+//									if (orderList.isEmpty()) {
+//										oppositeOrders.remove(newOrder.getAskingRate());
+//									}
+//								}
+//								buyOrders.remove(newOrder.getAskingRate());
+//								buyOrders.put(newOrder.getAskingRate(), matchedOrders);
+								break;
 
-							kafkaProducerService.send(matchMessage, topic, null, null);
-							
-							iterator.remove();
-							matchedOrders.add(oppositeOrder);
+							}
+							// case 2: only buy order is partial allowed and not sell order not
+							else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
+								if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
+										|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == -1) {
+									// i.e match -> if buy amount equals with sell order buy amount
+									// & if buy amt is greater than sell order amount
 
-							List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+									String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+											+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+											+ oppositeOrder.getAskingRate();
 
-							if (orderList != null) {
-								orderList.remove(newOrder);
-								if (orderList.isEmpty()) {
-									oppositeOrders.remove(newOrder.getAskingRate());
+									String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+									
+									log.info(matchMessage);
+									
+									log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+									kafkaProducerService.send(matchMessage, topic, null, null);
+
+									
+//									iterator.remove();
+//									matchedOrders.add(oppositeOrder);
+	//
+//									List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+	//
+//									if (orderList != null) {
+//										orderList.remove(newOrder);
+//										if (orderList.isEmpty()) {
+//											oppositeOrders.remove(newOrder.getAskingRate());
+//										}
+//									}
+//									buyOrders.remove(newOrder.getAskingRate());
+//									buyOrders.put(newOrder.getAskingRate(), matchedOrders);
+									break;
+								}
+
+							}
+							// case 3: only sell order is partial fill allowed.
+							else if (!newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
+								if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
+										|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 1) {
+									// i.e match -> if buy amount equals with sell order buy amount
+									// & if buy amt is less than sell order amount
+
+									String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+											+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+											+ oppositeOrder.getAskingRate();
+
+									String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+									
+									log.info(matchMessage);
+									
+									log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+									kafkaProducerService.send(matchMessage, topic, null, null);
+
+									
+//									iterator.remove();
+//									matchedOrders.add(oppositeOrder);
+	//
+//									List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+	//
+//									if (orderList != null) {
+//										orderList.remove(newOrder);
+//										if (orderList.isEmpty()) {
+//											oppositeOrders.remove(newOrder.getAskingRate());
+//										}
+//									}
+//									buyOrders.remove(newOrder.getAskingRate());
+//									buyOrders.put(newOrder.getAskingRate(), matchedOrders);
+									break;
 								}
 							}
-							buyOrders.remove(newOrder.getAskingRate());
-							buyOrders.put(newOrder.getAskingRate(), matchedOrders);
-							break;
+							// case 4: both partial fill not allowed
+							else if (!newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
+								if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0) {
+									// i.e match -> if buy amount equals with sell order buy amount
+
+									String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+											+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+											+ oppositeOrder.getAskingRate();
+
+									String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+									
+									log.info(matchMessage);
+									
+									log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+									kafkaProducerService.send(matchMessage, topic, null, null);
+
+								
+//									iterator.remove();
+//									matchedOrders.add(oppositeOrder);
+//									
+	//
+//									List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+	//
+//									if (orderList != null) {
+//										orderList.remove(newOrder);
+//										if (orderList.isEmpty()) {
+//											oppositeOrders.remove(newOrder.getAskingRate());
+//										}
+//									}
+//									buyOrders.remove(newOrder.getAskingRate());
+//									buyOrders.put(newOrder.getAskingRate(), matchedOrders);
+									break;
+								}
+
+							}
 
 						}
-						// case 2: only buy order is partial allowed and not sell order not
-						else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-							if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
-									|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == -1) {
-								// i.e match -> if buy amount equals with sell order buy amount
-								// & if buy amt is greater than sell order amount
+						// Check if new Order is a sell order
+						else if (newOrder.getDirection().getId() == 2
+								&& (newOrder.getBuyCurrency().getId() == oppositeOrder.getBuyCurrency().getId()
+										&& newOrder.getSellCurrency().getId() == oppositeOrder.getSellCurrency().getId())
+								&& (oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == 1
+										|| oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == 0)) {
+
+							// Case 1: both isPartial true
+							if (newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
 
 								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
@@ -140,260 +276,147 @@ public class Matching {
 
 								kafkaProducerService.send(matchMessage, topic, null, null);
 
-								
-								iterator.remove();
-								matchedOrders.add(oppositeOrder);
 
-								List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
-
-								if (orderList != null) {
-									orderList.remove(newOrder);
-									if (orderList.isEmpty()) {
-										oppositeOrders.remove(newOrder.getAskingRate());
-									}
-								}
-								buyOrders.remove(newOrder.getAskingRate());
-								buyOrders.put(newOrder.getAskingRate(), matchedOrders);
+//								iterator.remove();
+//								matchedOrders.add(oppositeOrder);
+	//
+//								List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+	//
+//								if (orderList != null) {
+//									orderList.remove(newOrder);
+//									if (orderList.isEmpty()) {
+//										oppositeOrders.remove(newOrder.getAskingRate());
+//									}
+//								}
+//								sellOrders.remove(newOrder.getAskingRate());
+//								sellOrders.put(newOrder.getAskingRate(), matchedOrders);
 								break;
+
+							}
+							// case 2: only buy order is partial allowed and not sell order not
+							else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
+								if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0
+										|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == -1) {
+									// i.e match -> if buy amount equals with sell order buy amount
+									// & if buy amt is greater than sell order amount
+
+									String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+											+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+											+ oppositeOrder.getAskingRate();
+
+									String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+									
+									log.info(matchMessage);
+									
+									log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+									kafkaProducerService.send(matchMessage, topic, null, null);
+
+//									iterator.remove();
+//									matchedOrders.add(oppositeOrder);
+	//
+//									List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+	//
+//									if (orderList != null) {
+//										orderList.remove(newOrder);
+//										if (orderList.isEmpty()) {
+//											oppositeOrders.remove(newOrder.getAskingRate());
+//										}
+//									}
+//									sellOrders.remove(newOrder.getAskingRate());
+//									sellOrders.put(newOrder.getAskingRate(), matchedOrders);
+									break;
+								}
+
+							}
+							// case 3: only sell order is partial fill allowed.
+							else if (!newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
+								if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0
+										|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 1) {
+									// i.e match -> if buy amount equals with sell order buy amount
+									// & if buy amt is less than sell order amount
+
+									String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+											+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+											+ oppositeOrder.getAskingRate();
+
+									String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+									
+									log.info(matchMessage);
+									
+									log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+									kafkaProducerService.send(matchMessage, topic, null, null);
+
+
+//									iterator.remove();
+//									matchedOrders.add(oppositeOrder);
+	//
+//									List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+	//
+//									if (orderList != null) {
+//										orderList.remove(newOrder);
+//										if (orderList.isEmpty()) {
+//											oppositeOrders.remove(newOrder.getAskingRate());
+//										}
+//									}
+//									sellOrders.remove(newOrder.getAskingRate());
+//									sellOrders.put(newOrder.getAskingRate(), matchedOrders);
+									break;
+								}
+							}
+							// case 4: both partial fill not allowed
+							else if (!newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
+								if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0) {
+									// i.e match -> if buy amount equals with sell order buy amount
+
+									String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+											+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+											+ oppositeOrder.getAskingRate();
+
+									String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+									
+									log.info(matchMessage);
+									
+									log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+									kafkaProducerService.send(matchMessage, topic, null, null);
+
+
+//									iterator.remove();
+//									matchedOrders.add(oppositeOrder);
+	//
+//									List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
+	//
+//									if (orderList != null) {
+//										orderList.remove(newOrder);
+//										if (orderList.isEmpty()) {
+//											oppositeOrders.remove(newOrder.getAskingRate());
+//										}
+//									}
+//									sellOrders.remove(newOrder.getAskingRate());
+//									sellOrders.put(newOrder.getAskingRate(), matchedOrders);
+									break;
+								}
+
 							}
 
 						}
-						// case 3: only sell order is partial fill allowed.
-						else if (!newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-							if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
-									|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 1) {
-								// i.e match -> if buy amount equals with sell order buy amount
-								// & if buy amt is less than sell order amount
 
-								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate();
-
-								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-								
-								log.info(matchMessage);
-								
-								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
-
-								kafkaProducerService.send(matchMessage, topic, null, null);
-
-								
-								iterator.remove();
-								matchedOrders.add(oppositeOrder);
-
-								List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
-
-								if (orderList != null) {
-									orderList.remove(newOrder);
-									if (orderList.isEmpty()) {
-										oppositeOrders.remove(newOrder.getAskingRate());
-									}
-								}
-								buyOrders.remove(newOrder.getAskingRate());
-								buyOrders.put(newOrder.getAskingRate(), matchedOrders);
-								break;
-							}
-						}
-						// case 4: both partial fill not allowed
-						else if (!newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-							if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0) {
-								// i.e match -> if buy amount equals with sell order buy amount
-
-								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate();
-
-								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-								
-								log.info(matchMessage);
-								
-								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
-
-								kafkaProducerService.send(matchMessage, topic, null, null);
-
-								
-								iterator.remove();
-								matchedOrders.add(oppositeOrder);
-								
-
-								List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
-
-								if (orderList != null) {
-									orderList.remove(newOrder);
-									if (orderList.isEmpty()) {
-										oppositeOrders.remove(newOrder.getAskingRate());
-									}
-								}
-								buyOrders.remove(newOrder.getAskingRate());
-								buyOrders.put(newOrder.getAskingRate(), matchedOrders);
-								break;
-							}
-
+						if (oppositeOrderList.isEmpty()) {
+							oppositeOrders.remove(price);
 						}
 
 					}
-					// Check if new Order is a sell order
-					else if (newOrder.getDirection().getId() == 2
-							&& (newOrder.getBuyCurrency().getId() == oppositeOrder.getBuyCurrency().getId()
-									&& newOrder.getSellCurrency().getId() == oppositeOrder.getSellCurrency().getId())
-							&& (oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == 1
-									|| oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == 0)) {
-
-						// Case 1: both isPartial true
-						if (newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-
-							String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-									+ oppositeOrder.getAskingRate();
-
-							String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-							
-							log.info(matchMessage);
-							
-							log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
-
-							kafkaProducerService.send(matchMessage, topic, null, null);
-
-
-							iterator.remove();
-							matchedOrders.add(oppositeOrder);
-
-							List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
-
-							if (orderList != null) {
-								orderList.remove(newOrder);
-								if (orderList.isEmpty()) {
-									oppositeOrders.remove(newOrder.getAskingRate());
-								}
-							}
-							sellOrders.remove(newOrder.getAskingRate());
-							sellOrders.put(newOrder.getAskingRate(), matchedOrders);
-							break;
-
-						}
-						// case 2: only buy order is partial allowed and not sell order not
-						else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-							if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0
-									|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == -1) {
-								// i.e match -> if buy amount equals with sell order buy amount
-								// & if buy amt is greater than sell order amount
-
-								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate();
-
-								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-								
-								log.info(matchMessage);
-								
-								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
-
-								kafkaProducerService.send(matchMessage, topic, null, null);
-
-								iterator.remove();
-								matchedOrders.add(oppositeOrder);
-
-								List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
-
-								if (orderList != null) {
-									orderList.remove(newOrder);
-									if (orderList.isEmpty()) {
-										oppositeOrders.remove(newOrder.getAskingRate());
-									}
-								}
-								sellOrders.remove(newOrder.getAskingRate());
-								sellOrders.put(newOrder.getAskingRate(), matchedOrders);
-								break;
-							}
-
-						}
-						// case 3: only sell order is partial fill allowed.
-						else if (!newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-							if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0
-									|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 1) {
-								// i.e match -> if buy amount equals with sell order buy amount
-								// & if buy amt is less than sell order amount
-
-								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate();
-
-								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-								
-								log.info(matchMessage);
-								
-								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
-
-								kafkaProducerService.send(matchMessage, topic, null, null);
-
-
-								iterator.remove();
-								matchedOrders.add(oppositeOrder);
-
-								List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
-
-								if (orderList != null) {
-									orderList.remove(newOrder);
-									if (orderList.isEmpty()) {
-										oppositeOrders.remove(newOrder.getAskingRate());
-									}
-								}
-								sellOrders.remove(newOrder.getAskingRate());
-								sellOrders.put(newOrder.getAskingRate(), matchedOrders);
-								break;
-							}
-						}
-						// case 4: both partial fill not allowed
-						else if (!newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-							if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0) {
-								// i.e match -> if buy amount equals with sell order buy amount
-
-								String matchMessage =  "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-										+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-										+ oppositeOrder.getAskingRate();
-
-								String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-								
-								log.info(matchMessage);
-								
-								log.info("Sending to " + "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
-
-								kafkaProducerService.send(matchMessage, topic, null, null);
-
-
-								iterator.remove();
-								matchedOrders.add(oppositeOrder);
-
-								List<NewOrder> orderList = oppositeOrders.get(newOrder.getAskingRate());
-
-								if (orderList != null) {
-									orderList.remove(newOrder);
-									if (orderList.isEmpty()) {
-										oppositeOrders.remove(newOrder.getAskingRate());
-									}
-								}
-								sellOrders.remove(newOrder.getAskingRate());
-								sellOrders.put(newOrder.getAskingRate(), matchedOrders);
-								break;
-							}
-
-						}
-
-					}
-
-					if (oppositeOrderList.isEmpty()) {
-						oppositeOrders.remove(price);
-					}
-
 				}
 
 			}
 			// }
 
 		}
-		for (NewOrder matchedOrder : matchedOrders) {
-			oppositePrices.remove(matchedOrder.getAskingRate());
-		}
+//		for (NewOrder matchedOrder : matchedOrders) {
+//			oppositePrices.remove(matchedOrder.getAskingRate());
+//		}
 
 	}
 

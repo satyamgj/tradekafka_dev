@@ -14,6 +14,7 @@ import com.finmamba.entities.configuration.EntityConfigurationSettings;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
 import com.finmamba.entities.transaction.ConfirmedOrderDetails;
 import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
+import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.entities.transaction.TransactionDetail;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.dto.CounterpartyTransactionDto;
@@ -36,6 +37,7 @@ import com.finmamba.resolver.repositories.TransactionRepository;
 import com.finmamba.resolver.repositories.UserRepository;
 import com.finmamba.resolver.services.EventPublisher;
 import com.finmamba.resolver.services.Matching;
+import com.finmamba.resolver.services.OrderMatch;
 import com.finmamba.resolver.services.TransactionServiceDal;
 import com.finmamba.resolver.util.ApplicationConstants;
 
@@ -89,6 +91,9 @@ public class CounterPartyOperation implements Operation {
 	
 	@Autowired
 	Matching matching;
+	
+	@Autowired
+	OrderMatch orderMatch;
 
 	String spread = "0.0001"; // Default: HARDCODED
 
@@ -270,18 +275,37 @@ public class CounterPartyOperation implements Operation {
 						.save(counterPartyOperation);
 				
 				//initiate Matching algo
-				NewOrder newOrder = NewOrder.builder().askingRate(counterPartyOperation.getClientOutright())
-									.orderId(transaction.getId())
-									.isPartial(counterPartyOperation.getTransactionId().getIsPartial())
-									.buyAmount(counterPartyOperation.getBankBuyAmount())
-									.sellAmount(counterPartyOperation.getBankSellAmount())
-									.direction(modelMapper.map(counterPartyOperation.getDirectionId(), DirectionDto.class))
-									.buyCurrency(modelMapper.map(counterPartyOperation.getTransactionId().getBaseCurrency(), CurrencyDto.class))
-									.sellCurrency(modelMapper.map(counterPartyOperation.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
-									.insertionTime(new Timestamp(System.currentTimeMillis()))
-									.build();
+//				NewOrder newOrder = NewOrder.builder().askingRate(counterPartyOperation.getClientOutright())
+//									.orderId(transaction.getId())
+//									.isPartial(counterPartyOperation.getTransactionId().getIsPartial())
+//									.buyAmount(counterPartyOperation.getBankBuyAmount())
+//									.sellAmount(counterPartyOperation.getBankSellAmount())
+//									.direction(modelMapper.map(counterPartyOperation.getDirectionId(), DirectionDto.class))
+//									.buyCurrency(modelMapper.map(counterPartyOperation.getTransactionId().getBaseCurrency(), CurrencyDto.class))
+//									.sellCurrency(modelMapper.map(counterPartyOperation.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
+//									.insertionTime(new Timestamp(System.currentTimeMillis()))
+//									.build();
+//				
+//				matching.initiateMatchingAlgorithm(newOrder);
+									
+					//Since we are matching only broker orders
+					
+					MatchingTable matchingTable = MatchingTable.builder()
+							.askingRate(counterPartyOperation.getClientOutright())
+							.destinationId(broker.getId())
+							.sourceId(sourceId)
+							.isPartial(quoteRequestDto.getIsPartial())
+							.orderId(transaction.getId())
+							.buyAmount(counterPartyOperation.getBankBuyAmount())
+							.sellAmount(counterPartyOperation.getBankSellAmount())
+							.direction(counterPartyOperation.getDirectionId().getId())
+							.buyCurrencyId(counterPartyOperation.getTransactionId().getBaseCurrency().getId())
+							.sellCurrencyId(counterPartyOperation.getTransactionId().getQuoteCurrency().getId())
+							.insertionTime(new Timestamp(System.currentTimeMillis()))
+							.build();
 				
-				matching.initiateMatchingAlgorithm(newOrder);
+					orderMatch.initiateMatchingAlgorithm(matchingTable);
+				
 				
 				// Publish on kafka topic
 				String kafkaTopic = broker.getRealmName() + "." + broker.getClientName() + "."
@@ -560,6 +584,8 @@ public class CounterPartyOperation implements Operation {
 					}
 
 				}
+				
+				
 			}
 
 			CounterpartyTransactionDetails transactionForBank = addToCounterPartyTransactionTable(
@@ -570,19 +596,45 @@ public class CounterPartyOperation implements Operation {
 					ApplicationConstants.Event.IN_RESPONSE.getEventId(), request);
 			
 			//initiate Matching algo
-			NewOrder newOrder = NewOrder.builder().askingRate(transactionForBroker.getClientOutright())
-								.isPartial(transactionForBroker.getTransactionId().getIsPartial())
-								.orderId(transactionForBroker.getId())
-								.buyAmount(transactionForBroker.getBankBuyAmount())
-								.sellAmount(transactionForBroker.getBankSellAmount())
-								.direction(modelMapper.map(transactionForBroker.getDirectionId(), DirectionDto.class))
-								.buyCurrency(modelMapper.map(transactionForBroker.getTransactionId().getBaseCurrency(), CurrencyDto.class))
-								.sellCurrency(modelMapper.map(transactionForBroker.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
-								.insertionTime(new Timestamp(System.currentTimeMillis()))
-								.build();
+//			NewOrder newOrder = NewOrder.builder().askingRate(transactionForBroker.getClientOutright())
+//								.isPartial(transactionForBroker.getTransactionId().getIsPartial())
+//								.orderId(transactionForBroker.getId())
+//								.buyAmount(transactionForBroker.getBankBuyAmount())
+//								.sellAmount(transactionForBroker.getBankSellAmount())
+//								.direction(modelMapper.map(transactionForBroker.getDirectionId(), DirectionDto.class))
+//								.buyCurrency(modelMapper.map(transactionForBroker.getTransactionId().getBaseCurrency(), CurrencyDto.class))
+//								.sellCurrency(modelMapper.map(transactionForBroker.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
+//								.insertionTime(new Timestamp(System.currentTimeMillis()))
+//								.build();
+//			
+//			matching.initiateMatchingAlgorithm(newOrder);
 			
-			matching.initiateMatchingAlgorithm(newOrder);
+			if(transactionForBroker.getDestinationId().getEntityType().getId() == 2L) {
+				
+				//Since we are matching only broker orders
+				
+				MatchingTable matchingTable = MatchingTable.builder()
+						.askingRate(transactionForBroker.getClientOutright())
+						.destinationId(transactionForBroker.getDestinationId().getId())
+						.sourceId(transactionForBroker.getSourceId().getId())
+						.isPartial(transactionForBroker.getTransactionId().getIsPartial())
+						.orderId(transactionForBroker.getId())
+						.buyAmount(transactionForBroker.getBankBuyAmount())
+						.sellAmount(transactionForBroker.getBankSellAmount())
+						.direction(transactionForBroker.getDirectionId().getId())
+						.buyCurrencyId(transactionForBroker.getTransactionId().getBaseCurrency().getId())
+						.sellCurrencyId(transactionForBroker.getTransactionId().getQuoteCurrency().getId())
+						.insertionTime(new Timestamp(System.currentTimeMillis()))
+						.build();
+				
+				orderMatch.initiateMatchingAlgorithm(matchingTable);
 
+			
+			}
+
+			
+			
+			
 			counterPartyTransactionRepository.save(transactionForBroker);
 
 			InstitutionalEntity broker = institutionalEntityRepository.getById(request.getDestination());
@@ -710,19 +762,44 @@ public class CounterPartyOperation implements Operation {
 			
 
 			//initiate Matching algo
-			NewOrder newOrder = NewOrder.builder().askingRate(transactionForBroker.getClientOutright())
-								.orderId(transactionForBroker.getId())
-								.isPartial(transactionForBroker.getTransactionId().getIsPartial())
-								.buyAmount(transactionForBroker.getBankBuyAmount())
-								.sellAmount(transactionForBroker.getBankSellAmount())
-								.direction(modelMapper.map(transactionForBroker.getDirectionId(), DirectionDto.class))
-								.buyCurrency(modelMapper.map(transactionForBroker.getTransactionId().getBaseCurrency(), CurrencyDto.class))
-								.sellCurrency(modelMapper.map(transactionForBroker.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
-								.insertionTime(new Timestamp(System.currentTimeMillis()))
-								.build();
-			
-			matching.initiateMatchingAlgorithm(newOrder);
+//			NewOrder newOrder = NewOrder.builder().askingRate(transactionForBroker.getClientOutright())
+//								.orderId(transactionForBroker.getId())
+//								.isPartial(transactionForBroker.getTransactionId().getIsPartial())
+//								.buyAmount(transactionForBroker.getBankBuyAmount())
+//								.sellAmount(transactionForBroker.getBankSellAmount())
+//								.direction(modelMapper.map(transactionForBroker.getDirectionId(), DirectionDto.class))
+//								.buyCurrency(modelMapper.map(transactionForBroker.getTransactionId().getBaseCurrency(), CurrencyDto.class))
+//								.sellCurrency(modelMapper.map(transactionForBroker.getTransactionId().getQuoteCurrency(), CurrencyDto.class))
+//								.insertionTime(new Timestamp(System.currentTimeMillis()))
+//								.build();
+//			
+//			matching.initiateMatchingAlgorithm(newOrder);
 
+
+			
+			if(transactionForBroker.getDestinationId().getEntityType().getId() == 2L) {
+				
+				//Since we are matching only broker orders
+				
+				MatchingTable matchingTable = MatchingTable.builder()
+						.askingRate(transactionForBroker.getClientOutright())
+						.destinationId(transactionForBroker.getDestinationId().getId())
+						.sourceId(transactionForBroker.getSourceId().getId())
+						.isPartial(transactionForBroker.getTransactionId().getIsPartial())
+						.orderId(transactionForBroker.getId())
+						.buyAmount(transactionForBroker.getBankBuyAmount())
+						.sellAmount(transactionForBroker.getBankSellAmount())
+						.direction(transactionForBroker.getDirectionId().getId())
+						.buyCurrencyId(transactionForBroker.getTransactionId().getBaseCurrency().getId())
+						.sellCurrencyId(transactionForBroker.getTransactionId().getQuoteCurrency().getId())
+						.insertionTime(new Timestamp(System.currentTimeMillis()))
+						.build();
+				
+				orderMatch.initiateMatchingAlgorithm(matchingTable);
+
+			
+			}
+			
 			counterPartyTransactionRepository.save(transactionForBroker);
 
 			InstitutionalEntity broker = institutionalEntityRepository.getById(request.getDestination());

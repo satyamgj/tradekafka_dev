@@ -19,9 +19,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
 import com.finmamba.models.dto.InstitutionalEntityDto;
+import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.request.UserProfileModel;
 import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.resolver.services.TransactionService;
@@ -243,6 +245,15 @@ public class TransactionDataController {
 	}
 	
 
+	@PostMapping("/getMatchingOrders")
+	public ResponseEntity<Object> initiateMatching(@RequestBody MatchingTable order){
+		try {
+			return new ResponseEntity<Object>(transactionService.intiateMatching(order),HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 	
 	private void logTimeUpdate(String functionName, String status) {
 		log.info(functionName + " " + status + " " + Instant.now());
