@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @CrossOrigin(origins = "*")
 @Slf4j
 public class ReportController {
+	// These are reports that are generated from the trades that have been traded on the system.
 
 	@Autowired
 	ReportsOperationsService reportsOperationsService;

@@ -2,7 +2,7 @@ package com.finmamba.entities.transaction;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.sql.Date;
+import java.time.Instant;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,13 +12,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-
-import com.finmamba.entities.staticdata.Currency;
-import com.finmamba.entities.staticdata.CustomerSegment;
-import com.finmamba.entities.staticdata.Direction;
-import com.finmamba.entities.staticdata.InstitutionalEntity;
-import com.finmamba.entities.staticdata.Product;
-import com.finmamba.entities.staticdata.Tenor;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,7 +26,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @Entity
-@Table(name = "nonflow", schema = "transaction")
+@Table(name = "nonflow_transaction_details", schema = "transaction")
 @Builder
 public class NonFlow implements Serializable, Cloneable {
 	/** 
@@ -52,118 +45,74 @@ public class NonFlow implements Serializable, Cloneable {
 
 	// Will be used for RMID among other user roles
 
-	@OneToOne
-	@JoinColumn(name = "customer_id", nullable = false)
-	private Customer customer;
-
 	// productId - SPOT, FWD
-	@OneToOne
-	@JoinColumn(name = "product_id", nullable = false)
-	private Product product;
+	@Column(name = "product_id", nullable = false)
+	private Integer product;
 
-	@Column(name = "user_id", nullable = false)
-	private Integer userId;
+	@Column(name = "entity_id", nullable = false)
+	private Integer entityId;
 
-	@OneToOne
-	@JoinColumn(name = "institutional_id", nullable = false)
-	private InstitutionalEntity institutionalId;
+	@Column(name = "buy_side_id", nullable = false)
+	private Integer buySideId;
 
-	@OneToOne
-	@JoinColumn(name = "institutional_source_entity_id", nullable = false)
-	private InstitutionalEntity institutionalSourcEntityId;
+	@Column(name = "sell_side_id", nullable = false)
+	private Integer sellSideId;
 
-	@Column(name = "institutional_source_entity_name", nullable = false)
-	private String institutionalSourceEntityName;
+	@Column(name = "buy_side_brokerage_ccy", nullable = true)
+	private Integer buySideBrokerageCcy;
 
-	@OneToOne
-	@JoinColumn(name = "institutional_destination_entity_id", nullable = false)
-	private InstitutionalEntity institutionalDestinationEntityId;
+	@Column(name = "sell_side_brokerage_ccy", nullable = true)
+	private Integer sellSideBrokerageCcy;
 
-	@Column(name = "institutional_destination_entity_name", nullable = false)
-	private String institutionalDestinationEntityName;
+	@Column(name = "buy_side_brokerage_base_ccy", nullable = true)
+	private Integer buySideBrokerageBaseCcy;
 
-	@OneToOne
-	@JoinColumn(name = "buy_sell_direction_id", nullable = false)
-	private Direction buySellDirection;
+	@Column(name = "sell_side_brokerage_base_ccy", nullable = true)
+	private Integer sellSideBrokerageBaseCcy;
 
-	// Maps to bankBuyCCyID
-	@OneToOne
-	@JoinColumn(name = "base_currency_id", nullable = false)
-	private Currency baseCurrency;
+	@Column(name = "buy_side_spread", nullable = true)
+	private BigDecimal buySideSpread;
 
-	// Maps to bankSellCCyID
-	@OneToOne
-	@JoinColumn(name = "quote_currency_id", nullable = false)
-	private Currency quoteCurrency;
+	@Column(name = "sell_side_spread", nullable = true)
+	private BigDecimal sellSideSpread;
 
-	// Buy Amount
-	@Column(name = "buy_amount", nullable = true)
-	private BigDecimal buyAmount;
+	@Column(name = "bank_buy_amount", nullable = true)
+	private BigDecimal bankBuyAmount;
 
-	// Buy Amount
-	@Column(name = "sell_amount", nullable = true)
-	private BigDecimal sellAmount;
+	@Column(name = "bank_sell_amount", nullable = true)
+	private BigDecimal bankSellAmount;
 
-	// Matrix of 3X3 (9 entries) for spot, spread and outright
+	@Column(name = "buy_side_base_amount", nullable = true)
+	private BigDecimal buySideBaseAmount;
 
-	// All Spot Values
-	@Column(name = "spot_rate", nullable = true)
-	private BigDecimal spotRate;
+	@Column(name = "sell_side_base_amount", nullable = true)
+	private BigDecimal selSideBaseAmount;
 
-	@Column(name = "outright", nullable = true)
-	private BigDecimal outright;
+	@Column(name = "calculated_buy_commission", nullable = true)
+	private BigDecimal calculatedBuyCommission;
 
-	@Column(name = "tenor_value", nullable = false)
-	private Long tenorValue;
+	@Column(name = "calculated_sell_commission", nullable = true)
+	private BigDecimal calculatedSellCommission;
 
-	@OneToOne
-	@JoinColumn(name = "tenor_unit_id", nullable = false)
-	private Tenor tenorUnit;
+	@Column(name = "client_outright", nullable = false)
+	private BigDecimal clientOutright;
 
-	@Column(name = "ui_request_timestamp", nullable = false)
-	private Date uiRequestTimestamp;
+	@Column(name = "buy_side_conversion_rate", nullable = true)
+	private BigDecimal buySideConversionRate;
 
-	@Column(name = "db_request_timestamp", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", nullable = false)
-	private Date dbRequestTimestamp;
+	@Column(name = "sell_side_conversion_rate", nullable = true)
+	private BigDecimal sellSideConversionRate;
 
-	@OneToOne
-	@JoinColumn(name = "customer_segment_id", nullable = false)
-	private CustomerSegment customerSegmentId;
+	@Column(name = "broker_commission_mode_ispip", nullable = false)
+	private Boolean brokerCommissionModeIsPip;
 
-	@Column(name = "is_pip_or_absolute", nullable = false)
-	private boolean isPipOrAbsolute;
+	@Column(name = "direction", nullable = false)
+	private Integer direction;
 
-	@Column(name = "buy_side_absolute_commision", nullable = false)
-	private BigDecimal buySideAbsoluteCommision;
+	@Column(name = "created_by", nullable = false)
+	private Integer createdBy;
 
-	@Column(name = "sell_side_absolute_commision", nullable = false)
-	private BigDecimal sellSideAbsoluteCommision;
+	@Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", nullable = false)
+	private Instant createdAt;
 
-	@OneToOne
-	@JoinColumn(name = "per_base_buy_currency", nullable = false)
-	private Currency perBaseBuyCurrency;
-
-	@OneToOne
-	@JoinColumn(name = "per_base_sell_currency", nullable = false)
-	private Currency perBaseSellCurrency;
-
-	@OneToOne
-	@JoinColumn(name = "buy_side_currency_id", nullable = false)
-	private Currency buySideCurrencyId;
-
-	@OneToOne
-	@JoinColumn(name = "sell_side_currency_id", nullable = false)
-	private Currency sellSideCurrencyId;
-
-	@Column(name = "per_base_buy_currency_amount", nullable = false)
-	private BigDecimal perBaseBuyCurrencyAmount;
-
-	@Column(name = "per_base_sell_currency_amount", nullable = false)
-	private BigDecimal perBaseSellCurrencyAmount;
-
-	@Column(name = "buy_side_commision_rate", nullable = false)
-	private BigDecimal buySideCommisionRate;
-
-	@Column(name = "sell_side_commision_rate", nullable = false)
-	private BigDecimal sellSideCommisionRate;
 }

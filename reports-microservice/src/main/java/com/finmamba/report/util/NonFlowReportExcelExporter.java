@@ -14,9 +14,8 @@ import org.apache.poi.xssf.usermodel.XSSFFont;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.finmamba.models.dto.NonFlowDto;
-import com.finmamba.models.dto.SavedNonFlowDto;
-import com.finmamba.models.dto.SuperInstitutionalEntityDto;
+import com.finmamba.models.reports.SaveNonFlowDto;
+import com.finmamba.models.reports.SearchNonFlowDto;
 
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -26,10 +25,10 @@ import lombok.NoArgsConstructor;
 public class NonFlowReportExcelExporter {
 	private XSSFWorkbook workbook;
 	private XSSFSheet sheet;
-	private List<SavedNonFlowDto> nonFlowReport;
+	private List<SearchNonFlowDto> nonFlowReport;
 
 	// This class will make a new workbook
-	public NonFlowReportExcelExporter(List<SavedNonFlowDto> nonFlowReport) {
+	public NonFlowReportExcelExporter(List<SearchNonFlowDto> nonFlowReport) {
 		this.nonFlowReport = nonFlowReport;
 		workbook = new XSSFWorkbook();
 	}
@@ -83,37 +82,45 @@ public class NonFlowReportExcelExporter {
 	}
 
 	private void writeDataLines() {
-		int rowCount = 1;
-
-		CellStyle style = workbook.createCellStyle();
-		XSSFFont font = workbook.createFont();
-		font.setFontHeight(14);
-		style.setFont(font);
-
-		for (SavedNonFlowDto nonFlowReportRow : nonFlowReport) {
-			Row row = sheet.createRow(rowCount++);
-			int columnCount = 0;
-
-			createCell(row, columnCount, (nonFlowReportRow.getProductId())!=null ? nonFlowReportRow.getProductId().getName():"", style);
-			createCell(row, columnCount++, (nonFlowReportRow.getBuySellDirection())!=null ? nonFlowReportRow.getBuySellDirection().getName():"", style);
-			createCell(row, columnCount++, (nonFlowReportRow.getBaseCurrencyId())!=null ? nonFlowReportRow.getBaseCurrencyId().getIsoCode():"", style);
-			createCell(row, columnCount++, (nonFlowReportRow.getQuoteCurrency())!=null ?nonFlowReportRow.getQuoteCurrency().getIsoCode():"", style);
-			createCell(row, columnCount++, (nonFlowReportRow.getBuyAmount())!=null ?nonFlowReportRow.getBuyAmount().doubleValue():0.0, style);
-			createCell(row, columnCount++, (nonFlowReportRow.getSellAmount())!=null ?nonFlowReportRow.getSellAmount().doubleValue():0.0, style);
-			createCell(row, columnCount++, (nonFlowReportRow.getSpotRate())!=null ?nonFlowReportRow.getSpotRate().doubleValue():0.0, style);
-			
-			createCell(row, columnCount++, (nonFlowReportRow.getTenorUnitId())!=null ?nonFlowReportRow.getTenorUnitId().getTenorUnit():"", style);
-			//createCell(row, columnCount++, (nonFlowReportRow.getNotional())!=null ?nonFlowReportRow.getNotional().doubleValue():0.0, style);
-			createCell(row, columnCount++, (nonFlowReportRow.getInstitutionalSourceEntityId())!=null ?nonFlowReportRow.getInstitutionalSourceEntityId().getLongName():"", style);
-		
-			// destination needs to be added.
-			
-			createCell(row, columnCount++, "NOT AVAILABLE", style);
-			//createCell(row, columnCount++, nonFlowReportRow.getTransactionId(), style);
-			createCell(row, columnCount++, "NOT AVAILABLE", style);
-
-		}
-	}
+		/*
+		 * int rowCount = 1;
+		 * 
+		 * CellStyle style = workbook.createCellStyle(); XSSFFont font =
+		 * workbook.createFont(); font.setFontHeight(14); style.setFont(font);
+		 * 
+		 * for (SearchNonFlowDto nonFlowReportRow : nonFlowReport) { Row row =
+		 * sheet.createRow(rowCount++); int columnCount = 0;
+		 * 
+		 * createCell(row, columnCount, (nonFlowReportRow.getProductId())!=null ?
+		 * nonFlowReportRow.getProductId().getName():"", style); createCell(row,
+		 * columnCount++, (nonFlowReportRow.getBuySellDirection())!=null ?
+		 * nonFlowReportRow.getBuySellDirection().getName():"", style); createCell(row,
+		 * columnCount++, (nonFlowReportRow.getBaseCurrencyId())!=null ?
+		 * nonFlowReportRow.getBaseCurrencyId().getIsoCode():"", style); createCell(row,
+		 * columnCount++, (nonFlowReportRow.getQuoteCurrency())!=null
+		 * ?nonFlowReportRow.getQuoteCurrency().getIsoCode():"", style); createCell(row,
+		 * columnCount++, (nonFlowReportRow.getBuyAmount())!=null
+		 * ?nonFlowReportRow.getBuyAmount().doubleValue():0.0, style); createCell(row,
+		 * columnCount++, (nonFlowReportRow.getSellAmount())!=null
+		 * ?nonFlowReportRow.getSellAmount().doubleValue():0.0, style); createCell(row,
+		 * columnCount++, (nonFlowReportRow.getSpotRate())!=null
+		 * ?nonFlowReportRow.getSpotRate().doubleValue():0.0, style);
+		 * 
+		 * createCell(row, columnCount++, (nonFlowReportRow.getTenorUnitId())!=null
+		 * ?nonFlowReportRow.getTenorUnitId().getTenorUnit():"", style);
+		 * //createCell(row, columnCount++, (nonFlowReportRow.getNotional())!=null
+		 * ?nonFlowReportRow.getNotional().doubleValue():0.0, style); createCell(row,
+		 * columnCount++, (nonFlowReportRow.getInstitutionalSourceEntityId())!=null
+		 * ?nonFlowReportRow.getInstitutionalSourceEntityId().getLongName():"", style);
+		 * 
+		 * // destination needs to be added.
+		 * 
+		 * createCell(row, columnCount++, "NOT AVAILABLE", style); //createCell(row,
+		 * columnCount++, nonFlowReportRow.getTransactionId(), style); createCell(row,
+		 * columnCount++, "NOT AVAILABLE", style);
+		 * 
+		 * }
+		 */}
 
 	public void export(HttpServletResponse response) throws IOException {
 		writeHeaderLine();

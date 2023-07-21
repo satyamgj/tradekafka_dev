@@ -1,13 +1,9 @@
-package com.finmamba.models.dto;
+package com.finmamba.models.reports;
 
 import java.math.BigDecimal;
-import java.sql.Date;
-
+import java.time.Instant;
 
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
-
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,87 +18,43 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @Builder
-public class NonFlowDto {
-
-	private Integer userId;
-
-	private Long institutionalId;
-	
-	private Long institutionalSourceEntityId;
-
-	// Added for ease of access. To be fetched from token in the FE
-	private String institutionalSourceEntityName;
-
-	private Long institutionalDestinationEntityId;
-
-	// Added for ease of access. To be fetched from token in the FE
-	private String institutionalDestinationEntityName;
-	
-	// Non Null because the RM may place OBO the customer
-	private Long customerId;
-
-	// productId - SPOT, FWD
-	@NonNull
-	private Long productId;
-
-	// Maps to bankBuyCCyID
-	@NonNull
-	private Long baseCurrencyId;
-
-	// Maps to bankSellCCyID
-	@NonNull
-	private Long quoteCurrency;
-
-	@NonNull
-	private Long buySellDirection;
-
-	@Nullable
-	private BigDecimal buyAmount;
-
-	@Nullable
-	private BigDecimal sellAmount;
-
-	@NonNull
-	private BigDecimal spotRate;
-
-	private BigDecimal outright;
-
-	private Long tenorValue;
-
-	@NonNull
-	private Long tenorUnitId;
-
-	@NonNull
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-	private Date uiRequestTimeStamp;
-
-
-	@NonNull
-	private Long customerSegmentId;
-
-	private int httpStatus;
+public class SaveNonFlowDto {
 	
 	@NonNull
-	private boolean isPipOrAbsolute;
-	
-	private BigDecimal buySideAbsoluteCommision;
-	
-	private BigDecimal sellSideAbsoluteCommision;
-	
-	private Long perBaseBuyCurrency;
-	
-	private Long perBaseSellCurrency;
-	
-	private Long buySideCurrencyId;
-	
-	private Long sellSideCurrencyId;
-	
-	private BigDecimal perBaseBuyCurrencyAmount;
-	
-	private BigDecimal perBaseSellCurrencyAmount;
-	
-	private BigDecimal buySideCommisionRate;
-	
-	private BigDecimal sellSideCommisionRate;
-
+	private Integer productId;
+	@NonNull
+	private Integer entityId;
+	@NonNull
+	private Integer buySideId;
+	@NonNull
+	private Integer sellSideId;
+	@NonNull
+	private Integer bankBuyCcyId;
+	@NonNull
+	private Integer bankSellCcyId;
+	private Integer buySideBrokerageCcy;
+	private Integer sellSideBrokerageCcy;
+	private Integer buySideBrokerageBaseCcy;
+	private Integer sellSideBrokerageBaseCcy;
+	private BigDecimal buySideSpread;
+	private BigDecimal sellSideSpread;
+	private BigDecimal bankBuyAmount;
+	private BigDecimal bankSellAmount;
+	private BigDecimal buySideBaseAmount;
+	private BigDecimal sellSideBaseAmount;
+	private BigDecimal calculatedBuyCommission;
+	private BigDecimal calculatedSellCommission;
+	@NonNull
+	private BigDecimal clientOutright;
+	private BigDecimal buySideConversionRate;
+	private BigDecimal sellSideConversionRate;
+	private Boolean brokerCommissionModeIspip;
+	@NonNull
+	private Integer direction;
+    private Instant createdAt;
+    @NonNull
+    private Integer createdBy;
+    
+    private int httpStatus;
+    
 }

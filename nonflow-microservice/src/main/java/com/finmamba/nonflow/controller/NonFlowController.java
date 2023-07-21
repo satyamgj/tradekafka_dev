@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.finmamba.models.dto.NonFlowDto;
-import com.finmamba.models.dto.SavedNonFlowDto;
+import com.finmamba.entities.transaction.NonFlow;
+import com.finmamba.models.reports.SaveNonFlowDto;
+import com.finmamba.models.reports.SearchNonFlowDto;
 import com.finmamba.nonflow.services.NonFlowOperationsService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,10 +29,10 @@ public class NonFlowController {
 	NonFlowOperationsService nonFlowOperationsService;
 
 	@PostMapping("/saveNonFlowTrade")
-	public ResponseEntity<List<SavedNonFlowDto>> processQuoteRequest(@RequestBody NonFlowDto nonFlowModel) {
+	public ResponseEntity<List<SaveNonFlowDto>> processQuoteRequest(@RequestBody SaveNonFlowDto nonFlowModel) {
 
 		try {
-			List<SavedNonFlowDto> returnList = nonFlowOperationsService.saveNonFlowTrade(nonFlowModel);
+			List<SaveNonFlowDto> returnList = nonFlowOperationsService.saveNonFlowTrade(nonFlowModel);
 
 			if (returnList.size() > 0) {
 				returnList.get(0).setHttpStatus(HttpStatus.OK.value());
@@ -44,15 +45,18 @@ public class NonFlowController {
 		}
 	}
 
-	/*
-	 * @PostMapping("/getNonFlowTrades") public ResponseEntity<List<NonFlow>>
-	 * getNonFlowTrades(@RequestBody NonFlowRequest nonFlowRequest) { List<NonFlow>
-	 * returnList = null; try { returnList =
-	 * nonFlowOperationsService.getNonFlowTrades(nonFlowRequest);
-	 * log.info("Request received for getting non flow trades"); //
-	 * returnList.get(0).setHttpStatus(HttpStatus.OK.value()); return new
-	 * ResponseEntity<>(returnList, HttpStatus.OK); } catch (Exception e) {
-	 * e.printStackTrace(); return new ResponseEntity<>(returnList,
-	 * HttpStatus.INTERNAL_SERVER_ERROR); } }
-	 */
+	@PostMapping("/getNonFlowTrades")
+	public ResponseEntity<List<SaveNonFlowDto>> getNonFlowTrades(@RequestBody SearchNonFlowDto nonFlowRequest) {
+		List<SaveNonFlowDto> returnList = null;
+		try {
+			returnList = nonFlowOperationsService.getNonFlowTrades(nonFlowRequest);
+			log.info("Request received for getting non flow trades"); //
+			returnList.get(0).setHttpStatus(HttpStatus.OK.value());
+			return new ResponseEntity<>(returnList, HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(returnList, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+
 }

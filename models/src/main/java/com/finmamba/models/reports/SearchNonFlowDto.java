@@ -1,6 +1,7 @@
-package com.finmamba.models.dto;
+package com.finmamba.models.reports;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Date;
 
 
@@ -22,89 +23,29 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString
 @Builder
-public class SavedNonFlowDto {
-
-	private Integer userId;
-	
-	private Long total_count;
-
-	private InstitutionalEntityDto institutionalId;
-	
-	private InstitutionalEntityDto institutionalSourceEntityId;
-
-	// Added for ease of access. To be fetched from token in the FE
-	private String institutionalSourceEntityName;
-
-	private InstitutionalEntityDto institutionalDestinationEntityId;
-
-	// Added for ease of access. To be fetched from token in the FE
-	private String institutionalDestinationEntityName;
-	
-	// Non Null because the RM may place OBO the customer
-	private CustomerDto customerId;
-
-	// productId - SPOT, FWD
-	@NonNull
-	private ProductDto productId;
-
-	// Maps to bankBuyCCyID
-	@NonNull
-	private CurrencyDto baseCurrencyId;
-
-	// Maps to bankSellCCyID
-	@NonNull
-	private CurrencyDto quoteCurrency;
+public class SearchNonFlowDto {
 
 	@NonNull
-	private DirectionDto buySellDirection;
-
-	@Nullable
-	private BigDecimal buyAmount;
-
-	@Nullable
-	private BigDecimal sellAmount;
+	private String startDate;
 
 	@NonNull
-	private BigDecimal spotRate;
+	private String endDate;
 
-	private BigDecimal outright;
-
-	private Long tenorValue;
+	private BigInteger reportId;
 
 	@NonNull
-	private TenorDto tenorUnitId;
+	private Long pageSize;
+	
+	// Page number is called offset
+	@NonNull
+	private Long offset;
 
 	@NonNull
-	@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-	private Date uiRequestTimeStamp;
-
-
-//	@NonNull
-	private CustomerSegmentDto customerSegmentId;
-
-	private int httpStatus;
+	private String sortOrder;
 	
 	@NonNull
-	private boolean isPipOrAbsolute;
+	private String sortField;
 	
-	private BigDecimal buySideAbsoluteCommision;
-	
-	private BigDecimal sellSideAbsoluteCommision;
-	
-	private CurrencyDto perBaseBuyCurrency;
-	
-	private CurrencyDto perBaseSellCurrency;
-	
-	private CurrencyDto buySideCurrencyId;
-	
-	private CurrencyDto sellSideCurrencyId;
-	
-	private BigDecimal perBaseBuyCurrencyAmount;
-	
-	private BigDecimal perBaseSellCurrencyAmount;
-	
-	private BigDecimal buySideCommisionRate;
-	
-	private BigDecimal sellSideCommisionRate;
-
+	@NonNull
+	private BigInteger entityId;
 }

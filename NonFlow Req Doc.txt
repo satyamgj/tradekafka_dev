@@ -1,0 +1,125 @@
+Non Flow Trades:
+
+The objective is to make sure that we are the single point of truth for all trades done by a bank/broker. For this we need to make sure that manual data entry of the trades done outside the system by the broker/bank is also fed into our system as a bulk upoad/single entry. This will make our CCIL report more accurate and the chances of them accepting the system is going to be higher.
+
+Step 1: Save the non flow trades:
+
+This will be a screen that looks like deal entry with 2 sections cut horizontally.
+
+Section 1 is the trade parameters (The financial parameters)
+Section 2 is the commission parameter. This section should ideally be independent of the upload file, and should be autofilled with the option of editing if the user wants. This will be autofilled from the entity/user level config setting.
+
+	Section 1 of the view will have financial trade parameters like 
+
+
+	1. Financial Parameters/NonFlow deal entry: Regulatory req... CCIL
+	
+	private Integer productId; HC 1 -- -- SPOT, FORWARD (tenor/date field extra) , NDF, SWAP
+	private Integer brokerId; - Sent from FE (Kanji id)
+	private Integer buySideId; - Sent from FE (optional)
+	private Integer sellSideId; - Sent from FE (optional)
+	private Integer bankBuyCcyId; - User Fills
+	private Integer bankSellCcyId; - User Fills
+	private Double bankBuyAmount; - User fills (optional)
+	private Double bankSellAmount; - User Fills (optional)
+	private Instant createdAt; - Generated on FE 
+    private Instant createdBy; - Sent from FE (UserId)
+	private Double clientOutright; - User Fills (Rate)
+	private Double buySideConversionRate; - User Fills (Optional)
+	private Double sellSideConversionRate; - User Fills (Optional)
+	private Integer direction; User Fills 
+    
+	
+	2nd Part of the View: 
+	
+	2. Commission Entry Parameters	Commission details to be all autofilled but can be edited by the user.
+
+	private Integer buySideBrokerageCcy;
+	private Integer sellSideBrokerageCcy;
+	private Integer buySideBrokerageBaseCcy;
+	private Integer sellSideBrokerageBaseCcy;
+	private Double buySideBaseAmount;
+	private Double sellSideBaseAmount;
+	private Double buySideSpread; 
+	private Double sellSideSpread; 
+	private Double calculatedBuyCommission;
+	private Double calculatedSellCommission;
+	private Boolean brokerCommissionModeIspip;
+
+	
+	Non Flow (Free): Something that is done outside the system.
+	
+	
+	Broker View:
+	
+	21-07-2023
+	Perspective Bank? 
+	
+	ICICI buy order to Kanji --- Kanji Sell trade with ICICI 
+	
+	Buy			USD/INR				ICICI			9m 				82.76578 		9:49 (max 3:30 pm) 
+	Sell		INR/USD				HDFC			9m 				82.76578 		9:49 (max 3:30 pm) 
+	Buy			USD/INR				ICICI			1m 				82.76578 		9:49 (max 3:30 pm) 
+	Buy			USD/INR				ICICI			3m 				82.76578 		9:49 (max 3:30 pm) 
+	Buy			EUR/INR				ICICI			10m 			82.76578 		9:49 (max 3:30 pm) 
+	Buy			USD/INR				ICICI			7m 				82.76578 		9:49 (max 3:30 pm)
+	Buy			USD/INR				ICICI			2m 				82.76578 		9:49 (max 3:30 pm)
+	
+	
+	ICICI View
+	
+	Buy			USD/INR				KANJI			2m 				82.76578 		9:49 (max 3:30 pm)
+
+	
+	
+	Excel is generated: Trade details of the day (21-07-2023) - PDF/Excel at EOD in the CCIL format. Regulatory (SEBI) req every bank/broker needs to send for recon.
+	
+ Explanation for the trade and how it works.
+	
+	
+	
+	1. ICICI(buyer) ----- HDFC(Seller) (Buy USD/INR @76.767 rate for 6723662378 USD) --- Refinitiv EIKON (Reuters --> Thompson Reuters)
+	
+	2. ICICI(Buyer) --- Kanji(Seller) (Buy USD/INR @76.767 rate for 6723662378 USD)
+				 Kanji(Buyer) --- HDFC (Seller) (Buy USD/INR @76.767 rate for 6723662378 USD)
+				 
+	3. 3:30pm -- Kanji CCIL report excel (Buy and opposite sell)
+				 HDFC report CCIL -- kanji
+				 ICICI report CCIL -- kanji
+	
+	
+	One commmission calculation:
+	
+	Scenario:
+	
+	Kanjii gets one buy order from ICICI for 1m USD/INR
+	
+	Now in user/Entity setting we have the following commission rate information:
+	
+	Commission Bible ------- Kanji takes 600 INR for every 1 million USD traded from each side.
+	Calculated Commission: 10M USD/INR --- 600*10 ICICI + 600*10 HDFC = 12000 INR
+	
+	Kanji is doing 1.5 billion USD trade --- 1500 Million. 1500*1200 INR = 18,00,000 INR everyday!!!!
+	Cash: 60*10*1500 = 1,80,000 Per Day
+	
+	Buy side commission rates:
+	
+	1. 600 (buy_side_spread)        2. INR (buy_side_brokerage_ccy)
+	
+	3. 1 million (base_amount)      4. USD (buy_side_brokerage_base_ccy)
+	
+	
+	Sell side commission rates can be different:
+	
+	1. 500                           2. INR
+	
+	3. 10 million (base amount)      4. USD
+	
+	
+	Order Details page Layout
+
+	Top Layer Tabs: 1. Active Requests 
+						a. Incoming  b. In-transit c. Waiting 
+					2. Confirmed -- All confirmed requests
+					3. Rejected -- All requests that have been rejected
+					4. Expired -- Timed out requests

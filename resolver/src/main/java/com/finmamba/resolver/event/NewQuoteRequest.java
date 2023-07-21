@@ -3,7 +3,6 @@ package com.finmamba.resolver.event;
 import org.springframework.context.ApplicationEvent;
 
 import com.finmamba.models.dto.QuoteRequestDto;
-import com.finmamba.models.dto.SuperInstitutionalEntityDto;
 
 import lombok.Getter;
 import lombok.Setter;

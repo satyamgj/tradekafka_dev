@@ -2,15 +2,15 @@ package com.finmamba.nonflow.services;
 
 import java.util.List;
 
-import com.finmamba.models.dto.NonFlowDto;
-import com.finmamba.models.dto.SavedNonFlowDto;
+import com.finmamba.models.reports.SaveNonFlowDto;
+import com.finmamba.models.reports.SearchNonFlowDto;
 import com.finmamba.nonflow.exception.CustomNonFlowException;
 
 public interface NonFlowOperationsServiceDal {
 
 
-	public List<SavedNonFlowDto> saveNonFlowRequest(NonFlowDto nonFlowDto) throws CustomNonFlowException;
+	public List<SaveNonFlowDto> saveNonFlowRequest(SaveNonFlowDto saveNonFlowDto) throws CustomNonFlowException;
 
-//	public List<NonFlow> getNonFlowRequest(NonFlowRequest nonFlowRequest) throws CustomNonFlowException;
+	public List<SaveNonFlowDto> getNonFlowRequest(SearchNonFlowDto nonFlowRequest) throws CustomNonFlowException;
 	
 }
