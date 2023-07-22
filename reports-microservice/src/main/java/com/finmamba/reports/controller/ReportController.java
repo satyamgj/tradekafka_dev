@@ -1,5 +1,6 @@
 package com.finmamba.reports.controller;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.text.DateFormat;
@@ -7,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -19,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.finmamba.models.dto.ConfirmedOrderDto;
 import com.finmamba.models.dto.ReportsDto;
 import com.finmamba.models.reports.TradeReport;
 import com.finmamba.report.util.TradeReportExcelExporter;
@@ -45,7 +46,7 @@ public class ReportController {
 			
 			returnList = reportsOperationsService.processTradeReportRequest(tradeReport);
 			
-			  if(returnList.size()>0) {
+			  if(returnList!=null && returnList.size()>0) {
 			  returnList.get(0).setTotalCount(Long.valueOf(returnList.size())); }
 			 
 			log.info("Request received for getting trade reports");
@@ -63,13 +64,16 @@ public class ReportController {
 		List<ReportsDto> returnList = null;
 		DateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
 		String currentDateTime = dateFormatter.format(new Date());
-	
+		
 		String headerKey = "Content-Disposition";
 		String headerValue ="";
+		String sheetName = "";
 		if(tradeReport.getReportId()==BigInteger.ONE) {
 		headerValue = "attachment; filename=tradereport_" + currentDateTime + ".xlsx";
+		sheetName = "TradeReport";
 		} else {
 			headerValue = "attachment; filename=commissionreport_" + currentDateTime + ".xlsx";
+			sheetName = "CommissionReport";
 		}
 		response.setHeader(headerKey, headerValue);
 		try {
@@ -79,8 +83,9 @@ public class ReportController {
 			e.printStackTrace();
 		}
 		TradeReportExcelExporter excelExporter = new TradeReportExcelExporter(returnList);
-		excelExporter.export(response);
+		excelExporter.export(response, sheetName);
 	}
+	
 	
 	
 }

@@ -2,7 +2,6 @@ package com.finmamba.nonflow.services;
 
 import java.lang.reflect.Type;
 import java.math.BigInteger;
-import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,10 +16,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import com.finmamba.entities.reports.NonFlowReport;
 import com.finmamba.entities.transaction.NonFlow;
+import com.finmamba.models.reports.NonFlowReportDto;
 import com.finmamba.models.reports.SaveNonFlowDto;
 import com.finmamba.models.reports.SearchNonFlowDto;
-import com.finmamba.models.reports.TradeReport;
 //import com.finmamba.nonflow.NonFlowRequest;
 import com.finmamba.nonflow.exception.CustomNonFlowException;
 import com.finmamba.nonflow.repositories.CurrencyRepository;
@@ -29,6 +29,7 @@ import com.finmamba.nonflow.repositories.CustomerSegmentRepository;
 import com.finmamba.nonflow.repositories.DirectionRepository;
 import com.finmamba.nonflow.repositories.InstitutionalEntityRepository;
 import com.finmamba.nonflow.repositories.NonFlowRepository;
+import com.finmamba.nonflow.repositories.NonFlowRepositoryRetrieve;
 import com.finmamba.nonflow.repositories.ProductRepository;
 import com.finmamba.nonflow.repositories.TenorRepository;
 import com.finmamba.nonflow.repositories.UserRepository;
@@ -46,6 +47,10 @@ public class NonFlowOperationsServiceDalImpl implements NonFlowOperationsService
 	@Autowired
 	NonFlowRepository nonFlowRepository;
 
+	@Autowired
+	NonFlowRepositoryRetrieve nonFlowRepositoryRetrieve;
+
+	
 	@Autowired
 	CurrencyRepository currencyRepository;
 
@@ -177,9 +182,9 @@ public class NonFlowOperationsServiceDalImpl implements NonFlowOperationsService
 
 	@Override
 	@Transactional
-	public List<SaveNonFlowDto> getNonFlowRequest(SearchNonFlowDto nonFlowRequest) {
+	public List<NonFlowReportDto> getNonFlowRequest(SearchNonFlowDto nonFlowRequest) {
 		log.info("Inside get Non Flow Dal Implementation");
-		List<SaveNonFlowDto> returnList = null;
+		List<NonFlowReportDto> returnList = null;
 		String startDate = nonFlowRequest.getStartDate();
 		String endDate = nonFlowRequest.getEndDate();
 		SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd");
@@ -210,10 +215,10 @@ public class NonFlowOperationsServiceDalImpl implements NonFlowOperationsService
 			pageableRequest = PageRequest.of(offSet, pageSize, Sort.Direction.DESC, sortField);
 		}
 
-		Type listType = new TypeToken<List<SaveNonFlowDto>>() {
+		Type listType = new TypeToken<List<NonFlowReportDto>>() {
 		}.getType();
 
-		List<NonFlow> nonFlowList = nonFlowRepository.findByEntityIdAndCreateAtBetween(entityId, sqlStartDate, sqlEndDate,
+		List<NonFlowReport> nonFlowList = nonFlowRepositoryRetrieve.findByEntityIdAndCreateAtBetween(entityId.intValue(), sqlStartDate, sqlEndDate,
 				pageableRequest);
 		log.info("return list of NonFlow requests" + nonFlowList);  
 		returnList = modelMapper.map(nonFlowList, listType);

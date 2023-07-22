@@ -9,9 +9,11 @@ import javax.transaction.Transactional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.finmamba.entities.reports.NonFlowReport;
 import com.finmamba.entities.transaction.NonFlow;
 
 @Repository
@@ -23,7 +25,7 @@ public interface NonFlowRepository extends JpaRepository<NonFlow, Long> {
 	@Transactional
 	@Query(value = "select * from transaction.nonflow_transaction_details t where created_at BETWEEN :startDate AND :endDate"
 			+ " AND entity_id = :entityId", nativeQuery = true)
-	public List<NonFlow> findByEntityIdAndCreateAtBetween(@Param("entityId") BigInteger entityId,
+	public List<NonFlow> getNonFlowRequest(@Param("entityId") BigInteger entityId,
 			@Param("startDate") Date startDate, @Param("endDate") Date endDate, Pageable pageable);
 
 	/*
@@ -38,13 +40,5 @@ public interface NonFlowRepository extends JpaRepository<NonFlow, Long> {
 	 * 
 	 * Date startDate, Date endDate, Pageable pageable);
 	 */
-
-	/*
-	 * @Transactional
-	 * 
-	 * @Procedure(procedureName = "transaction.get_nonflow_requests") public
-	 * List<NonFlow> getNonFlowRequest( BigInteger institutionId, String startDate,
-	 * String endDate, Pageable pageable);
-	 */
-
+	 
 }

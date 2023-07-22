@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.finmamba.entities.transaction.NonFlow;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.dto.DaddyDto;
+import com.finmamba.models.reports.NonFlowReportDto;
 import com.finmamba.models.reports.SaveNonFlowDto;
 import com.finmamba.models.reports.SearchNonFlowDto;
 //import com.finmamba.nonflow.NonFlowRequest;
@@ -61,7 +62,7 @@ public class NonFlowOperationsServiceImpl implements NonFlowOperationsService {
 	}
 
 	@Override
-	public List<SaveNonFlowDto> getNonFlowTrades(SearchNonFlowDto nonFlowRequest) {
+	public List<NonFlowReportDto> getNonFlowTrades(SearchNonFlowDto nonFlowRequest) {
 
 		log.info("Get non flow Request | START " + Instant.now());
 		try {
@@ -69,7 +70,7 @@ public class NonFlowOperationsServiceImpl implements NonFlowOperationsService {
 			 * Get non flow Request in database
 			 */
 
-			List<SaveNonFlowDto> requests = dal.getNonFlowRequest(nonFlowRequest);
+			List<NonFlowReportDto> requests = dal.getNonFlowRequest(nonFlowRequest);
 
 			/**
 			 * Return the list of non flow Request requests for this user to frontend

@@ -3,6 +3,7 @@ package com.finmamba.nonflow.services;
 import java.util.List;
 
 import com.finmamba.entities.transaction.NonFlow;
+import com.finmamba.models.reports.NonFlowReportDto;
 import com.finmamba.models.reports.SaveNonFlowDto;
 import com.finmamba.models.reports.SearchNonFlowDto;
 
@@ -12,7 +13,7 @@ public interface NonFlowOperationsService {
 	 */
 	public List<SaveNonFlowDto> saveNonFlowTrade(SaveNonFlowDto nonFlowModel);
 
-	public List<SaveNonFlowDto> getNonFlowTrades(SearchNonFlowDto nonFlowRequest);
+	public List<NonFlowReportDto> getNonFlowTrades(SearchNonFlowDto nonFlowRequest);
 
 	
 }
