@@ -341,7 +341,7 @@ public class OrderMatch {
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
 						if(oppositeOrderTransaction.isRequestActive()) {
-							matchedOrders.add(newOrderTransaction);
+							matchedOrders.add(oppositeOrderTransaction);
 						}
 					
 
@@ -369,7 +369,7 @@ public class OrderMatch {
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 									.findById(oppositeOrder.getOrderId()).get();
 							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(newOrderTransaction);
+								matchedOrders.add(oppositeOrderTransaction);
 							}
 						
 					}
@@ -398,7 +398,7 @@ public class OrderMatch {
 							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 									.findById(oppositeOrder.getOrderId()).get();
 							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(newOrderTransaction);
+								matchedOrders.add(oppositeOrderTransaction);
 							}
 						
 
@@ -425,7 +425,7 @@ public class OrderMatch {
 							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 									.findById(oppositeOrder.getOrderId()).get();
 							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(newOrderTransaction);
+								matchedOrders.add(oppositeOrderTransaction);
 							}
 						
 
@@ -458,7 +458,7 @@ public class OrderMatch {
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
 						if(oppositeOrderTransaction.isRequestActive()) {
-							matchedOrders.add(newOrderTransaction);
+							matchedOrders.add(oppositeOrderTransaction);
 						}
 					
 
@@ -487,7 +487,7 @@ public class OrderMatch {
 							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 									.findById(oppositeOrder.getOrderId()).get();
 							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(newOrderTransaction);
+								matchedOrders.add(oppositeOrderTransaction);
 							}
 						
 					}
@@ -517,7 +517,7 @@ public class OrderMatch {
 							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 									.findById(oppositeOrder.getOrderId()).get();
 							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(newOrderTransaction);
+								matchedOrders.add(oppositeOrderTransaction);
 							}
 						
 					}
@@ -543,7 +543,7 @@ public class OrderMatch {
 							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 									.findById(oppositeOrder.getOrderId()).get();
 							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(newOrderTransaction);
+								matchedOrders.add(oppositeOrderTransaction);
 							}
 						
 

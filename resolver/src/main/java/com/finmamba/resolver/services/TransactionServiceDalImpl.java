@@ -789,10 +789,12 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	@Override
 	public HttpResponseModel intiateMatchingAlgorithms(MatchingTable order) {
 		try {
-			match.matchRequest(order);
+			 
+			
 			
 			return HttpResponseModel.builder()
 					.message("Matching all your buy sell orders. Please wait ... ")
+					.data(match.matchRequest(order))
 					.build();
 
 		} catch (Exception e) {
