@@ -15,6 +15,9 @@ public class TransactionDto implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 
+
+	private Long id;
+	
 	private ProductDto product;
 
 	private EventTypeDto eventType;
