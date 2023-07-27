@@ -272,94 +272,111 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	@Transactional
 	public HttpResponseModel findInOutForTransaction(String transactionId, String institutionId) throws EntityNotFound {
 
-		logTimeUpdate("findInOutForTransaction", "START");
+		try {
+			logTimeUpdate("findInOutForTransaction", "START");
 
-		Type listType;
+			Type listType;
 
-		List<CounterpartyTransactionDetails> listAwaitingOrders = new ArrayList<>();
+			List<CounterpartyTransactionDetails> listAwaitingOrders = new ArrayList<>();
 
-		com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
 
-		com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
 
-		com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
+			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
 
-		com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
+			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
 
-		com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
+			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
 
-		com.finmamba.entities.staticdata.EventType outEventType = eventTypeRepository.getById(2L);
+			com.finmamba.entities.staticdata.EventType outEventType = eventTypeRepository.getById(2L);
 
-		com.finmamba.entities.staticdata.EventType outResponse = eventTypeRepository.getById(4L);
+			com.finmamba.entities.staticdata.EventType outResponse = eventTypeRepository.getById(4L);
 
-		com.finmamba.entities.staticdata.EventType outNegotiation = eventTypeRepository.getById(6L);
+			com.finmamba.entities.staticdata.EventType outNegotiation = eventTypeRepository.getById(6L);
 
-		com.finmamba.entities.staticdata.EventType outReject = eventTypeRepository.getById(8L);
+			com.finmamba.entities.staticdata.EventType outReject = eventTypeRepository.getById(8L);
 
-		List<com.finmamba.entities.staticdata.EventType> inEvents = new ArrayList<>();
+			List<com.finmamba.entities.staticdata.EventType> inEvents = new ArrayList<>();
 
-		inEvents.add(inEventType);
+			inEvents.add(inEventType);
 
-		inEvents.add(inNegotiation);
+			inEvents.add(inNegotiation);
 
-		List<com.finmamba.entities.staticdata.EventType> outEvents = new ArrayList<>();
+			List<com.finmamba.entities.staticdata.EventType> outEvents = new ArrayList<>();
 
-		outEvents.add(outEventType);
+			outEvents.add(outEventType);
 
-		outEvents.add(outNegotiation);
+			outEvents.add(outNegotiation);
 
-		outEvents.add(outReject);
+			outEvents.add(outReject);
 
-		outEvents.add(outResponse);
+			outEvents.add(outResponse);
 
-		List<com.finmamba.entities.staticdata.EventType> rejects = new ArrayList<>();
+			List<com.finmamba.entities.staticdata.EventType> rejects = new ArrayList<>();
 
-		rejects.add(inReject);
+			rejects.add(inReject);
 
-		List<com.finmamba.entities.staticdata.EventType> confirmed = new ArrayList<>();
+			List<com.finmamba.entities.staticdata.EventType> confirmed = new ArrayList<>();
 
-		confirmed.add(inResponse);
+			confirmed.add(inResponse);
 
-		List<CounterpartyTransactionDetails> inTransactions = counterPartyTransactionRepository
-				.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
-						institutionalEntityRepository.getById(Long.valueOf(institutionId)), inEvents, true);
+			List<CounterpartyTransactionDetails> inTransactions = counterPartyTransactionRepository
+					.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
+							institutionalEntityRepository.getById(Long.valueOf(institutionId)), inEvents, true);
 
-		List<CounterpartyTransactionDetails> outTransactions = counterPartyTransactionRepository
-				.findAllBySourceIdAndEventTypeInAndIsRequestActive(
-						institutionalEntityRepository.getById(Long.valueOf(institutionId)), outEvents, true);
+			List<CounterpartyTransactionDetails> outTransactions = counterPartyTransactionRepository
+					.findAllBySourceIdAndEventTypeInAndIsRequestActive(
+							institutionalEntityRepository.getById(Long.valueOf(institutionId)), outEvents, true);
 
-		List<CounterpartyTransactionDetails> rejectedTransactions = counterPartyTransactionRepository
-				.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
-						institutionalEntityRepository.getById(Long.valueOf(institutionId)), rejects, true);
+			List<CounterpartyTransactionDetails> rejectedTransactions = counterPartyTransactionRepository
+					.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
+							institutionalEntityRepository.getById(Long.valueOf(institutionId)), rejects, true);
 
-		List<CounterpartyTransactionDetails> confirmedTransactions = counterPartyTransactionRepository
-				.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
-						institutionalEntityRepository.getById(Long.valueOf(institutionId)), confirmed, true);
+			List<CounterpartyTransactionDetails> confirmedTransactions = counterPartyTransactionRepository
+					.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
+							institutionalEntityRepository.getById(Long.valueOf(institutionId)), confirmed, true);
 
-		TransactionDetail parentTransaction = transactionRepository.findById(Long.valueOf(transactionId)).get();
+			TransactionDetail parentTransaction = transactionRepository.findById(Long.valueOf(transactionId)).get();
 
-		if (parentTransaction.getSource().getId() == Long.valueOf(institutionId)) {
-			// BuySide
-			listType = new TypeToken<List<BuySideTransactionDto>>() {
-			}.getType();
-		} else {
-			// SellSide
-			listType = new TypeToken<List<SellSideTransactionDto>>() {
-			}.getType();
+			if (parentTransaction.getSource().getId() == Long.valueOf(institutionId)) {
+				// BuySide
+				listType = new TypeToken<List<BuySideTransactionDto>>() {
+				}.getType();
+			} else {
+				// SellSide
+				listType = new TypeToken<ArrayList<SellSideTransactionDto>>() {
+				}.getType();
+			}
+
+			Map<String, Object> mapInOut = new HashMap<>();
+
+			mapInOut.put("in", modelMapper.map(inTransactions, listType));
+			mapInOut.put("out", modelMapper.map(outTransactions, listType));
+			mapInOut.put("confirm", modelMapper.map(confirmedTransactions, listType));
+			mapInOut.put("reject", modelMapper.map(rejectedTransactions, listType));
+			mapInOut.put("awaiting", modelMapper.map(listAwaitingOrders, listType));
+
+			logTimeUpdate("findInOutForTransaction", "END");
+
+			// Publish request to be displayed on broker view
+			return HttpResponseModel.builder().data(mapInOut).build();
+		} catch (Exception e) {
+			Map<String, Object> mapInOut = new HashMap<>();
+
+			mapInOut.put("in", Collections.emptyList());
+			mapInOut.put("out", Collections.emptyList());
+			mapInOut.put("confirm", Collections.emptyList());
+			mapInOut.put("reject", Collections.emptyList());
+			mapInOut.put("awaiting", Collections.emptyList());
+			
+			logTimeUpdate("findInOutForTransaction", "END");
+			
+			return HttpResponseModel.builder().data(mapInOut)
+					.message(e.getMessage())
+					.build();
+
 		}
-
-		Map<String, Object> mapInOut = new HashMap<>();
-
-		mapInOut.put("in", modelMapper.map(inTransactions, listType));
-		mapInOut.put("out", modelMapper.map(outTransactions, listType));
-		mapInOut.put("confirm", modelMapper.map(confirmedTransactions, listType));
-		mapInOut.put("reject", modelMapper.map(rejectedTransactions, listType));
-		mapInOut.put("awaiting", modelMapper.map(listAwaitingOrders, listType));
-
-		logTimeUpdate("findInOutForTransaction", "END");
-
-		// Publish request to be displayed on broker view
-		return HttpResponseModel.builder().data(mapInOut).build();
 
 	}
 

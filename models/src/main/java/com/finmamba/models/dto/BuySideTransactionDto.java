@@ -6,23 +6,17 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+
 public class BuySideTransactionDto implements Serializable{private static final long serialVersionUID = 1L;
 private Long id;
 
-private ProductDto product;
-
-private DirectionDto direction;
-
-private CurrencyDto baseCurrency;
-
-private CurrencyDto quoteCurrency;
-
-private BigDecimal buyAmount;
-
-private BigDecimal sellAmount;
 
 private BigDecimal destinationOutright;
 

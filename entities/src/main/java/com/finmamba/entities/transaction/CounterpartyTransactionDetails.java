@@ -39,6 +39,10 @@ public class CounterpartyTransactionDetails implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 	
+//	{"transactionId", "sourceId" ,"destinationId" ,"isRequestActive","buySideSpread" ,"sellSideSpread","brokerCommissionIsPip","buySideBrokerageCurrency","sellSideBrokerageCurrency"
+//	,"sellSideBrokerageBaseCurrency","buySideBrokerageBaseCurrency","buySideBaseAmount","sellSideBaseAmount",	
+//	}
+	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "id")

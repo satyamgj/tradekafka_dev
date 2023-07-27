@@ -1,5 +1,6 @@
 package com.finmamba.resolver.operations;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -7,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -273,6 +275,15 @@ public class CounterPartyOperation implements Operation {
 
 				CounterpartyTransactionDetails transaction = counterPartyTransactionRepository
 						.save(counterPartyOperation);
+				
+				CounterpartyTransactionDetails bankTransaction = new CounterpartyTransactionDetails();
+				
+
+		        copyPropertiesExclude(counterPartyOperation, bankTransaction, "serialVersionUID");
+				
+				bankTransaction.setEventType(eventTypeRepository.getById(ApplicationConstants.Event.OUT_REQUEST.getEventId()));
+				
+				counterPartyTransactionRepository.save(bankTransaction);
 				
 				//initiate Matching algo
 //				NewOrder newOrder = NewOrder.builder().askingRate(counterPartyOperation.getClientOutright())
@@ -1338,5 +1349,43 @@ public class CounterPartyOperation implements Operation {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
 
+    // Helper method to copy properties from one object to another excluding specified properties
+    private static void copyPropertiesExclude(Object source, Object destination, String... excludeProperties) {
+        Class<?> sourceClass = source.getClass();
+        Class<?> destinationClass = destination.getClass();
+
+        // Get all fields from the source class
+        Field[] sourceFields = sourceClass.getDeclaredFields();
+
+        for (Field field : sourceFields) {
+            // Skip fields that are in the exclude list
+            if (contains(excludeProperties, field.getName())) {
+                continue;
+            }
+
+            // Copy the value from the source field to the destination field
+            try {
+                field.setAccessible(true);
+                Field destinationField = destinationClass.getDeclaredField(field.getName());
+                destinationField.setAccessible(true);
+                destinationField.set(destination, field.get(source));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Helper method to check if an array contains a specific string
+    private static boolean contains(String[] arr, String targetValue) {
+        for (String s : arr) {
+            if (s.equals(targetValue)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
+
+
