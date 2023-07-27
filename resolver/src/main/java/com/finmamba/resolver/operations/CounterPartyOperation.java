@@ -276,14 +276,147 @@ public class CounterPartyOperation implements Operation {
 				CounterpartyTransactionDetails transaction = counterPartyTransactionRepository
 						.save(counterPartyOperation);
 				
-				CounterpartyTransactionDetails bankTransaction = new CounterpartyTransactionDetails();
+				//same order for bank
 				
+				CounterpartyTransactionDetails bankTransaction = CounterpartyTransactionDetails.builder()
 
-		        copyPropertiesExclude(counterPartyOperation, bankTransaction, "serialVersionUID");
+						.transactionId(transactionRepository.findByTransactionId(quoteRequestDto.getTransactionId()))
+						
+						.buyCcy(transactionRepository.findByTransactionId(quoteRequestDto.getTransactionId()).getBaseCurrency())
+						
+						.sellCcy(transactionRepository.findByTransactionId(quoteRequestDto.getTransactionId()).getQuoteCurrency())
+
+						.sourceId(institutionalEntityRepository.getById(quoteRequestDto.getSource().getId()))
+
+						.destinationId(institutionalEntityRepository.getById(broker.getId()))
+
+						.directionId(directionRepository.findById(quoteRequestDto.getBuySellDirection().getId()).get())
+
+						.eventType(eventTypeRepository.getById(ApplicationConstants.Event.OUT_REQUEST.getEventId()))
+
+						.bankBuyAmount(quoteRequestDto.getBuyAmount()).bankSellAmount(quoteRequestDto.getSellAmount())
+
+						.clientOutright(quoteRequestDto.getDestinationOutright()).isRequestActive(true)
+
+						.createdBy(userRepository.getById(quoteRequestDto.getCreatedBy().getId()))
+
+						// .isPartial(quoteRequestDto.getIsPartial())
+
+						.requestInitiatedBy(institutionalEntityRepository.getById(quoteRequestDto.getSource().getId()))
+
+						.build();
+
+				if (brokerConfiguration != null) {
+
+					bankTransaction.setBrokerCommissionIsPip(brokerConfiguration.getIsPipOrAbsolute());
+
+					if (brokerConfiguration.getIsPipOrAbsolute()) { // i.e pips
+
+						bankTransaction.setBuySideSpread(brokerConfiguration.getDefaultSpreadBuy());
+						bankTransaction.setSellSideSpread(brokerConfiguration.getDefaultSpreadSell());
+
+						BigDecimal defaultSpread = new BigDecimal(spread); // Setting spread to default = 0.0001
+
+						// calculating commission
+						BigDecimal buyCommission = bankTransaction.getBankBuyAmount()
+								.multiply(brokerConfiguration.getDefaultSpreadBuy()).multiply(defaultSpread);
+
+						// calculating commission
+						BigDecimal sellCommission = bankTransaction.getBankSellAmount()
+								.multiply(brokerConfiguration.getDefaultSpreadBuy()).multiply(defaultSpread);
+
+						bankTransaction.setCalculatedBuyCommission(buyCommission);
+
+						bankTransaction.setCalculatedSellCommission(sellCommission);
+
+						bankTransaction.setBuySideBrokerageCurrency(
+								currencyRepository.getById(quoteRequestDto.getBaseCurrency().getId()));
+
+						bankTransaction.setSellSideBrokerageCurrency(
+								currencyRepository.getById(quoteRequestDto.getQuoteCurrency().getId()));
+
+					} else {
+
+						BigDecimal conversionRate = new BigDecimal(defaultConversionRate);
+
+						bankTransaction.setBuySideConversionRate(conversionRate);
+
+						bankTransaction.setSellSideConversionRate(conversionRate);
+
+						bankTransaction.setBuySideSpread(brokerConfiguration.getBuySideAbsoluteCommission());
+
+						bankTransaction.setSellSideSpread(brokerConfiguration.getSellSideAbsoluteCommission());
+
+						bankTransaction
+								.setBuySideBrokerageCurrency(brokerConfiguration.getBuyCommissionCurrency());
+
+						bankTransaction
+								.setSellSideBrokerageCurrency(brokerConfiguration.getSellCommissionCurrency());
+
+						bankTransaction.setBuySideBaseAmount(brokerConfiguration.getBuySideBaseCommissionValue());
+
+						bankTransaction
+								.setSellSideBaseAmount(brokerConfiguration.getSellSideBaseCommissionValue());
+
+						bankTransaction.setBuySideBrokerageBaseCurrency(
+								brokerConfiguration.getBuySideBaseCommissionCurrency());
+
+						bankTransaction.setSellSideBrokerageBaseCurrency(
+								brokerConfiguration.getSellSideBaseCommissionCurrency());
+
+						BigDecimal buyCommission = bankTransaction.getBankBuyAmount().multiply(conversionRate)
+								.multiply(brokerConfiguration.getBuySideAbsoluteCommission())
+								.divide(brokerConfiguration.getBuySideBaseCommissionValue());
+
+						BigDecimal sellCommission = bankTransaction.getBankSellAmount().multiply(conversionRate)
+								.multiply(brokerConfiguration.getSellSideAbsoluteCommission())
+								.divide(brokerConfiguration.getSellSideBaseCommissionValue());
+
+						bankTransaction.setCalculatedBuyCommission(buyCommission);
+
+						bankTransaction.setCalculatedSellCommission(sellCommission);
+
+					}
+
+				} else {
+
+					bankTransaction.setBrokerCommissionIsPip(false); // Default to false i.e absolute
+
+					BigDecimal conversionRate = new BigDecimal(defaultConversionRate);
+
+					bankTransaction.setBuySideConversionRate(conversionRate);
+
+					bankTransaction.setSellSideConversionRate(conversionRate);
+
+					bankTransaction.setBuySideSpread(defaultValue);
+
+					bankTransaction.setSellSideSpread(defaultValue);
+
+					bankTransaction.setBuySideBrokerageCurrency(currencyRepository.getById(1L));
+
+					bankTransaction.setSellSideBrokerageCurrency(currencyRepository.getById(1L));
+
+					bankTransaction.setBuySideBaseAmount(defaultValue);
+
+					bankTransaction.setSellSideBaseAmount(defaultValue);
+
+					bankTransaction.setBuySideBrokerageBaseCurrency(currencyRepository.getById(1L));
+
+					bankTransaction.setSellSideBrokerageBaseCurrency(currencyRepository.getById(1L));
+
+					BigDecimal buyCommission = bankTransaction.getBankBuyAmount().multiply(conversionRate)
+							.multiply(defaultValue).divide(defaultValue);
+
+					BigDecimal sellCommission = bankTransaction.getBankSellAmount().multiply(conversionRate)
+							.multiply(defaultValue).divide(defaultValue);
+
+					bankTransaction.setCalculatedBuyCommission(buyCommission);
+
+					bankTransaction.setCalculatedSellCommission(sellCommission);
+
+				}
 				
-				bankTransaction.setEventType(eventTypeRepository.getById(ApplicationConstants.Event.OUT_REQUEST.getEventId()));
-				
-				counterPartyTransactionRepository.save(bankTransaction);
+				counterPartyTransactionRepository.save(bankTransaction);	
 				
 				//initiate Matching algo
 //				NewOrder newOrder = NewOrder.builder().askingRate(counterPartyOperation.getClientOutright())

@@ -274,6 +274,10 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 		try {
 			logTimeUpdate("findInOutForTransaction", "START");
+			
+			TransactionDetail transaction = transactionRepository.getById(Long.valueOf(transactionId));
+			
+			InstitutionalEntity institution = institutionalEntityRepository.getById(Long.valueOf(institutionId));
 
 			Type listType;
 
@@ -322,20 +326,31 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			confirmed.add(inResponse);
 
 			List<CounterpartyTransactionDetails> inTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
-							institutionalEntityRepository.getById(Long.valueOf(institutionId)), inEvents, true);
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(
+							institution, inEvents,
+							transaction,
+							true);
 
 			List<CounterpartyTransactionDetails> outTransactions = counterPartyTransactionRepository
-					.findAllBySourceIdAndEventTypeInAndIsRequestActive(
-							institutionalEntityRepository.getById(Long.valueOf(institutionId)), outEvents, true);
+					.findAllBySourceIdAndEventTypeInAndTransactionIdAndIsRequestActive(
+							institution, outEvents, 
+							transaction,
+							true);
 
 			List<CounterpartyTransactionDetails> rejectedTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
-							institutionalEntityRepository.getById(Long.valueOf(institutionId)), rejects, true);
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(
+							institution
+							, rejects,
+							transaction,
+
+							true);
 
 			List<CounterpartyTransactionDetails> confirmedTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndIsRequestActive(
-							institutionalEntityRepository.getById(Long.valueOf(institutionId)), confirmed, true);
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(
+							institution, confirmed,
+							transaction,
+
+							true);
 
 			TransactionDetail parentTransaction = transactionRepository.findById(Long.valueOf(transactionId)).get();
 

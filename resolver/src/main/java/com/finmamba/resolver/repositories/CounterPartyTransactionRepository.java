@@ -36,12 +36,16 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 																		
 																		Pageable pageRequest);	
 	
-	List<CounterpartyTransactionDetails> findAllByDestinationIdAndEventTypeInAndIsRequestActive(InstitutionalEntity destination,
-			Collection<EventType> events, Boolean isRequestActive);
+	List<CounterpartyTransactionDetails> findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(InstitutionalEntity destination,
+			Collection<EventType> events,
+			TransactionDetail transaction,
+			Boolean isRequestActive);
 	
 	
-	List<CounterpartyTransactionDetails> findAllBySourceIdAndEventTypeInAndIsRequestActive(InstitutionalEntity source,
-			Collection<EventType> events, Boolean isRequestActive);
+	List<CounterpartyTransactionDetails> findAllBySourceIdAndEventTypeInAndTransactionIdAndIsRequestActive(InstitutionalEntity source,
+			Collection<EventType> events,
+			TransactionDetail transaction,
+			Boolean isRequestActive);
 	
 	List<CounterpartyTransactionDetails> findAllByDestinationId(InstitutionalEntity destination,
 			Pageable pageRequest);	
