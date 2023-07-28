@@ -47,10 +47,11 @@ public class ReportController {
 			returnList = reportsOperationsService.processTradeReportRequest(tradeReport);
 			
 			  if(returnList!=null && returnList.size()>0) {
-			  returnList.get(0).setTotalCount(Long.valueOf(returnList.size())); }
+			  returnList.get(0).setTotalCount(Long.valueOf(returnList.size()));
+			  returnList.get(0).setHttpStatus(HttpStatus.OK.value());
+			  }
 			 
 			log.info("Request received for getting trade reports");
-			returnList.get(0).setHttpStatus(HttpStatus.OK.value());
 			return new ResponseEntity<>(returnList, HttpStatus.OK);
 		} catch (Exception e) {
 			e.printStackTrace();
