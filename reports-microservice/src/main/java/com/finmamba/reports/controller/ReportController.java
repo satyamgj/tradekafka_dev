@@ -1,6 +1,5 @@
 package com.finmamba.reports.controller;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.text.DateFormat;
@@ -8,7 +7,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 
 import javax.servlet.http.HttpServletResponse;
 

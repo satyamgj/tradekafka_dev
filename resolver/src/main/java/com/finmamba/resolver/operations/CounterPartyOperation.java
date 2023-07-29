@@ -2,8 +2,10 @@ package com.finmamba.resolver.operations;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,11 +15,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.finmamba.entities.configuration.EntityConfigurationSettings;
+import com.finmamba.entities.staticdata.Currency;
+import com.finmamba.entities.staticdata.Direction;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
+import com.finmamba.entities.staticdata.Product;
+import com.finmamba.entities.staticdata.Tenor;
 import com.finmamba.entities.transaction.ConfirmedOrderDetails;
 import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
+import com.finmamba.entities.transaction.Customer;
 import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.entities.transaction.TransactionDetail;
+import com.finmamba.entities.transaction.User;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.dto.CounterpartyTransactionDto;
 import com.finmamba.models.dto.CurrencyDto;
@@ -27,6 +35,7 @@ import com.finmamba.models.dto.SellSideTransactionDto;
 import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.transaction.ConfirmRequest;
 import com.finmamba.models.transaction.TransactionRequest;
+import com.finmamba.resolver.exception.EntityNotFound;
 import com.finmamba.resolver.repositories.ConfirmationRepostory;
 import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 import com.finmamba.resolver.repositories.CurrencyRepository;
@@ -34,6 +43,7 @@ import com.finmamba.resolver.repositories.DirectionRepository;
 import com.finmamba.resolver.repositories.EntityConfigurationRepository;
 import com.finmamba.resolver.repositories.EventTypeRepository;
 import com.finmamba.resolver.repositories.InstitutionalEntityRepository;
+import com.finmamba.resolver.repositories.ProductRepository;
 import com.finmamba.resolver.repositories.QuoteRequestRepository;
 import com.finmamba.resolver.repositories.TransactionRepository;
 import com.finmamba.resolver.repositories.UserRepository;
@@ -42,6 +52,7 @@ import com.finmamba.resolver.services.Matching;
 import com.finmamba.resolver.services.OrderMatch;
 import com.finmamba.resolver.services.TransactionServiceDal;
 import com.finmamba.resolver.util.ApplicationConstants;
+import com.finmamba.resolver.util.UniqueIdentifierGenerator;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -96,6 +107,9 @@ public class CounterPartyOperation implements Operation {
 	
 	@Autowired
 	OrderMatch orderMatch;
+	
+	@Autowired
+	ProductRepository productRepository;
 
 	String spread = "0.0001"; // Default: HARDCODED
 
@@ -830,79 +844,190 @@ public class CounterPartyOperation implements Operation {
 			 * 
 			 */
 			InstitutionalEntity source = institutionalEntityRepository.getById(request.getSource());
+			
+			List<CounterpartyTransactionDetails> prevBankRequestTransactions = counterPartyTransactionRepository
+					.findBysourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+
+							institutionalEntityRepository.getById(request.getDestination()),
+							institutionalEntityRepository.getById(request.getSource()), true,
+							transactionRepository.findById(request.getTransactionId()).get());
+
+			for (CounterpartyTransactionDetails transactions : prevBankRequestTransactions) {
+				if (transactions != null) {
+
+					transactions.setRequestActive(false);
+					counterPartyTransactionRepository.save(transactions);
+				} else {
+					log.info("Not out coming request from bank. Seems to be on brokers side.");
+				}
+
+			}
 
 			if (source.getEntityType().getId() == 2L) {
 
 				log.info("Transaction triggered by Broker. Hence deactivating banks incoming request");
 
-				List<CounterpartyTransactionDetails> prevTransactions = counterPartyTransactionRepository
-						.findBysourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+//				List<CounterpartyTransactionDetails> prevTransactions = counterPartyTransactionRepository
+//						.findBysourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+//
+//								institutionalEntityRepository.getById(request.getDestination()),
+//								source, true,
+//								transactionRepository.findById(request.getTransactionId()).get());
+//
+//				for (CounterpartyTransactionDetails transactions : prevTransactions) {
+//					if (transactions != null && (transactions.getEventType().getId() == 2L
+//							|| transactions.getEventType().getId() == 4L || transactions.getEventType().getId() == 6L
+//							|| transactions.getEventType().getId() == 8L)) {
+//
+//						transactions.setRequestActive(false);
+//						counterPartyTransactionRepository.save(transactions);
+//					} else {
+//						log.info("Not out coming request from bank. Seems to be on brokers side.");
+//					}
+//
+//				}
+//
+//				log.info("setting previous incoming request of bank as false");
 
-								institutionalEntityRepository.getById(request.getDestination()),
-								institutionalEntityRepository.getById(request.getSource()), true,
-								transactionRepository.findById(request.getTransactionId()).get());
+				CounterpartyTransactionDetails transactionForBroker = addToCounterPartyTransactionTable(
+						ApplicationConstants.Event.OUT_NEGOTIATION.getEventId(), request);
+				counterPartyTransactionRepository.save(transactionForBroker);
 
-				for (CounterpartyTransactionDetails transactions : prevTransactions) {
-					if (transactions != null && (transactions.getEventType().getId() == 2L
-							|| transactions.getEventType().getId() == 4L || transactions.getEventType().getId() == 6L
-							|| transactions.getEventType().getId() == 8L)) {
+				CounterpartyTransactionDetails transactionForBank = addToCounterPartyTransactionTable(
+						ApplicationConstants.Event.IN_NEGOTIATION.getEventId(), request);
+				counterPartyTransactionRepository.save(transactionForBank);
+				
+				InstitutionalEntity broker = institutionalEntityRepository.getById(request.getDestination());
 
-						transactions.setRequestActive(false);
-						counterPartyTransactionRepository.save(transactions);
-					} else {
-						log.info("Not out coming request from bank. Seems to be on brokers side.");
-					}
+				// Publish on kafka topic
+				String kafkaTopic = broker.getRealmName() + "." + broker.getClientName() + "." + broker.getClientRoleName()
+						+ "." + broker.getGroupName();
 
-				}
+				log.info("Pushing on kafka topic: " + kafkaTopic);
 
-				log.info("setting previous incoming request of bank as false");
+				CounterpartyTransactionDto inResponse = modelMapper.map(transactionForBroker,
+						CounterpartyTransactionDto.class);
 
-				List<CounterpartyTransactionDetails> prevBankRequestTransactions = counterPartyTransactionRepository
-						.findBysourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+				List<CounterpartyTransactionDto> inResponseList = new ArrayList<>();
+				inResponseList.add(inResponse);
 
-								institutionalEntityRepository.getById(request.getDestination()),
-								institutionalEntityRepository.getById(request.getSource()), true,
-								transactionRepository.findById(request.getTransactionId()).get());
+				kafkaProducerService.send(inResponseList, kafkaTopic, null, null);
 
-				for (CounterpartyTransactionDetails transactions : prevBankRequestTransactions) {
-					if (transactions != null) {
-
-						transactions.setRequestActive(false);
-						counterPartyTransactionRepository.save(transactions);
-					} else {
-						log.info("Not out coming request from bank. Seems to be on brokers side.");
-					}
-
-				}
+				
+		
 
 			} else {
-				log.info("Transaction triggered by Bank. Hence deactivating banks incoming request");
+				log.info("Transaction triggered by Bank.");
 
-				List<CounterpartyTransactionDetails> prevTransactions = counterPartyTransactionRepository
-						.findBysourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+				log.info("Creating new Transaction and forwarding to single broker");
+				
+				TransactionDetail parentTransaction = transactionRepository.findById(request.getTransactionId()).get();
+				
 
-								institutionalEntityRepository.getById(request.getDestination()),
-								institutionalEntityRepository.getById(request.getSource()), true,
-								transactionRepository.findById(request.getTransactionId()).get());
+				// All dates
+				LocalDateTime localDateTime = LocalDateTime.now();
+				Date requestTimeStamp = Date.valueOf(localDateTime.toLocalDate());
 
-				for (CounterpartyTransactionDetails transactions : prevTransactions) {
-					if (transactions != null) {
+				// User
 
-						transactions.setRequestActive(false);
-						counterPartyTransactionRepository.save(transactions);
-					} else {
-						log.info("Not out coming request from bank. Seems to be on brokers side.");
-					}
+				User userId = userRepository.getById(Long.valueOf(request.getCreatedBy()));
 
+				/*
+				 * Prepare a request template
+				 */
+				TransactionDetail negotiaionRequest = TransactionDetail.builder()	
+						.product(parentTransaction.getProduct())
+						.buyAmount(parentTransaction.getBuyAmount())
+						.sellAmount(parentTransaction.getSellAmount())
+						.sourceOutright(parentTransaction.getSourceOutright())						
+						.destinationOutright(request.getDestinationOutright())
+						.tenorUnit(parentTransaction.getTenorUnit())
+						.source(source)
+						.baseCurrency(parentTransaction.getBaseCurrency())						
+						.quoteCurrency(parentTransaction.getQuoteCurrency())
+						.customer(null)
+						.transactionId(UniqueIdentifierGenerator.unique()) // Saved by Db halted
+						.createdAt(Instant.now()).createdBy(userId)
+						.isPartial(parentTransaction.getIsPartial())
+						.isConfirmed(false).build();
+				
+				if(parentTransaction.getBuySellDirection().getId() == 1L ) {
+					log.info("Parent Transaction was a BUY");
+					negotiaionRequest.setSpreadOutright(request.getSellSideSpread());
+					negotiaionRequest.setBuySellDirection(directionRepository.getById(2L));
+				}else {
+					log.info("Parent Transaction was a SELL");
+					negotiaionRequest.setSpreadOutright(request.getBuySideSpread());
+					negotiaionRequest.setBuySellDirection(directionRepository.getById(1L));
 				}
+
+				TransactionDetail savedRequest = quoteRequestRepository.save(negotiaionRequest);
+				
+				CounterpartyTransactionDetails negotiatedTransactionForBank = addToCounterPartyTransactionTable(
+						ApplicationConstants.Event.OUT_NEGOTIATION.getEventId(), request);
+				counterPartyTransactionRepository.save(negotiatedTransactionForBank);
+
+				CounterpartyTransactionDetails negotiatedTransactionForBroker = addToCounterPartyTransactionTable(
+						ApplicationConstants.Event.IN_NEGOTIATION.getEventId(), request);
+				counterPartyTransactionRepository.save(negotiatedTransactionForBroker);
+
+				
+				request.setTransactionId(savedRequest.getId()); //Setting transaction ID for new request.
+				
+				
+				CounterpartyTransactionDetails transactionForBank = addToCounterPartyTransactionTable(
+						ApplicationConstants.Event.OUT_REQUEST.getEventId(), request);
+				counterPartyTransactionRepository.save(transactionForBank);
+
+				CounterpartyTransactionDetails transactionForBroker = addToCounterPartyTransactionTable(
+						ApplicationConstants.Event.IN_REQUEST.getEventId(), request);
+				counterPartyTransactionRepository.save(transactionForBroker);
+				
+				if(transactionForBroker.getDestinationId().getEntityType().getId() == 2L) {
+					
+					//Since we are matching only broker orders
+					
+					MatchingTable matchingTable = MatchingTable.builder()
+							.askingRate(transactionForBroker.getClientOutright())
+							.destinationId(transactionForBroker.getDestinationId().getId())
+							.sourceId(transactionForBroker.getSourceId().getId())
+							.isPartial(transactionForBroker.getTransactionId().getIsPartial())
+							.orderId(transactionForBroker.getId())
+							.buyAmount(transactionForBroker.getBankBuyAmount())
+							.sellAmount(transactionForBroker.getBankSellAmount())
+							.direction(transactionForBroker.getDirectionId().getId())
+							.buyCurrencyId(transactionForBroker.getTransactionId().getBaseCurrency().getId())
+							.sellCurrencyId(transactionForBroker.getTransactionId().getQuoteCurrency().getId())
+							.insertionTime(new Timestamp(System.currentTimeMillis()))
+							.build();
+					
+					orderMatch.initiateMatchingAlgorithm(matchingTable);
+
+				
+				}
+				
+				counterPartyTransactionRepository.save(transactionForBroker);
+
+				
+				InstitutionalEntity broker = institutionalEntityRepository.getById(request.getDestination());
+
+				// Publish on kafka topic
+				String kafkaTopic = broker.getRealmName() + "." + broker.getClientName() + "." + broker.getClientRoleName()
+						+ "." + broker.getGroupName();
+
+				log.info("Pushing on kafka topic: " + kafkaTopic);
+
+				CounterpartyTransactionDto inResponse = modelMapper.map(transactionForBroker,
+						CounterpartyTransactionDto.class);
+
+				List<CounterpartyTransactionDto> inResponseList = new ArrayList<>();
+				inResponseList.add(inResponse);
+
+				kafkaProducerService.send(inResponseList, kafkaTopic, null, null);
+				
+				
 			}
 
-			CounterpartyTransactionDetails transactionForBank = addToCounterPartyTransactionTable(
-					ApplicationConstants.Event.OUT_NEGOTIATION.getEventId(), request);
-			counterPartyTransactionRepository.save(transactionForBank);
-
-			CounterpartyTransactionDetails transactionForBroker = addToCounterPartyTransactionTable(
-					ApplicationConstants.Event.IN_NEGOTIATION.getEventId(), request);
 			
 
 			//initiate Matching algo
@@ -919,48 +1044,6 @@ public class CounterPartyOperation implements Operation {
 //			
 //			matching.initiateMatchingAlgorithm(newOrder);
 
-
-			
-			if(transactionForBroker.getDestinationId().getEntityType().getId() == 2L) {
-				
-				//Since we are matching only broker orders
-				
-				MatchingTable matchingTable = MatchingTable.builder()
-						.askingRate(transactionForBroker.getClientOutright())
-						.destinationId(transactionForBroker.getDestinationId().getId())
-						.sourceId(transactionForBroker.getSourceId().getId())
-						.isPartial(transactionForBroker.getTransactionId().getIsPartial())
-						.orderId(transactionForBroker.getId())
-						.buyAmount(transactionForBroker.getBankBuyAmount())
-						.sellAmount(transactionForBroker.getBankSellAmount())
-						.direction(transactionForBroker.getDirectionId().getId())
-						.buyCurrencyId(transactionForBroker.getTransactionId().getBaseCurrency().getId())
-						.sellCurrencyId(transactionForBroker.getTransactionId().getQuoteCurrency().getId())
-						.insertionTime(new Timestamp(System.currentTimeMillis()))
-						.build();
-				
-				orderMatch.initiateMatchingAlgorithm(matchingTable);
-
-			
-			}
-			
-			counterPartyTransactionRepository.save(transactionForBroker);
-
-			InstitutionalEntity broker = institutionalEntityRepository.getById(request.getDestination());
-
-			// Publish on kafka topic
-			String kafkaTopic = broker.getRealmName() + "." + broker.getClientName() + "." + broker.getClientRoleName()
-					+ "." + broker.getGroupName();
-
-			log.info("Pushing on kafka topic: " + kafkaTopic);
-
-			CounterpartyTransactionDto inResponse = modelMapper.map(transactionForBroker,
-					CounterpartyTransactionDto.class);
-
-			List<CounterpartyTransactionDto> inResponseList = new ArrayList<>();
-			inResponseList.add(inResponse);
-
-			kafkaProducerService.send(inResponseList, kafkaTopic, null, null);
 
 		} catch (Exception e) {
 			logException("insertOutNegotiation", e.getLocalizedMessage());
