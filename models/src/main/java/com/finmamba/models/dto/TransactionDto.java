@@ -3,6 +3,8 @@ package com.finmamba.models.dto;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+import javax.annotation.Nullable;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,7 +22,7 @@ public class TransactionDto implements Serializable{
 	
 	private ProductDto product;
 
-	private EventTypeDto eventType;
+	//private EventTypeDto eventType;
 
 	private DirectionDto buySellDirection;
 
@@ -45,10 +47,6 @@ public class TransactionDto implements Serializable{
 	private boolean isRequestActive;
 
 	private String transactionId;
-
-	private CustomerDto customer;
-	
-	private int httpStatus;
-	
+		
 	private UserDto createdBy;
 }

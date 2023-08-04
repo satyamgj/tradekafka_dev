@@ -48,7 +48,7 @@ public class CounterpartyTransactionDetails implements Serializable {
 	@Column(name = "id")
 	private Long id;
 
-	@OneToOne
+	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "transaction_id", nullable = false)
 	private TransactionDetail transactionId;
 	

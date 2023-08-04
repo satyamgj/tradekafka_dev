@@ -101,7 +101,7 @@ public class TransactionDetail implements Serializable, Cloneable {
 	private String transactionId;
 	
 	@OneToOne
-	@JoinColumn(name = "customer_id", nullable = false)
+	@JoinColumn(name = "customer_id", nullable = true)
 	private Customer customer;
 
 	
