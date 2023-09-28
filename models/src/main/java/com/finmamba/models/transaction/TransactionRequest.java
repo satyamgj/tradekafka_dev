@@ -4,12 +4,14 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class TransactionRequest implements Serializable{
 
 	private static final long serialVersionUID = 1L;
@@ -66,4 +68,6 @@ public class TransactionRequest implements Serializable{
 	private Long legInitiatedBy; //counterpartyTransactionDetails
 	
 	private Long direction;
+	
+	private Boolean sendToBrokers; //True if broadcast to all brokers : False if broadcast to all banks.
 }

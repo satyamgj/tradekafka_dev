@@ -114,4 +114,7 @@ public class TransactionDetail implements Serializable, Cloneable {
 	
 	@Column(name = "created_at", nullable = false, insertable = false)
 	private Instant createdAt;
+	
+	@Column(name="parent_transaction_id",nullable = false)
+	private Long parentTransactionId;
 }

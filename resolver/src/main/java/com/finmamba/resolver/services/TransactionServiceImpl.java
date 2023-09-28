@@ -25,6 +25,7 @@ import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.request.UserProfileModel;
 import com.finmamba.models.transaction.ConfirmRequest;
+import com.finmamba.models.transaction.LatestQuoteDetailRequest;
 import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.models.transaction.TransactionRequest;
@@ -155,7 +156,8 @@ public class TransactionServiceImpl implements TransactionService {
 	public HttpResponseModel findConfirmedOrdersForBroker(String institutionName, int page, int pageSize) {
 		log.info("Fetching Confirmed requests for route id: " + institutionName);
 		try {
-			return dal.findConfirmedOrdersForBroker(institutionName, page, pageSize);
+			HttpResponseModel response = dal.findConfirmedOrdersForBroker(institutionName, page, pageSize);
+			return response;
 		} catch (EntityNotFound e) {
 			// TODO Auto-generated catch block
 			return HttpResponseModel.builder().data(Collections.emptyList()).message("Exception occured in findConfirmedOrdersForInstitution: "
@@ -302,7 +304,8 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public HttpResponseModel findSellInRequestsForBroker(String institutionId, int page, int pageSize) {
 		try {
-			return dal.findSellInOrdersForBroker(institutionId, page, pageSize);
+			HttpResponseModel response = dal.findSellInOrdersForBroker(institutionId, page, pageSize);
+			return response;
 			
 		} catch (Exception e) {
 			return HttpResponseModel.builder()
@@ -319,6 +322,30 @@ public class TransactionServiceImpl implements TransactionService {
 		} catch (Exception e) {
 			return HttpResponseModel.builder()
 					.message("Something went wrong while matching. Please try again! " + e.getMessage())
+					.build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel getLatestQuoteBySource(LatestQuoteDetailRequest latestQuoteDetailRequest) {
+		try {
+			return dal.getLatestQuoteBySource(latestQuoteDetailRequest);
+		} catch (Exception e) {
+			return HttpResponseModel.builder()
+					.data(Collections.emptyList())
+					.message("Something went wrong while fetching getLatestQuoteBySource. Please try again! " + e.getMessage())
+					.build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel findInOutForTransactionForBroker(String transactionName, String institutionId) {
+		try {
+			return dal.findInOutForTransactionForBroker(transactionName, institutionId);
+		} catch (Exception e) {
+			return HttpResponseModel.builder()
+					.data(Collections.emptyList())
+					.message("Something went wrong while fetching findInOutForTransactionForBroker. Please try again! " + e.getMessage())
 					.build();
 		}
 	}

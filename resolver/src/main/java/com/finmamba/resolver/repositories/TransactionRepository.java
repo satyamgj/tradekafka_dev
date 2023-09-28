@@ -21,4 +21,6 @@ public interface TransactionRepository extends JpaRepository<TransactionDetail, 
 	
 	int countBySourceAndIsConfirmed(InstitutionalEntity source, Boolean isConfirmed);
 	
+	TransactionDetail findByParentTransactionIdAndSource(Long parentTransactionId, InstitutionalEntity source);
+	
 }

@@ -1,5 +1,10 @@
 package com.finmamba.entities.transaction;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -13,8 +18,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-
-import org.hibernate.annotations.Type;
 
 import com.finmamba.entities.staticdata.Currency;
 import com.finmamba.entities.staticdata.Direction;
@@ -153,4 +156,16 @@ public class CounterpartyTransactionDetails implements Serializable {
 	@JoinColumn(name="bank_buy_ccy_id")
 	private Currency buyCcy;
 	
+	@Column(name="via_broker")
+	private Boolean viaBroker=false;
+	
+	public static <T> T deepCopy(T object) throws IOException, ClassNotFoundException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+        objectOutputStream.writeObject(object);
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+        return (T) objectInputStream.readObject();
+    }
 }

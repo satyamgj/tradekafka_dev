@@ -23,8 +23,8 @@ import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
 import com.finmamba.models.dto.InstitutionalEntityDto;
-import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.request.UserProfileModel;
+import com.finmamba.models.transaction.LatestQuoteDetailRequest;
 import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.resolver.services.TransactionService;
 
@@ -95,6 +95,25 @@ public class TransactionDataController {
 		}
 	}
 
+	/**	
+	 * Get all IN/OUT requests for the Institution
+	 * @param transactionID and institutionId
+	 * @return
+	 */
+	@GetMapping("/getInOutConfirmedForBroker/{transactionId}")
+	public ResponseEntity<Object> getInOutForTransactionForBroker(
+			@PathVariable(name = "transactionId", required = true) String transactionId,
+			@RequestParam(name = "institutionId", required = true) String institutionId) {
+		
+		try {
+			return new ResponseEntity<>(transactionService.findInOutForTransactionForBroker(transactionId, institutionId),
+					HttpStatus.OK);
+		} catch (Exception e) {
+			e.getStackTrace();
+			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
+		
+		}
+	}
 
 	/**
 	 * Get all IN requests for the Institution
@@ -254,6 +273,18 @@ public class TransactionDataController {
 			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
+	
+	@PostMapping("/getSourceLatestQuote")
+	public ResponseEntity<Object> getLatestQuote(@RequestBody LatestQuoteDetailRequest latestQuoteDetailRequest){
+		try {
+			return new ResponseEntity<Object>(transactionService.getLatestQuoteBySource(latestQuoteDetailRequest),HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	
 	
 	private void logTimeUpdate(String functionName, String status) {
 		log.info(functionName + " " + status + " " + Instant.now());

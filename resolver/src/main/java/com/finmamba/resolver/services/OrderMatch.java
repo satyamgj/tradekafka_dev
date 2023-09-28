@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -14,6 +16,7 @@ import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 import com.finmamba.resolver.repositories.MatchingRepository;
+import com.finmamba.resolver.repositories.TransactionRepository;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,10 +33,16 @@ public class OrderMatch {
 	@Autowired
 	MatchingRepository matchingRepository;
 
+	@Autowired
+	TransactionRepository transactionRepository;
+
 	BigDecimal zero = new BigDecimal(0);
 
 	public static final Long BUY = 1L;
 	public static final Long SELL = 2L;
+
+	private static final Long IN_REQUEST = 1L;
+	private static final Long IN_NEGOTIATION = 5L;
 
 	@Async
 	public void initiateMatchingAlgorithm(MatchingTable order) {
@@ -46,20 +55,42 @@ public class OrderMatch {
 		matchingRepository.save(order);
 
 		if (order.getDirection() == 1) {
-			List<MatchingTable> sellOrders = matchingRepository
-					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyId(order.getDestinationId(), SELL,
-							order.getBuyCurrencyId(), order.getSellCurrencyId());
-			matchOrders(sellOrders, order);
+
+	
+
+				List<MatchingTable> sellOrders = matchingRepository
+						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+								order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+								IN_NEGOTIATION, order.getTransactionId());
+
+				List<MatchingTable> inRequestOrders = matchingRepository
+						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
+								order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+								IN_REQUEST);
+
+				matchOrders(Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
+						order);
+
 
 		} else {
-			List<MatchingTable> buyOrders = matchingRepository
-					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyId(order.getDestinationId(), BUY,
-							order.getBuyCurrencyId(), order.getSellCurrencyId());
-			matchOrders(buyOrders, order);
+			
+
+				List<MatchingTable> sellOrders = matchingRepository
+						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+								order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+								IN_NEGOTIATION, order.getTransactionId());
+
+				List<MatchingTable> inRequestOrders = matchingRepository
+						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
+								order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+								IN_REQUEST);
+
+				matchOrders(Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
+						order);
+			
 		}
 	}
 
-	
 	public List<CounterpartyTransactionDetails> matchRequest(MatchingTable order) {
 
 		log.info("Received an individual order request for matching");
@@ -69,18 +100,54 @@ public class OrderMatch {
 		}
 
 		if (order.getDirection() == 1) {
-			List<MatchingTable> sellOrders = matchingRepository
-					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyId(order.getDestinationId(), SELL,
-							order.getBuyCurrencyId(), order.getSellCurrencyId());
-			return fetchMatchedOrders(sellOrders, order);
+
+
+				List<MatchingTable> sellOrders = matchingRepository
+						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+								order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+								IN_NEGOTIATION, order.getTransactionId());
+
+				List<MatchingTable> inRequestOrders = matchingRepository
+						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
+								order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+								IN_REQUEST);
+
+				return fetchMatchedOrders(
+						Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
+						order);
+
 
 		} else {
-			List<MatchingTable> buyOrders = matchingRepository
-					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyId(order.getDestinationId(), BUY,
-							order.getBuyCurrencyId(), order.getSellCurrencyId());
-			return fetchMatchedOrders(buyOrders, order);
-		}
 		
+				List<MatchingTable> sellOrders = matchingRepository
+						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+								order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+								IN_NEGOTIATION, order.getTransactionId());
+
+				List<MatchingTable> inRequestOrders = matchingRepository
+						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
+								order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+								IN_REQUEST);
+
+				return fetchMatchedOrders(
+						Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
+						order);
+
+		}
+
+//		if (order.getDirection() == 1) {
+//			List<MatchingTable> sellOrders = matchingRepository
+//					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyId(order.getDestinationId(), SELL,
+//							order.getBuyCurrencyId(), order.getSellCurrencyId());
+//			return fetchMatchedOrders(sellOrders, order);
+//
+//		} else {
+//			List<MatchingTable> buyOrders = matchingRepository
+//					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyId(order.getDestinationId(), BUY,
+//							order.getBuyCurrencyId(), order.getSellCurrencyId());
+//			return fetchMatchedOrders(buyOrders, order);
+//		}
+
 	}
 
 	@Async
@@ -91,8 +158,6 @@ public class OrderMatch {
 
 		CounterpartyTransactionDetails newOrderTransaction = counterPartyTransactionRepository
 				.findById(newOrder.getOrderId()).get();
-		
-		List<CounterpartyTransactionDetails>matchedOrders = new ArrayList<>();
 
 		for (MatchingTable oppositeOrder : oppositeOrders) {
 
@@ -102,7 +167,6 @@ public class OrderMatch {
 			// Iterator<NewOrder> iterator = oppositeOrderList.iterator();
 
 			// NewOrder oppositeOrder = iterator.next();
-			
 
 			// Check if new Order buy condition and asking rate comparison
 			if (newOrder.getDirection() == 1 && (oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == -1
@@ -123,8 +187,6 @@ public class OrderMatch {
 							+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
 					kafkaProducerService.send(matchMessage, topic, null, null);
-					
-					
 
 				}
 				// case 2: only buy order is partial allowed and not sell order not
@@ -147,7 +209,6 @@ public class OrderMatch {
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
 
-						
 					}
 
 				}
@@ -171,8 +232,6 @@ public class OrderMatch {
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
 
-						
-
 					}
 				}
 				// case 4: both partial fill not allowed
@@ -192,8 +251,6 @@ public class OrderMatch {
 								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
-						
-						
 
 					}
 
@@ -207,23 +264,6 @@ public class OrderMatch {
 
 				// Case 1: both isPartial true
 				if (newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-
-					String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-							+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-							+ oppositeOrder.getAskingRate();
-
-					String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-
-					log.info(matchMessage);
-
-					log.info("Sending to " + "realm_"
-							+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
-
-					kafkaProducerService.send(matchMessage, topic, null, null);
-
-					
-
-
 				}
 				// case 2: only buy order is partial allowed and not sell order not
 				else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
@@ -245,7 +285,6 @@ public class OrderMatch {
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
 
-						
 					}
 
 				}
@@ -269,8 +308,6 @@ public class OrderMatch {
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
 
-
-						
 					}
 				}
 				// case 4: both partial fill not allowed
@@ -290,8 +327,6 @@ public class OrderMatch {
 								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
-						
-						
 
 					}
 
@@ -301,21 +336,17 @@ public class OrderMatch {
 
 		}
 
-
 	}
 
-	
-	public List<CounterpartyTransactionDetails> fetchMatchedOrders(List<MatchingTable> oppositeOrders, MatchingTable newOrder) {
+	public List<CounterpartyTransactionDetails> fetchMatchedOrders(List<MatchingTable> oppositeOrders,
+			MatchingTable newOrder) {
 
 		CounterpartyTransactionDetails newOrderTransaction = counterPartyTransactionRepository
 				.findById(newOrder.getOrderId()).get();
-		
-		List<CounterpartyTransactionDetails>matchedOrders = new ArrayList<>();
+
+		List<CounterpartyTransactionDetails> matchedOrders = new ArrayList<>();
 
 		for (MatchingTable oppositeOrder : oppositeOrders) {
-
-			
-			
 
 			// Check if new Order buy condition and asking rate comparison
 			if (newOrder.getDirection() == 1 && (oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == -1
@@ -336,14 +367,12 @@ public class OrderMatch {
 							+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
 					kafkaProducerService.send(matchMessage, topic, null, null);
-					
-					
-						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
-								.findById(oppositeOrder.getOrderId()).get();
-						if(oppositeOrderTransaction.isRequestActive()) {
-							matchedOrders.add(oppositeOrderTransaction);
-						}
-					
+
+					CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+							.findById(oppositeOrder.getOrderId()).get();
+					if (oppositeOrderTransaction.isRequestActive()) {
+						matchedOrders.add(oppositeOrderTransaction);
+					}
 
 				}
 				// case 2: only buy order is partial allowed and not sell order not
@@ -367,11 +396,11 @@ public class OrderMatch {
 						kafkaProducerService.send(matchMessage, topic, null, null);
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
-									.findById(oppositeOrder.getOrderId()).get();
-							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(oppositeOrderTransaction);
-							}
-						
+								.findById(oppositeOrder.getOrderId()).get();
+						if (oppositeOrderTransaction.isRequestActive()) {
+							matchedOrders.add(oppositeOrderTransaction);
+						}
+
 					}
 
 				}
@@ -395,12 +424,11 @@ public class OrderMatch {
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
 
-							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
-									.findById(oppositeOrder.getOrderId()).get();
-							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(oppositeOrderTransaction);
-							}
-						
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
+						if (oppositeOrderTransaction.isRequestActive()) {
+							matchedOrders.add(oppositeOrderTransaction);
+						}
 
 					}
 				}
@@ -421,13 +449,12 @@ public class OrderMatch {
 								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
-						
-							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
-									.findById(oppositeOrder.getOrderId()).get();
-							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(oppositeOrderTransaction);
-							}
-						
+
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
+						if (oppositeOrderTransaction.isRequestActive()) {
+							matchedOrders.add(oppositeOrderTransaction);
+						}
 
 					}
 
@@ -455,13 +482,11 @@ public class OrderMatch {
 
 					kafkaProducerService.send(matchMessage, topic, null, null);
 
-						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
-								.findById(oppositeOrder.getOrderId()).get();
-						if(oppositeOrderTransaction.isRequestActive()) {
-							matchedOrders.add(oppositeOrderTransaction);
-						}
-					
-
+					CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+							.findById(oppositeOrder.getOrderId()).get();
+					if (oppositeOrderTransaction.isRequestActive()) {
+						matchedOrders.add(oppositeOrderTransaction);
+					}
 
 				}
 				// case 2: only buy order is partial allowed and not sell order not
@@ -484,12 +509,12 @@ public class OrderMatch {
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
 
-							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
-									.findById(oppositeOrder.getOrderId()).get();
-							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(oppositeOrderTransaction);
-							}
-						
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
+						if (oppositeOrderTransaction.isRequestActive()) {
+							matchedOrders.add(oppositeOrderTransaction);
+						}
+
 					}
 
 				}
@@ -513,13 +538,12 @@ public class OrderMatch {
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
 
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
+						if (oppositeOrderTransaction.isRequestActive()) {
+							matchedOrders.add(oppositeOrderTransaction);
+						}
 
-							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
-									.findById(oppositeOrder.getOrderId()).get();
-							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(oppositeOrderTransaction);
-							}
-						
 					}
 				}
 				// case 4: both partial fill not allowed
@@ -539,13 +563,12 @@ public class OrderMatch {
 								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
-						
-							CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
-									.findById(oppositeOrder.getOrderId()).get();
-							if(oppositeOrderTransaction.isRequestActive()) {
-								matchedOrders.add(oppositeOrderTransaction);
-							}
-						
+
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
+						if (oppositeOrderTransaction.isRequestActive()) {
+							matchedOrders.add(oppositeOrderTransaction);
+						}
 
 					}
 
@@ -556,6 +579,7 @@ public class OrderMatch {
 		}
 
 		return matchedOrders;
-		
+
 	}
+
 }

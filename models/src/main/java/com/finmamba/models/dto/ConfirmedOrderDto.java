@@ -20,7 +20,7 @@ public class ConfirmedOrderDto implements Serializable {
 
 	private InstitutionalEntityDto brokerId;
 
-	private TransactionDto transactionId;
+	private String transactionId;
 
 	private InstitutionalEntityDto buySideId;
 

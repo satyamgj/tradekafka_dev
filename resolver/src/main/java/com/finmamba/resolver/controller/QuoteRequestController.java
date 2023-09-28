@@ -23,6 +23,7 @@ import com.finmamba.models.transaction.TransactionRequest;
 import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 import com.finmamba.resolver.repositories.TransactionRepository;
 import com.finmamba.resolver.services.TransactionService;
+import com.finmamba.resolver.services.TransactionServiceImpl;
 import com.finmamba.resolver.util.ApplicationConstants;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class QuoteRequestController {
 
 	@Autowired
-	TransactionService transactionService;
+	TransactionServiceImpl transactionService;
 	
 	@Autowired
 	TransactionRepository transactionRepository;

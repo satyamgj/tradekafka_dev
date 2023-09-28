@@ -13,6 +13,10 @@ public interface InstitutionalEntityAssociationRepository extends JpaRepository<
 	public List<InstitutionalEntityAssociation> findDestinationEntityByWillingToBuyAndSourceEntityAndDestinationEntityNot(boolean willingToBuy,
 			InstitutionalEntity sourceEntity, InstitutionalEntity destinationEntity);
 	
+	//for fetching broker mapping
+	public List<InstitutionalEntityAssociation>findDestinationEntityByWillingToBuyAndSourceEntityAndDestinationEntityNotAndEntityType(boolean willingToBuy,
+			InstitutionalEntity sourceEntity, InstitutionalEntity destinationEntity, long entityType);
+	
 	public List<InstitutionalEntityAssociation> findDestinationEntityByWillingToBuyAndSourceEntity(boolean willingToBuy,
 			InstitutionalEntity sourceEntity);
 }

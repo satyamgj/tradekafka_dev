@@ -25,7 +25,7 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 									Boolean isRequestActive,
 									TransactionDetail transactionId);
 	
-	List<CounterpartyTransactionDetails> findBysourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+	List<CounterpartyTransactionDetails> findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
 			InstitutionalEntity source,
 			InstitutionalEntity destination,
 			Boolean isRequestActive,
@@ -40,6 +40,13 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 			Collection<EventType> events,
 			TransactionDetail transaction,
 			Boolean isRequestActive);
+	
+	List<CounterpartyTransactionDetails> findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActiveAndSourceIdNot
+	(InstitutionalEntity destination,
+			Collection<EventType> events,
+			TransactionDetail transaction,
+			Boolean isRequestActive,
+			InstitutionalEntity source);
 	
 	
 	List<CounterpartyTransactionDetails> findAllBySourceIdAndEventTypeInAndTransactionIdAndIsRequestActive(InstitutionalEntity source,
@@ -72,4 +79,7 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 						Boolean isActive,
 						Collection<EventType> events
 				);
-	}
+
+
+	
+}

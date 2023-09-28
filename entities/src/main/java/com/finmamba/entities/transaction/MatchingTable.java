@@ -70,6 +70,11 @@ public class MatchingTable implements Serializable{
 	@Column(name="insertion_time")
 	private Timestamp insertionTime;
 
+	@Column(name="event_type")
+	private Long eventType;
+	
+	@Column(name="transaction_id")
+	private Long transactionId;
 
 
 }

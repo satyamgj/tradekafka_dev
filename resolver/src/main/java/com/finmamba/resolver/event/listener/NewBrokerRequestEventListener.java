@@ -35,9 +35,11 @@ public class NewBrokerRequestEventListener implements ApplicationListener<NewBro
 
 		log.info("Inside NewBrokerRequest for: " + event.getBrokerDispatchRequest().getSource());
 		
+		//As LegInitiatedBy tells us the source of the quote.
 		
 		Boolean result = counterPartyOperation.dispatchRequestToCounterparties(event.getBrokerDispatchRequest()
-				, event.getBrokerDispatchRequest().getRequestInitiatedBy() );
+				, event.getBrokerDispatchRequest().getLegInitiatedBy() ); 
+		
 		
 		
 		log.info("NewBrokerRequest end with status: " + result );

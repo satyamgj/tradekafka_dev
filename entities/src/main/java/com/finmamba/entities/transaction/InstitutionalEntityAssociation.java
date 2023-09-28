@@ -51,4 +51,7 @@ public class InstitutionalEntityAssociation implements Serializable {
 	
 	@Column(name = "willing_to_sell")
 	private boolean willingToSell;
+	
+	@Column(name="entity_type")
+	private Long entityType;
 }

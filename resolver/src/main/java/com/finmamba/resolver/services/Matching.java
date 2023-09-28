@@ -79,7 +79,6 @@ public class Matching {
 	public void matchOrders(Map<BigDecimal, List<NewOrder>> oppositeOrders, NewOrder newOrder) {
 
 		List<BigDecimal> oppositePrices = new ArrayList<>(oppositeOrders.keySet());
-//		List<NewOrder> matchedOrders = new ArrayList<>();
 
 		CounterpartyTransactionDetails newOrderTransaction = counterPartyTransactionRepository
 				.findById(newOrder.getOrderId()).get();
@@ -90,10 +89,10 @@ public class Matching {
 
 			// Iterate over the list using an iterator to safely remove elements
 			Iterator<NewOrder> iterator = oppositeOrderList.iterator();
+			
 			while (iterator.hasNext()) {
 				NewOrder oppositeOrder = iterator.next();
 			
-				// checking whether destination is same then only matching
 				CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 						.findById(oppositeOrder.getOrderId()).get();
 				
@@ -101,6 +100,7 @@ public class Matching {
 					iterator.remove();
 				}
 				else {
+					// checking whether destination is same then only matching
 					if (newOrderTransaction.getDestinationId().getId() == oppositeOrderTransaction.getDestinationId()
 							.getId() && oppositeOrderTransaction.isRequestActive()
 							&& newOrderTransaction.getSourceId().getId() != oppositeOrderTransaction.getSourceId().getId() ) {

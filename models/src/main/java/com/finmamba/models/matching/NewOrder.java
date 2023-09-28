@@ -28,5 +28,6 @@ public class NewOrder implements Serializable {
 	private BigDecimal buyAmount;
 	private BigDecimal sellAmount;
 	private Timestamp insertionTime;
+	private Long orderEvent;
 
 }

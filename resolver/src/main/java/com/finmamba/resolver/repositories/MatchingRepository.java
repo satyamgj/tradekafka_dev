@@ -12,4 +12,11 @@ public interface MatchingRepository extends JpaRepository<MatchingTable, Long> {
 
 	List<MatchingTable> findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyId(Long destination,
 			Long direction, Long buyCurrencyId, Long sellCurrencyId);
+
+	List<MatchingTable> findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(Long destination,
+			Long direction, Long buyCurrencyId, Long sellCurrencyId, Long eventTypeId);
+
+	List<MatchingTable> findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+			Long destination, Long direction, Long buyCurrencyId, Long sellCurrencyId, Long eventTypeId,
+			Long transactionId);
 }

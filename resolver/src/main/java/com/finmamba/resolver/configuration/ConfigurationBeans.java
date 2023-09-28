@@ -36,6 +36,7 @@ public class ConfigurationBeans {
 		return new ModelMapper();
 	}
 	
+
 	//@Bean(name = "applicationEventMulticaster")
     public ApplicationEventMulticaster simpleApplicationEventMulticaster() {
         SimpleApplicationEventMulticaster eventMulticaster =
@@ -54,5 +55,7 @@ public class ConfigurationBeans {
                 .cacheDefaults(cacheConfiguration)
                 .build();
     }
+    
+    
 
 }

@@ -6,6 +6,7 @@ import com.finmamba.entities.staticdata.InstitutionalEntity;
 import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.dto.QuoteRequestDto;
+import com.finmamba.models.transaction.LatestQuoteDetailRequest;
 import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.resolver.exception.EntityNotFound;
@@ -19,12 +20,14 @@ public interface TransactionServiceDal {
 
 	public List<InstitutionalEntity> findEligibleBrokers(long sourceId) throws EntityNotFound; // visited
 
-	public List<InstitutionalEntity> findEligibleCounterparties(long source) throws EntityNotFound; // visited
+	public List<InstitutionalEntity> findEligibleCounterparties(long source, Boolean isBroadcastToBrokers) throws EntityNotFound; // visited
 
 	HttpResponseModel findActiveRequestsForInstitution(String institutionName, int page, int pageSize)
 			throws EntityNotFound; // visited
 
 	HttpResponseModel findInOutForTransaction(String transactionId, String institutionName) throws EntityNotFound; // visted
+	
+	HttpResponseModel findInOutForTransactionForBroker(String transactionId, String institutionName) throws EntityNotFound; 
 
 	HttpResponseModel findInForInstitution(String institutionName, int page, int pageSize) throws EntityNotFound; // visited
 
@@ -41,5 +44,6 @@ public interface TransactionServiceDal {
 	HttpResponseModel findDepthOfCcyPairByInstituionId(MarketDepthRequest marketDepthRequest);
 	
 	HttpResponseModel intiateMatchingAlgorithms(MatchingTable order);
-
+	
+	HttpResponseModel getLatestQuoteBySource(LatestQuoteDetailRequest latestQuoteDetailRequest);
 }
