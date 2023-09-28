@@ -647,8 +647,6 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			events.add(inAwait);
 //
 			
-			Type counterPartyTransaction = new TypeToken<List<CounterpartyTransactionDto>>() {
-			}.getType();
 			
 			List<CounterPartyTransactionFetchingDto> buyTransactionList = new ArrayList();
 
@@ -840,11 +838,17 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	public HttpResponseModel intiateMatchingAlgorithms(MatchingTable order) {
 		try {
 			 
+			List<CounterpartyTransactionDetails> matchingOrders = match.matchRequest(order);
 			
+			List<CounterPartyTransactionFetchingDto>matchingTransaction = new ArrayList<>();
+			
+			for(CounterpartyTransactionDetails buyOrders:matchingOrders){
+				matchingTransaction.add(modelMapper.map(buyOrders, CounterPartyTransactionFetchingDto.class));
+			}
 			
 			return HttpResponseModel.builder()
 					.message("Matching all your buy sell orders. Please wait ... ")
-					.data(match.matchRequest(order))
+					.data(matchingTransaction)
 					.build();
 
 		} catch (Exception e) {
