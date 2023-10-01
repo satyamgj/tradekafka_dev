@@ -39,11 +39,13 @@ public class CounterPartyTransactionFetchingDto implements Serializable {
 
 	private TenorDto tenorUnit;
 	
-	private InstitutionalEntityDto source;
+	private InstitutionalEntityDto sourceId;
+	
+	private InstitutionalEntityDto destinationId;
 	
 	private boolean isRequestActive;
 	
-//	private EventTypeDto eventType;
+	private EventTypeDto eventType;
 		
 //	private UserDto createdBy;
 	

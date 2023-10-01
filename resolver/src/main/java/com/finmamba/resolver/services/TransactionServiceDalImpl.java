@@ -958,6 +958,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			Map<String, Object> mapInOut = new HashMap<>();
 
+			mapInOut.put("in", modelMapper.map(inTransactions, listType));
 			mapInOut.put("out", modelMapper.map(outTransactions, listType));
 			mapInOut.put("confirm", modelMapper.map(confirmedTransactions, listType));
 			mapInOut.put("reject", modelMapper.map(rejectedTransactions, listType));

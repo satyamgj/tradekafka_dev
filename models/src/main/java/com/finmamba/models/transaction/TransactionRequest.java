@@ -17,6 +17,8 @@ public class TransactionRequest implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 
+	private Long counterpartyDetailId;
+	
 	private BigDecimal buyAmount;
 
 	private BigDecimal sellAmount;
@@ -61,10 +63,10 @@ public class TransactionRequest implements Serializable{
 	
 	private BigDecimal sellSideConversionRate;
 
-	private Long responseInitiatedBy;
-	
-	private Long requestInitiatedBy; //Transaction
-	
+//	private Long responseInitiatedBy;
+//	
+//	private Long requestInitiatedBy; //Transaction
+//	
 	private Long legInitiatedBy; //counterpartyTransactionDetails
 	
 	private Long direction;
