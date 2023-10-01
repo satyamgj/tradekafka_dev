@@ -825,6 +825,25 @@ public class CounterPartyOperation implements Operation {
 				for (CounterpartyTransactionDetails transactions : prevTransactions) {
 					if (transactions != null) {
 						transactions.setRequestActive(false);
+//						responseInitiatedBy = transactions.getResponseInitiatedBy(); //Setting response Initiated by
+					} else {
+						log.info("No previous transaction found!");
+					}
+
+					counterPartyTransactionRepository.save(transactions);
+				}
+				
+				List<CounterpartyTransactionDetails> prevBrokerTransactions = counterPartyTransactionRepository
+						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+
+								
+								institutionalEntityRepository.getById(request.getDestination()),
+								institutionalEntityRepository.getById(request.getSource()),true,
+								transactionRepository.findById(request.getTransactionId()).get());
+
+				for (CounterpartyTransactionDetails transactions : prevBrokerTransactions) {
+					if (transactions != null) {
+						transactions.setRequestActive(false);
 						responseInitiatedBy = transactions.getResponseInitiatedBy(); //Setting response Initiated by
 					} else {
 						log.info("No previous transaction found!");
