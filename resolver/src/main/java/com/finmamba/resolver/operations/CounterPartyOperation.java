@@ -665,7 +665,9 @@ public class CounterPartyOperation implements Operation {
 				.build();
 		
 		if(eventId == ApplicationConstants.Event.IN_REQUEST.getEventId()
-			) {
+			||
+			eventId == ApplicationConstants.Event.OUT_REQUEST.getEventId()
+				) {
 			newTransactionDetails.setResponseInitiatedBy(null);
 
 		}else {
@@ -674,7 +676,8 @@ public class CounterPartyOperation implements Operation {
 				log.info("hence not modifying response intiatedBy");
 				
 			}else {
-				if(newTransactionDetails.getResponseInitiatedBy()==null) {
+				if(counterPartyTransactionRepository.findById(counterpartyTransactionDetails.getCounterpartyDetailId()).get()
+						.getResponseInitiatedBy()==null) {
 					newTransactionDetails.setResponseInitiatedBy
 					(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()));
 				}else {
@@ -833,24 +836,9 @@ public class CounterPartyOperation implements Operation {
 					counterPartyTransactionRepository.save(transactions);
 				}
 				
-				List<CounterpartyTransactionDetails> prevBrokerTransactions = counterPartyTransactionRepository
-						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
-
-								
-								institutionalEntityRepository.getById(request.getDestination()),
-								institutionalEntityRepository.getById(request.getSource()),true,
-								transactionRepository.findById(request.getTransactionId()).get());
-
-				for (CounterpartyTransactionDetails transactions : prevBrokerTransactions) {
-					if (transactions != null) {
-						transactions.setRequestActive(false);
-						responseInitiatedBy = transactions.getResponseInitiatedBy(); //Setting response Initiated by
-					} else {
-						log.info("No previous transaction found!");
-					}
-
-					counterPartyTransactionRepository.save(transactions);
-				}
+				
+				
+				responseInitiatedBy = counterPartyTransactionRepository.getById(request.getCounterpartyDetailId()).getResponseInitiatedBy();
 				
 				List<CounterpartyTransactionDetails> prevNegotiationTransaction = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(responseInitiatedBy,
