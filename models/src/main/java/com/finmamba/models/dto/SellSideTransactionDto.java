@@ -50,7 +50,7 @@ private BigDecimal sellSideBaseAmount;
 @JsonProperty("brokerageConversionRate")
 private BigDecimal sellSideConversionRate;
 
-//private Instant createdAt;
+private Instant createdAt;
 
 //@JsonProperty("direction")
 //private DirectionDto direction;

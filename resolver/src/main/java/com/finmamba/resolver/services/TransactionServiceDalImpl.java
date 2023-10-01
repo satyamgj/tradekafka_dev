@@ -350,17 +350,18 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 							true);
 
-			TransactionDetail parentTransaction = transactionRepository.findById(Long.valueOf(transactionId)).get();
 
-			if (parentTransaction.getSource().getId() == Long.valueOf(institutionId)) {
-				// BuySide
-				listType = new TypeToken<List<BuySideTransactionDto>>() {
-				}.getType();
-			} else {
-				// SellSide
-				listType = new TypeToken<ArrayList<SellSideTransactionDto>>() {
-				}.getType();
-			}
+//			if (parentTransaction.getSource().getId() == Long.valueOf(institutionId)) {
+//				// BuySide
+//				
+//			} else {
+//				// SellSide
+//				listType = new TypeToken<ArrayList<SellSideTransactionDto>>() {
+//				}.getType();
+//			}
+			
+			listType = new TypeToken<List<CounterPartyTransactionFetchingDto>>() {
+			}.getType();
 
 			Map<String, Object> mapInOut = new HashMap<>();
 
@@ -941,21 +942,22 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 							true);
 
-			TransactionDetail parentTransaction = transactionRepository.findById(Long.valueOf(transactionId)).get();
 
-			if (parentTransaction.getSource().getId() == Long.valueOf(institutionName)) {
-				// BuySide
-				listType = new TypeToken<List<BuySideTransactionDto>>() {
-				}.getType();
-			} else {
-				// SellSide
-				listType = new TypeToken<ArrayList<SellSideTransactionDto>>() {
-				}.getType();
-			}
+//			if (parentTransaction.getSource().getId() == Long.valueOf(institutionName)) {
+//				// BuySide
+//				listType = new TypeToken<List<BuySideTransactionDto>>() {
+//				}.getType();
+//			} else {
+//				// SellSide
+//				listType = new TypeToken<ArrayList<SellSideTransactionDto>>() {
+//				}.getType();
+//			}
+			
+			listType = new TypeToken<List<CounterPartyTransactionFetchingDto>>() {
+			}.getType();
 
 			Map<String, Object> mapInOut = new HashMap<>();
 
-			mapInOut.put("in", modelMapper.map(inTransactions, listType));
 			mapInOut.put("out", modelMapper.map(outTransactions, listType));
 			mapInOut.put("confirm", modelMapper.map(confirmedTransactions, listType));
 			mapInOut.put("reject", modelMapper.map(rejectedTransactions, listType));
