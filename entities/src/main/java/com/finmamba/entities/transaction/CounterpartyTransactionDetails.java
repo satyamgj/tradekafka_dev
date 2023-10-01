@@ -1,10 +1,5 @@
 package com.finmamba.entities.transaction;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -38,7 +33,7 @@ import lombok.NoArgsConstructor;
 		name = "counterparty_transaction_details"
 		)
 @Builder
-public class CounterpartyTransactionDetails implements Serializable {
+public class CounterpartyTransactionDetails implements Serializable, Cloneable {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -159,13 +154,9 @@ public class CounterpartyTransactionDetails implements Serializable {
 	@Column(name="via_broker")
 	private Boolean viaBroker=false;
 	
-	public static <T> T deepCopy(T object) throws IOException, ClassNotFoundException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-        objectOutputStream.writeObject(object);
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-        ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-        return (T) objectInputStream.readObject();
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
+
 }

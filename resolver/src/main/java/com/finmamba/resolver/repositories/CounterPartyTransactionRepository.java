@@ -80,6 +80,13 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 						Collection<EventType> events
 				);
 
+	List<CounterpartyTransactionDetails> findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionIdAndEventTypeInOrderByIdDesc(
+			InstitutionalEntity source,
+			InstitutionalEntity destination,
+			Boolean isRequestActive,
+			TransactionDetail transactionId,
+			Collection<EventType> events
+			);
 
 	
 }

@@ -28,7 +28,7 @@ public class NewCounterPartyResponseEventListener implements ApplicationListener
 
 	@Autowired
 	KafkaProducerService kafkaProducerService;
-	
+
 	@Autowired
 	InstitutionalEntityRepository institutionalEntityRepository;
 
@@ -37,7 +37,7 @@ public class NewCounterPartyResponseEventListener implements ApplicationListener
 
 	@Autowired
 	TransactionServiceDal dal;
-	
+
 	@Autowired
 	CounterPartyOperation counterPartyOperation;
 
@@ -45,26 +45,25 @@ public class NewCounterPartyResponseEventListener implements ApplicationListener
 	public void onApplicationEvent(NewCounterpartyResponse event) {
 
 		log.info("Inside NewCounterpartyResponse");
-		
-		
+
 		TransactionRequest request = event.getRequest();
 
-		log.info( "Sending to counter party Id: " + request.getDestination());
-		
+		log.info("Sending to counter party Id: " + request.getDestination());
+
 		int responseType = event.getResponseType();
-		
+
 		log.info("responseType: " + responseType);
-		
+
 		if (responseType == 4) { // OUT_RESPONSE
-			 counterPartyOperation.insertOutResponse(request); 
-		} else if(responseType == 6) // NEGOTIATE
+			counterPartyOperation.insertOutResponse(request);
+		} else if (responseType == 6) // NEGOTIATE
 		{
 			counterPartyOperation.insertOutNegotiation(request);
-		}else if (responseType == 3) // REJECT 
+		} else if (responseType == 3) // REJECT
 		{
-			counterPartyOperation.insertOutReject(request); 
+			counterPartyOperation.insertOutReject(request);
 		}
-		
+
 	}
 
 }

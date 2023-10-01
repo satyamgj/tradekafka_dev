@@ -194,7 +194,6 @@ public class TransactionDataController {
 			@RequestParam(name = "pageSize", required = false, defaultValue = "10") int pageSize
 			) {
 
-		Map<String, List<CounterPartyTransactionFetchingDto>> requests = new HashMap<>();
 
 		
 		try {

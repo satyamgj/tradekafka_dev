@@ -25,7 +25,7 @@ public interface Operation {
 	
 	public void insertOutResponse(TransactionRequest request);
 	
-	public void insertOutNegotiation(TransactionRequest request);
+	public void insertOutNegotiation(TransactionRequest request) throws CloneNotSupportedException;
 	
 	public void insertOutReject(TransactionRequest request);
 	

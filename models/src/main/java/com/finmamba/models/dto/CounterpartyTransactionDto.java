@@ -74,6 +74,6 @@ public class CounterpartyTransactionDto implements Serializable {
 
 	private BigDecimal sellSideConversionRate;
 
-	private Instant createdAt;
+	private String createdAt;
 
 }

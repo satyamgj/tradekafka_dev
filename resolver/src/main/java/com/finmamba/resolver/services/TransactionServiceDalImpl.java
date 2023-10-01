@@ -142,20 +142,20 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 	@Autowired
 	ConfirmationRepostory confirmationRepostory;
-	
+
 	@Autowired
 	OrderMatch match;
 
 //	@Autowired
 //	HistoryWriter historyWriter;
-	
+
 	private static final Long BANK = 1L;
 	private static final Long BROKER = 2L;
-	
-	Direction getBuyObject(){
+
+	Direction getBuyObject() {
 		return directionRepository.getById(1L);
 	}
-	
+
 	Direction getSellObject() {
 		return directionRepository.getById(2L);
 	}
@@ -279,9 +279,9 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 		try {
 			logTimeUpdate("findInOutForTransaction", "START");
-			
+
 			TransactionDetail transaction = transactionRepository.getById(Long.valueOf(transactionId));
-			
+
 			InstitutionalEntity institution = institutionalEntityRepository.getById(Long.valueOf(institutionId));
 
 			Type listType;
@@ -331,28 +331,21 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			confirmed.add(inResponse);
 
 			List<CounterpartyTransactionDetails> inTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(
-							institution, inEvents,
-							transaction,
-							true);
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(institution, inEvents,
+							transaction, true);
 
 			List<CounterpartyTransactionDetails> outTransactions = counterPartyTransactionRepository
-					.findAllBySourceIdAndEventTypeInAndTransactionIdAndIsRequestActive(
-							institution, outEvents, 
-							transaction,
-							true);
+					.findAllBySourceIdAndEventTypeInAndTransactionIdAndIsRequestActive(institution, outEvents,
+							transaction, true);
 
 			List<CounterpartyTransactionDetails> rejectedTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(
-							institution
-							, rejects,
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(institution, rejects,
 							transaction,
 
 							true);
 
 			List<CounterpartyTransactionDetails> confirmedTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(
-							institution, confirmed,
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(institution, confirmed,
 							transaction,
 
 							true);
@@ -389,12 +382,10 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			mapInOut.put("confirm", Collections.emptyList());
 			mapInOut.put("reject", Collections.emptyList());
 			mapInOut.put("awaiting", Collections.emptyList());
-			
+
 			logTimeUpdate("findInOutForTransaction", "END");
-			
-			return HttpResponseModel.builder().data(mapInOut)
-					.message(e.getMessage())
-					.build();
+
+			return HttpResponseModel.builder().data(mapInOut).message(e.getMessage()).build();
 
 		}
 
@@ -453,11 +444,9 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			InstitutionalEntity entity = findInstitutionalEntityFromId(Long.valueOf(institutionId));
 
 			List<ConfirmedOrderDetails> confirmationList = confirmationRepostory.findAllBybrokerId(entity);
-			
+
 			Type confirmOrders = new TypeToken<List<ConfirmedOrderDto>>() {
 			}.getType();
-			
-		
 
 			return HttpResponseModel.builder().data(modelMapper.map(confirmationList, confirmOrders)).build();
 		} catch (NumberFormatException e) {
@@ -486,26 +475,25 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	}
 
 	@Override
-	public List<InstitutionalEntity> findEligibleCounterparties(long source, Boolean isBroadcastToBrokers ) throws EntityNotFound {
+	public List<InstitutionalEntity> findEligibleCounterparties(long source, Boolean isBroadcastToBrokers)
+			throws EntityNotFound {
 
 		List<InstitutionalEntity> eligibleSellers = new ArrayList<>();
-		
+
 		List<InstitutionalEntityAssociation> institutionalEntityAssociations = new ArrayList<>();
 
 		InstitutionalEntity sourceEntity = institutionalEntityRepository.findById(source)
 				.orElseThrow(() -> new EntityNotFound("Source not found"));
 
-		if(isBroadcastToBrokers) {
+		if (isBroadcastToBrokers) {
 			institutionalEntityAssociations = institutionalEntityAssociationRepository
-					.findDestinationEntityByWillingToBuyAndSourceEntityAndDestinationEntityNotAndEntityType(true, sourceEntity,
-							sourceEntity,BROKER);
-		}else {
+					.findDestinationEntityByWillingToBuyAndSourceEntityAndDestinationEntityNotAndEntityType(true,
+							sourceEntity, sourceEntity, BROKER);
+		} else {
 			institutionalEntityAssociations = institutionalEntityAssociationRepository
-					.findDestinationEntityByWillingToBuyAndSourceEntityAndDestinationEntityNotAndEntityType(true, sourceEntity,
-							sourceEntity,BANK);
+					.findDestinationEntityByWillingToBuyAndSourceEntityAndDestinationEntityNotAndEntityType(true,
+							sourceEntity, sourceEntity, BANK);
 		}
-
-		
 
 		log.info("Fetched all associations for " + sourceEntity.getRealmName());
 
@@ -613,17 +601,15 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 		log.info(functionName + " " + status + " " + Instant.now());
 	}
 
-
-
 	@Override
 	public HttpResponseModel findDepthOfCcyPairByInstituionId(MarketDepthRequest marketDepthRequest) {
-		
+
 		logTimeUpdate("findDepthOfCcyPairByInstituionId", "START");
 
 		Map<String, Object> orders = new HashMap<>();
-		
+
 		try {
-			
+
 			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
 
 			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
@@ -646,49 +632,41 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			events.add(inAwait);
 //
-			
-			
+
 			List<CounterPartyTransactionFetchingDto> buyTransactionList = new ArrayList();
 
 			List<CounterPartyTransactionFetchingDto> sellTransactionList = new ArrayList();
-			
-			List<CounterpartyTransactionDetails> buyDepth = counterPartyTransactionRepository.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActiveAndEventTypeIn(
-					institutionalEntityRepository.getById(marketDepthRequest.getInstituionId()),
-					currencyRepository.getById(marketDepthRequest.getSellCurrencyId()), 
-					currencyRepository.getById(marketDepthRequest.getBuyCurrencyId()),
-					directionRepository.getById(1L)
-					, true
-					,events);
-			
-			for(CounterpartyTransactionDetails buyOrders:buyDepth){
+
+			List<CounterpartyTransactionDetails> buyDepth = counterPartyTransactionRepository
+					.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActiveAndEventTypeIn(
+							institutionalEntityRepository.getById(marketDepthRequest.getInstituionId()),
+							currencyRepository.getById(marketDepthRequest.getSellCurrencyId()),
+							currencyRepository.getById(marketDepthRequest.getBuyCurrencyId()),
+							directionRepository.getById(1L), true, events);
+
+			for (CounterpartyTransactionDetails buyOrders : buyDepth) {
 				buyTransactionList.add(modelMapper.map(buyOrders, CounterPartyTransactionFetchingDto.class));
 			}
-			
-			
+
 			orders.put("BUY", buyTransactionList);
-					
-			List<CounterpartyTransactionDetails> sellDepth = counterPartyTransactionRepository.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActiveAndEventTypeIn(
-					institutionalEntityRepository.getById(marketDepthRequest.getInstituionId()),
-					currencyRepository.getById(marketDepthRequest.getSellCurrencyId()), 
-					currencyRepository.getById(marketDepthRequest.getBuyCurrencyId()),
-					directionRepository.getById(2L)
-					, true
-					,events
-					);
-			
-			
-			for(CounterpartyTransactionDetails sellOrders:sellDepth){
+
+			List<CounterpartyTransactionDetails> sellDepth = counterPartyTransactionRepository
+					.findByDestinationIdAndSellCcyAndBuyCcyAndDirectionIdAndIsRequestActiveAndEventTypeIn(
+							institutionalEntityRepository.getById(marketDepthRequest.getInstituionId()),
+							currencyRepository.getById(marketDepthRequest.getSellCurrencyId()),
+							currencyRepository.getById(marketDepthRequest.getBuyCurrencyId()),
+							directionRepository.getById(2L), true, events);
+
+			for (CounterpartyTransactionDetails sellOrders : sellDepth) {
 				sellTransactionList.add(modelMapper.map(sellOrders, CounterPartyTransactionFetchingDto.class));
 			}
-			
-			orders.put("SELL", sellTransactionList);
-			
-			logTimeUpdate("findDepthOfCcyPairByInstituionId", "END");
 
+			orders.put("SELL", sellTransactionList);
+
+			logTimeUpdate("findDepthOfCcyPairByInstituionId", "END");
 
 			return HttpResponseModel.builder().data(orders).build();
 
-			
 		} catch (Exception e) {
 			// TODO: handle exception
 
@@ -697,14 +675,14 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			orders.put("SELL", Collections.emptyList());
 
 			return HttpResponseModel.builder().data(orders)
-					.message("Exception Occured inside method findDepthOfCcyPairByInstituionId: " + e.getMessage()).build();
+					.message("Exception Occured inside method findDepthOfCcyPairByInstituionId: " + e.getMessage())
+					.build();
 		}
 	}
 
 	@Override
 	public HttpResponseModel findBuyInOrdersForBroker(String brokerId, int page, int pageSize) throws EntityNotFound {
 		logTimeUpdate("findBuyInOrdersForBroker", "START");
-
 
 		try {
 
@@ -743,7 +721,6 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			List<CounterPartyTransactionFetchingDto> buyTransactionList = new ArrayList();
 
-
 			for (CounterpartyTransactionDetails transaction : buyTransactions) {
 
 				buyTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
@@ -753,27 +730,24 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			logTimeUpdate("findBuyInOrdersForBroker", "END");
 
 			return HttpResponseModel.builder().data(buyTransactionList)
-					.total(Integer.valueOf(String.valueOf(counterPartyTransactionRepository.countByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, buy, true, events))))
+					.total(Integer.valueOf(String.valueOf(counterPartyTransactionRepository
+							.countByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, buy, true,
+									events))))
 					.build();
 
 		} catch (Exception e) {
 			// TODO: handle exception
-
-			
 
 			return HttpResponseModel.builder().data(Collections.emptyList())
 					.message("Exception Occured inside method findBuyInOrdersForBroker: " + e.getMessage()).build();
 		}
 	}
 
-	
 	@Override
 	public HttpResponseModel findSellInOrdersForBroker(String brokerId, int page, int pageSize) throws EntityNotFound {
 		logTimeUpdate("findSellInOrdersForBroker", "START");
 
-
 		try {
-
 
 			Direction sell = directionRepository.getById(2L);
 
@@ -806,9 +780,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
 									"id"));
 
-
 			List<CounterPartyTransactionFetchingDto> sellTransactionList = new ArrayList();
-
 
 			for (CounterpartyTransactionDetails transaction : sellTransactions) {
 
@@ -816,18 +788,16 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			}
 
-			
-
 			logTimeUpdate("findSellInOrdersForBroker", "END");
 
 			return HttpResponseModel.builder().data(sellTransactionList)
-					.total(Integer.valueOf(String.valueOf(counterPartyTransactionRepository.countByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, sell, true, events))))
+					.total(Integer.valueOf(String.valueOf(counterPartyTransactionRepository
+							.countByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, sell, true,
+									events))))
 					.build();
 
 		} catch (Exception e) {
 			// TODO: handle exception
-
-			
 
 			return HttpResponseModel.builder().data(Collections.emptyList())
 					.message("Exception Occured inside method findSellInOrdersForBroker: " + e.getMessage()).build();
@@ -837,42 +807,58 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	@Override
 	public HttpResponseModel intiateMatchingAlgorithms(MatchingTable order) {
 		try {
-			 
+
 			List<CounterpartyTransactionDetails> matchingOrders = match.matchRequest(order);
-			
-			List<CounterPartyTransactionFetchingDto>matchingTransaction = new ArrayList<>();
-			
-			for(CounterpartyTransactionDetails buyOrders:matchingOrders){
+
+			List<CounterPartyTransactionFetchingDto> matchingTransaction = new ArrayList<>();
+
+			for (CounterpartyTransactionDetails buyOrders : matchingOrders) {
 				matchingTransaction.add(modelMapper.map(buyOrders, CounterPartyTransactionFetchingDto.class));
 			}
-			
-			return HttpResponseModel.builder()
-					.message("Matching all your buy sell orders. Please wait ... ")
-					.data(matchingTransaction)
-					.build();
+
+			return HttpResponseModel.builder().message("Matching all your buy sell orders. Please wait ... ")
+					.data(matchingTransaction).build();
 
 		} catch (Exception e) {
 			return HttpResponseModel.builder().data(Collections.emptyList())
 					.message("Exception Occured inside method intiateMatchingAlgorithms: " + e.getMessage()).build();
 		}
-		
+
 	}
 
 	@Override
 	public HttpResponseModel getLatestQuoteBySource(LatestQuoteDetailRequest latestQuoteDetailRequest) {
 		try {
+
+			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+
+			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+
+			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
+
+			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
+
+			events.add(inEventType);
+
+			events.add(inResponse);
+
+			events.add(inNegotiation);
+
+			List<CounterpartyTransactionDetails> latestQuote = counterPartyTransactionRepository
+					.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionIdAndEventTypeInOrderByIdDesc(
+							institutionalEntityRepository.findById(latestQuoteDetailRequest.getSourceId()).get(),
+							institutionalEntityRepository.findById(latestQuoteDetailRequest.getDestinationId()).get(),
+							true, transactionRepository.findById(latestQuoteDetailRequest.getTransactionId()).get(),
+							events);
+
+			List<CounterPartyTransactionFetchingDto> latestOrder = new ArrayList<>();
+
 			
-			List<CounterpartyTransactionDetails> latestQuote = counterPartyTransactionRepository.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
-					institutionalEntityRepository.findById(latestQuoteDetailRequest.getSourceId()).get(),
-					institutionalEntityRepository.findById(latestQuoteDetailRequest.getDestinationId()).get(),
-					true,
-					transactionRepository.findById(latestQuoteDetailRequest.getTransactionId()).get()
-					);
+			latestOrder.add(modelMapper.map(latestQuote.get(0), CounterPartyTransactionFetchingDto.class));
 			
-			return HttpResponseModel.builder()
-					.data(latestQuote)
-					.build();
-			
+
+			return HttpResponseModel.builder().data(latestOrder).build();
+
 		} catch (Exception e) {
 			return HttpResponseModel.builder().data(Collections.emptyList())
 					.message("Exception Occured inside method getLatestQuoteBySource: " + e.getMessage()).build();
@@ -884,9 +870,9 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			throws EntityNotFound {
 		try {
 			logTimeUpdate("findInOutForTransactionForBroker", "START");
-			
+
 			TransactionDetail transaction = transactionRepository.getById(Long.valueOf(transactionId));
-			
+
 			InstitutionalEntity institution = institutionalEntityRepository.getById(Long.valueOf(institutionName));
 
 			Type listType;
@@ -936,29 +922,21 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			confirmed.add(inResponse);
 
 			List<CounterpartyTransactionDetails> inTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActiveAndSourceIdNot(
-							institution, inEvents,
-							transaction,
-							true,
-							transaction.getSource());
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActiveAndSourceIdNot(institution,
+							inEvents, transaction, true, transaction.getSource());
 
 			List<CounterpartyTransactionDetails> outTransactions = counterPartyTransactionRepository
-					.findAllBySourceIdAndEventTypeInAndTransactionIdAndIsRequestActive(
-							institution, outEvents, 
-							transaction,
-							true);
+					.findAllBySourceIdAndEventTypeInAndTransactionIdAndIsRequestActive(institution, outEvents,
+							transaction, true);
 
 			List<CounterpartyTransactionDetails> rejectedTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(
-							institution
-							, rejects,
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(institution, rejects,
 							transaction,
 
 							true);
 
 			List<CounterpartyTransactionDetails> confirmedTransactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(
-							institution, confirmed,
+					.findAllByDestinationIdAndEventTypeInAndTransactionIdAndIsRequestActive(institution, confirmed,
 							transaction,
 
 							true);
@@ -995,12 +973,10 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			mapInOut.put("confirm", Collections.emptyList());
 			mapInOut.put("reject", Collections.emptyList());
 			mapInOut.put("awaiting", Collections.emptyList());
-			
+
 			logTimeUpdate("findInOutForTransactionForBroker", "END");
-			
-			return HttpResponseModel.builder().data(mapInOut)
-					.message(e.getMessage())
-					.build();
+
+			return HttpResponseModel.builder().data(mapInOut).message(e.getMessage()).build();
 
 		}
 	}

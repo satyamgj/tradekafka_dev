@@ -2,40 +2,27 @@ package com.finmamba.resolver.operations;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.finmamba.entities.configuration.EntityConfigurationSettings;
-import com.finmamba.entities.staticdata.Currency;
-import com.finmamba.entities.staticdata.Direction;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
-import com.finmamba.entities.staticdata.Product;
-import com.finmamba.entities.staticdata.Tenor;
 import com.finmamba.entities.transaction.ConfirmedOrderDetails;
 import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
-import com.finmamba.entities.transaction.Customer;
 import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.entities.transaction.TransactionDetail;
-import com.finmamba.entities.transaction.User;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.dto.CounterpartyTransactionDto;
-import com.finmamba.models.dto.CurrencyDto;
-import com.finmamba.models.dto.DirectionDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SellSideTransactionDto;
-import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.transaction.ConfirmRequest;
 import com.finmamba.models.transaction.TransactionRequest;
-import com.finmamba.resolver.exception.EntityNotFound;
 import com.finmamba.resolver.repositories.ConfirmationRepostory;
 import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 import com.finmamba.resolver.repositories.CurrencyRepository;
@@ -52,7 +39,6 @@ import com.finmamba.resolver.services.Matching;
 import com.finmamba.resolver.services.OrderMatch;
 import com.finmamba.resolver.services.TransactionServiceDal;
 import com.finmamba.resolver.util.ApplicationConstants;
-import com.finmamba.resolver.util.UniqueIdentifierGenerator;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -810,17 +796,28 @@ public class CounterPartyOperation implements Operation {
 
 				List<CounterpartyTransactionDetails> prevNegotiationTransaction = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(responseInitiatedBy,
-								institutionalEntityRepository.getById(request.getDestination()), true,
+								institutionalEntityRepository.getById(request.getDestination()), false,
 								transactionRepository.findById(request.getTransactionId()).get());
 
 				for (CounterpartyTransactionDetails transactions : prevNegotiationTransaction) {
 					if (transactions != null) {
-						transactions.setRequestActive(true);
+
+						if(transactions.getEventType().getId() == IN_NEGOTIATION) {
+							
+							TransactionRequest newRequest = convert(transactions);
+							
+							CounterpartyTransactionDetails newCounterpartyTransactionDetails = addToCounterPartyTransactionTable(IN_NEGOTIATION, newRequest);
+							
+							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);							
+							
+						}
+						
+						
 					} else {
 						log.info("No previous transaction found!");
 					}
 
-					counterPartyTransactionRepository.save(transactions);
+
 				}
 
 				log.info("De-activating latest quote sent to the broker");
@@ -875,12 +872,25 @@ public class CounterPartyOperation implements Operation {
 
 				for (CounterpartyTransactionDetails transactions : prevNegotiationTransaction) {
 					if (transactions != null) {
-						transactions.setRequestActive(false);
+						//if Destination is buyer 
+						//Deactivate in_nego only
+						if(institutionalEntityRepository.getById(request.getDestination()).getId() == transactionRepository
+								.findById(request.getTransactionId()).get().getSource().getId()) {
+							if(transactions.getEventType().getId() == IN_NEGOTIATION) {
+								transactions.setRequestActive(false);
+								counterPartyTransactionRepository.save(transactions);
+
+							}
+						}else {
+							//if destination is seller make both in_nego/out nego deactive
+							transactions.setRequestActive(false);
+							counterPartyTransactionRepository.save(transactions);
+
+						}
 					} else {
 						log.info("No previous transaction found!");
 					}
 
-					counterPartyTransactionRepository.save(transactions);
 				}
 			}
 
@@ -936,6 +946,7 @@ public class CounterPartyOperation implements Operation {
 		} catch (Exception e) {
 			logException("insertOutNegotiation", e.getLocalizedMessage());
 		}
+
 
 		logTimeUpdate("insertOutNegotiation", END);
 
@@ -1109,31 +1120,27 @@ public class CounterPartyOperation implements Operation {
 			TransactionDetail buyTransaction = transactionRepository
 					.getById(buySideCounterPartyTransaction.getTransactionId().getId()); // Buy Side origin transaction
 
-
 			if (buySideCounterparty.getEntityType().getId() == 2L) // Checking if buyside is broker
 			{
 				log.info("It seems broker has accepted a broker order");
 				log.info("Sending in-response to initial broker");
 
-				CounterpartyTransactionDetails transactionBuyBroker = CounterpartyTransactionDetails
-						.deepCopy(sellSideCounterPartyTransaction);
+				CounterpartyTransactionDetails transactionBuyBroker = addToCounterPartyTransactionTable(ApplicationConstants.Event.OUT_RESPONSE.getEventId(),
+						convert(sellSideCounterPartyTransaction));
 
-				transactionBuyBroker.setSourceId(sellSideCounterPartyTransaction.getDestinationId());
-				transactionBuyBroker.setDestinationId(buySideCounterPartyTransaction.getSourceId());
-				transactionBuyBroker.setEventType(
-						eventTypeRepository.getById(ApplicationConstants.Event.OUT_RESPONSE.getEventId()));
-
+				transactionBuyBroker.setSourceId(sellSideCounterPartyTransaction.getDestinationId());//sellBroker
+				transactionBuyBroker.setDestinationId(buySideCounterPartyTransaction.getSourceId()); //original broker
+				
 				counterPartyTransactionRepository.save(transactionBuyBroker);
 
-				CounterpartyTransactionDetails transactionSellBroker = CounterpartyTransactionDetails
-						.deepCopy(sellSideCounterPartyTransaction);
+				CounterpartyTransactionDetails transactionSellBroker = addToCounterPartyTransactionTable(ApplicationConstants.Event.IN_RESPONSE.getEventId(),
+						convert(sellSideCounterPartyTransaction));
 
 				transactionBuyBroker.setSourceId(sellSideCounterPartyTransaction.getDestinationId());
 				transactionBuyBroker.setDestinationId(buySideCounterPartyTransaction.getSourceId());
-				transactionBuyBroker.setEventType(
-						eventTypeRepository.getById(ApplicationConstants.Event.IN_RESPONSE.getEventId()));
-
+			
 				counterPartyTransactionRepository.save(transactionSellBroker);
+				
 
 				InstitutionalEntity destination = buySideCounterPartyTransaction.getSourceId();
 
@@ -1166,178 +1173,235 @@ public class CounterPartyOperation implements Operation {
 
 				orderMatch.initiateMatchingAlgorithm(matchingTable);
 
-			}else if(sellSideCounterparty.getEntityType().getId() == 2L) {
-				
+			} else if (sellSideCounterparty.getEntityType().getId() == 2L) {
+
 				log.info("It seems buy side broker has accepted order with a sell side broker");
 				log.info("completing orders ...");
-				
-				
+
 				sellTransaction.setIsConfirmed(true);
 				transactionRepository.save(sellTransaction);
 				
-				
-			}
-
-			if (buySideCounterparty.getId() == buyTransaction.getSource().getId()) { // transaction
-
 				buyTransaction.setIsConfirmed(true);
 				transactionRepository.save(buyTransaction);
+				
+				//Saving confirmed orders
+				ConfirmedOrderDetails buyConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
+						.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
+						.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction).sellSideId(sellSideCounterparty)
+						.buySideId(buySideCounterparty).transactionId(buyTransaction)
+						.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
 
-			}
+				confirmationRepostory.save(buyConfirm);
 
-			if (sellSideCounterparty.getId() == sellTransaction.getSource().getId()) { // transaction
+				ConfirmedOrderDetails sellConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
+						.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
+						.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction).sellSideId(sellSideCounterparty)
+						.buySideId(buySideCounterparty).transactionId(sellTransaction)
+						.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
+				confirmationRepostory.save(sellConfirm);
 
-				sellTransaction.setIsConfirmed(true);
-				transactionRepository.save(sellTransaction);
+				// Deactivating buy-bank-broker
 
-			}
-
-			/*if (buySideCounterparty.getId() != buyTransaction.getSource().getId()
-					&& sellSideCounterparty.getId() != sellTransaction.getSource().getId()
-					&& buySideCounterparty.getEntityType().getId() == 1L
-					&& sellSideCounterparty.getEntityType().getId() == 1L) {
-				// Add new Transaction to Db
-
-				TransactionDetail newBuyTransaction = TransactionDetail.builder()
-						.baseCurrency(buySideCounterPartyTransaction.getTransactionId().getBaseCurrency())
-						.quoteCurrency(buySideCounterPartyTransaction.getTransactionId().getQuoteCurrency())
-						.buyAmount(buySideCounterPartyTransaction.getBankBuyAmount())
-						.sellAmount(buySideCounterPartyTransaction.getBankSellAmount())
-						.buySellDirection(buySideCounterPartyTransaction.getDirectionId())
-						.createdBy(buySideCounterPartyTransaction.getCreatedBy())
-						.destinationOutright(buySideCounterPartyTransaction.getClientOutright()).isConfirmed(true)
-						.isPartial(buySideCounterPartyTransaction.getTransactionId().getIsPartial()).build();
-
-				TransactionDetail newSellTransaction = TransactionDetail.builder()
-						.baseCurrency(sellSideCounterPartyTransaction.getTransactionId().getBaseCurrency())
-						.quoteCurrency(sellSideCounterPartyTransaction.getTransactionId().getQuoteCurrency())
-						.buyAmount(sellSideCounterPartyTransaction.getBankBuyAmount())
-						.sellAmount(sellSideCounterPartyTransaction.getBankSellAmount())
-						.buySellDirection(sellSideCounterPartyTransaction.getDirectionId())
-						.createdBy(sellSideCounterPartyTransaction.getCreatedBy())
-						.destinationOutright(sellSideCounterPartyTransaction.getClientOutright()).isConfirmed(true)
-						.isPartial(sellSideCounterPartyTransaction.getTransactionId().getIsPartial()).build();
-
-				transactionRepository.save(newBuyTransaction);
-				transactionRepository.save(newSellTransaction);
-
-			}*/
-
-			ConfirmedOrderDetails buyConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
-					.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
-					.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction).sellSideId(sellSideCounterparty)
-					.buySideId(buySideCounterparty).transactionId(buyTransaction)
-					.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
-
-			confirmationRepostory.save(buyConfirm);
-
-			ConfirmedOrderDetails sellConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
-					.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
-					.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction).sellSideId(sellSideCounterparty)
-					.buySideId(buySideCounterparty).transactionId(sellTransaction)
-					.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
-			confirmationRepostory.save(sellConfirm);
-
-			// Deactivating counterPartyBroker-Broker transaction
-
-			List<CounterpartyTransactionDetails> buySideTransactionActive = counterPartyTransactionRepository
-					.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
-							buySideCounterPartyTransaction.getSourceId(), broker, true, buyTransaction);
-
-			for (CounterpartyTransactionDetails buySideTransaction : buySideTransactionActive) {
-				if (buySideTransaction != null) {
-					buySideTransaction.setRequestActive(false);
-					counterPartyTransactionRepository.save(buySideTransaction);
-				}
-
-			}
-
-			List<CounterpartyTransactionDetails> sellSideTransactionActive = counterPartyTransactionRepository
-					.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
-							sellSideCounterPartyTransaction.getSourceId(), broker, true, sellTransaction);
-
-			for (CounterpartyTransactionDetails sellSideTransaction : sellSideTransactionActive) {
-				if (sellSideTransaction != null) {
-					sellSideTransaction.setRequestActive(false);
-					counterPartyTransactionRepository.save(sellSideTransaction);
-				}
-
-			}
-
-			/*if (buySideCounterparty.getEntityType().getId() == 2L) {
-
-				// Set everytime request initiated if Bank
-				// Set everytime same requestInitiatedBy while broker sends to broker
-
-				List<CounterpartyTransactionDetails> buytransaction = counterPartyTransactionRepository
+				List<CounterpartyTransactionDetails> buySideTransactionActive = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
-								buySideCounterPartyTransaction.getLegInitiatedBy(), buySideCounterparty, true,
-								buyTransaction);
+								buySideCounterPartyTransaction.getSourceId(), broker, true, buyTransaction);
 
-				List<CounterpartyTransactionDetails> selltransaction = counterPartyTransactionRepository
-						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(broker, buySideCounterparty,
-								true, buyTransaction);
-
-				for (CounterpartyTransactionDetails transaction : buytransaction) {
-					if (transaction != null) {
-						transaction.setRequestActive(false);
-						counterPartyTransactionRepository.save(transaction);
+				for (CounterpartyTransactionDetails buySideTransaction : buySideTransactionActive) {
+					if (buySideTransaction != null) {
+						buySideTransaction.setRequestActive(false);
+						counterPartyTransactionRepository.save(buySideTransaction);
 					}
+
 				}
+				
+				
 
-				for (CounterpartyTransactionDetails transaction : selltransaction) {
-					if (transaction != null) {
-						transaction.setRequestActive(false);
-						counterPartyTransactionRepository.save(transaction);
-					}
-				}
-
-				ConfirmRequest newRequest = ConfirmRequest.builder().brokerId(buySideCounterparty.getId())
-						.buySideCounterParty(buySideCounterPartyTransaction.getLegInitiatedBy().getId())
-						.sellSideCounterPart(broker.getId())
-						.buySideCounterPartyTransactionId(buytransaction.get(0).getId())
-						.sellSideCounterPartyTransactionId(selltransaction.get(0).getId()).build();
-
-				confirmRequest(newRequest);
-
-			}
-			if (sellSideCounterparty.getEntityType().getId() == 2L) {
-
-				// Set everytime request initiated if Bank
-				// Set everytime same requestInitiatedBy while broker sends to broker
-
-				List<CounterpartyTransactionDetails> buytransaction = counterPartyTransactionRepository
+				//deactivating broker-broker
+				List<CounterpartyTransactionDetails> sellSideTransactionActive = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
-								sellSideCounterPartyTransaction.getLegInitiatedBy(), sellSideCounterparty, true,
-								sellTransaction);
+								sellSideCounterPartyTransaction.getSourceId(), broker, true, sellTransaction);
 
-				List<CounterpartyTransactionDetails> selltransaction = counterPartyTransactionRepository
-						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(broker, sellSideCounterparty,
-								true, sellTransaction);
-
-				for (CounterpartyTransactionDetails transaction : buytransaction) {
-					if (transaction != null) {
-						transaction.setRequestActive(false);
-						counterPartyTransactionRepository.save(transaction);
+				for (CounterpartyTransactionDetails sellSideTransaction : sellSideTransactionActive) {
+					if (sellSideTransaction != null) {
+						sellSideTransaction.setRequestActive(false);
+						counterPartyTransactionRepository.save(sellSideTransaction);
 					}
+
+				}
+				
+				log.info("Broker-to-broker confirmation completed.");
+
+				
+			}
+			else {
+				if (buySideCounterparty.getId() == buyTransaction.getSource().getId()) { // transaction
+
+					buyTransaction.setIsConfirmed(true);
+					transactionRepository.save(buyTransaction);
+
 				}
 
-				for (CounterpartyTransactionDetails transaction : selltransaction) {
-					if (transaction != null) {
-						transaction.setRequestActive(false);
-						counterPartyTransactionRepository.save(transaction);
-					}
+				if (sellSideCounterparty.getId() == sellTransaction.getSource().getId()) { // transaction
+
+					sellTransaction.setIsConfirmed(true);
+					transactionRepository.save(sellTransaction);
+
 				}
 
-				ConfirmRequest newRequest = ConfirmRequest.builder().brokerId(buySideCounterparty.getId())
-						.buySideCounterParty(buySideCounterPartyTransaction.getLegInitiatedBy().getId())
-						.sellSideCounterPart(broker.getId())
-						.buySideCounterPartyTransactionId(buytransaction.get(0).getId())
-						.sellSideCounterPartyTransactionId(selltransaction.get(0).getId()).build();
+				/*
+				 * if (buySideCounterparty.getId() != buyTransaction.getSource().getId() &&
+				 * sellSideCounterparty.getId() != sellTransaction.getSource().getId() &&
+				 * buySideCounterparty.getEntityType().getId() == 1L &&
+				 * sellSideCounterparty.getEntityType().getId() == 1L) { // Add new Transaction
+				 * to Db
+				 * 
+				 * TransactionDetail newBuyTransaction = TransactionDetail.builder()
+				 * .baseCurrency(buySideCounterPartyTransaction.getTransactionId().
+				 * getBaseCurrency())
+				 * .quoteCurrency(buySideCounterPartyTransaction.getTransactionId().
+				 * getQuoteCurrency())
+				 * .buyAmount(buySideCounterPartyTransaction.getBankBuyAmount())
+				 * .sellAmount(buySideCounterPartyTransaction.getBankSellAmount())
+				 * .buySellDirection(buySideCounterPartyTransaction.getDirectionId())
+				 * .createdBy(buySideCounterPartyTransaction.getCreatedBy())
+				 * .destinationOutright(buySideCounterPartyTransaction.getClientOutright()).
+				 * isConfirmed(true)
+				 * .isPartial(buySideCounterPartyTransaction.getTransactionId().getIsPartial()).
+				 * build();
+				 * 
+				 * TransactionDetail newSellTransaction = TransactionDetail.builder()
+				 * .baseCurrency(sellSideCounterPartyTransaction.getTransactionId().
+				 * getBaseCurrency())
+				 * .quoteCurrency(sellSideCounterPartyTransaction.getTransactionId().
+				 * getQuoteCurrency())
+				 * .buyAmount(sellSideCounterPartyTransaction.getBankBuyAmount())
+				 * .sellAmount(sellSideCounterPartyTransaction.getBankSellAmount())
+				 * .buySellDirection(sellSideCounterPartyTransaction.getDirectionId())
+				 * .createdBy(sellSideCounterPartyTransaction.getCreatedBy())
+				 * .destinationOutright(sellSideCounterPartyTransaction.getClientOutright()).
+				 * isConfirmed(true)
+				 * .isPartial(sellSideCounterPartyTransaction.getTransactionId().getIsPartial())
+				 * .build();
+				 * 
+				 * transactionRepository.save(newBuyTransaction);
+				 * transactionRepository.save(newSellTransaction);
+				 * 
+				 * }
+				 */
 
-				confirmRequest(newRequest);
+				ConfirmedOrderDetails buyConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
+						.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
+						.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction).sellSideId(sellSideCounterparty)
+						.buySideId(buySideCounterparty).transactionId(buyTransaction)
+						.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
 
-			}*/
+				confirmationRepostory.save(buyConfirm);
+
+				ConfirmedOrderDetails sellConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
+						.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
+						.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction).sellSideId(sellSideCounterparty)
+						.buySideId(buySideCounterparty).transactionId(sellTransaction)
+						.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
+				confirmationRepostory.save(sellConfirm);
+
+				// Deactivating counterPartyBroker-Broker transaction
+
+				List<CounterpartyTransactionDetails> buySideTransactionActive = counterPartyTransactionRepository
+						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+								buySideCounterPartyTransaction.getSourceId(), broker, true, buyTransaction);
+
+				for (CounterpartyTransactionDetails buySideTransaction : buySideTransactionActive) {
+					if (buySideTransaction != null) {
+						buySideTransaction.setRequestActive(false);
+						counterPartyTransactionRepository.save(buySideTransaction);
+					}
+
+				}
+
+				List<CounterpartyTransactionDetails> sellSideTransactionActive = counterPartyTransactionRepository
+						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+								sellSideCounterPartyTransaction.getSourceId(), broker, true, sellTransaction);
+
+				for (CounterpartyTransactionDetails sellSideTransaction : sellSideTransactionActive) {
+					if (sellSideTransaction != null) {
+						sellSideTransaction.setRequestActive(false);
+						counterPartyTransactionRepository.save(sellSideTransaction);
+					}
+
+				}
+			}
+
+			
+
+			/*
+			 * if (buySideCounterparty.getEntityType().getId() == 2L) {
+			 * 
+			 * // Set everytime request initiated if Bank // Set everytime same
+			 * requestInitiatedBy while broker sends to broker
+			 * 
+			 * List<CounterpartyTransactionDetails> buytransaction =
+			 * counterPartyTransactionRepository
+			 * .findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+			 * buySideCounterPartyTransaction.getLegInitiatedBy(), buySideCounterparty,
+			 * true, buyTransaction);
+			 * 
+			 * List<CounterpartyTransactionDetails> selltransaction =
+			 * counterPartyTransactionRepository
+			 * .findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(broker,
+			 * buySideCounterparty, true, buyTransaction);
+			 * 
+			 * for (CounterpartyTransactionDetails transaction : buytransaction) { if
+			 * (transaction != null) { transaction.setRequestActive(false);
+			 * counterPartyTransactionRepository.save(transaction); } }
+			 * 
+			 * for (CounterpartyTransactionDetails transaction : selltransaction) { if
+			 * (transaction != null) { transaction.setRequestActive(false);
+			 * counterPartyTransactionRepository.save(transaction); } }
+			 * 
+			 * ConfirmRequest newRequest =
+			 * ConfirmRequest.builder().brokerId(buySideCounterparty.getId())
+			 * .buySideCounterParty(buySideCounterPartyTransaction.getLegInitiatedBy().getId
+			 * ()) .sellSideCounterPart(broker.getId())
+			 * .buySideCounterPartyTransactionId(buytransaction.get(0).getId())
+			 * .sellSideCounterPartyTransactionId(selltransaction.get(0).getId()).build();
+			 * 
+			 * confirmRequest(newRequest);
+			 * 
+			 * } if (sellSideCounterparty.getEntityType().getId() == 2L) {
+			 * 
+			 * // Set everytime request initiated if Bank // Set everytime same
+			 * requestInitiatedBy while broker sends to broker
+			 * 
+			 * List<CounterpartyTransactionDetails> buytransaction =
+			 * counterPartyTransactionRepository
+			 * .findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+			 * sellSideCounterPartyTransaction.getLegInitiatedBy(), sellSideCounterparty,
+			 * true, sellTransaction);
+			 * 
+			 * List<CounterpartyTransactionDetails> selltransaction =
+			 * counterPartyTransactionRepository
+			 * .findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(broker,
+			 * sellSideCounterparty, true, sellTransaction);
+			 * 
+			 * for (CounterpartyTransactionDetails transaction : buytransaction) { if
+			 * (transaction != null) { transaction.setRequestActive(false);
+			 * counterPartyTransactionRepository.save(transaction); } }
+			 * 
+			 * for (CounterpartyTransactionDetails transaction : selltransaction) { if
+			 * (transaction != null) { transaction.setRequestActive(false);
+			 * counterPartyTransactionRepository.save(transaction); } }
+			 * 
+			 * ConfirmRequest newRequest =
+			 * ConfirmRequest.builder().brokerId(buySideCounterparty.getId())
+			 * .buySideCounterParty(buySideCounterPartyTransaction.getLegInitiatedBy().getId
+			 * ()) .sellSideCounterPart(broker.getId())
+			 * .buySideCounterPartyTransactionId(buytransaction.get(0).getId())
+			 * .sellSideCounterPartyTransactionId(selltransaction.get(0).getId()).build();
+			 * 
+			 * confirmRequest(newRequest);
+			 * 
+			 * }
+			 */
 
 //			//Fetching buySide bank : FE can get using requestInitiated By
 //			InstitutionalEntity buySide = institutionalEntityRepository.getById(confirmRequest.getBuySideBank());
@@ -1530,41 +1594,38 @@ public class CounterPartyOperation implements Operation {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	// Helper method to copy properties from one object to another excluding
-	// specified properties
-	private static void copyPropertiesExclude(Object source, Object destination, String... excludeProperties) {
-		Class<?> sourceClass = source.getClass();
-		Class<?> destinationClass = destination.getClass();
-
-		// Get all fields from the source class
-		Field[] sourceFields = sourceClass.getDeclaredFields();
-
-		for (Field field : sourceFields) {
-			// Skip fields that are in the exclude list
-			if (contains(excludeProperties, field.getName())) {
-				continue;
-			}
-
-			// Copy the value from the source field to the destination field
-			try {
-				field.setAccessible(true);
-				Field destinationField = destinationClass.getDeclaredField(field.getName());
-				destinationField.setAccessible(true);
-				destinationField.set(destination, field.get(source));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+	
+	private TransactionRequest convert(CounterpartyTransactionDetails counterpartyTransactionDetails) {
+		
+		TransactionRequest request = TransactionRequest.builder()
+				.brokerCommissionIsPip(counterpartyTransactionDetails.getBrokerCommissionIsPip())
+				.buyAmount(counterpartyTransactionDetails.getBankBuyAmount())
+				.buySideBaseAmount(counterpartyTransactionDetails.getBuySideBaseAmount())
+				.buySideBrokerageBaseCurrency(counterpartyTransactionDetails.getBuySideBrokerageBaseCurrency().getId())
+				.buySideBrokerageCurrency(counterpartyTransactionDetails.getBuySideBrokerageCurrency().getId())
+				.buySideConversionRate(counterpartyTransactionDetails.getBuySideConversionRate())
+				.calculatedBuyCommission(counterpartyTransactionDetails.getCalculatedBuyCommission())
+				.calculatedSellCommission(counterpartyTransactionDetails.getCalculatedSellCommission())
+				.createdBy(counterpartyTransactionDetails.getCreatedBy().getId())
+				.destination(counterpartyTransactionDetails.getDestinationId().getId())
+				.destinationOutright(counterpartyTransactionDetails.getClientOutright())
+				.direction(counterpartyTransactionDetails.getDirectionId().getId())
+				.legInitiatedBy(counterpartyTransactionDetails.getLegInitiatedBy().getId())
+				.requestInitiatedBy(counterpartyTransactionDetails.getRequestInitiatedBy().getId())
+				.transactionId(counterpartyTransactionDetails.getTransactionId().getId())
+				.sourceOutright(counterpartyTransactionDetails.getTransactionId().getSourceOutright())
+				.source(counterpartyTransactionDetails.getSourceId().getId())
+				.sendToBrokers(counterpartyTransactionDetails.getViaBroker())
+				.sellSideSpread(counterpartyTransactionDetails.getSellSideSpread())
+				.sellSideConversionRate(counterpartyTransactionDetails.getSellSideConversionRate())
+				.sellSideBrokerageCurrency(counterpartyTransactionDetails.getSellSideBrokerageCurrency().getId())
+				.sellSideBrokerageBaseCurrency(counterpartyTransactionDetails.getSellSideBrokerageBaseCurrency().getId())
+				.sellSideBaseAmount(counterpartyTransactionDetails.getSellSideBaseAmount())
+				.sellAmount(counterpartyTransactionDetails.getBankSellAmount())
+				.responseInitiatedBy(counterpartyTransactionDetails.getResponseInitiatedBy().getId())
+				.build();
+		return request;
 	}
 
-	// Helper method to check if an array contains a specific string
-	private static boolean contains(String[] arr, String targetValue) {
-		for (String s : arr) {
-			if (s.equals(targetValue)) {
-				return true;
-			}
-		}
-		return false;
-	}
+	
 }
