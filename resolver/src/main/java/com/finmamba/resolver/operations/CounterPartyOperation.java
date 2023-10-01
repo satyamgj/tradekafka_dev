@@ -658,7 +658,7 @@ public class CounterPartyOperation implements Operation {
 				// .isPartial(counterpartyTransactionDetails.getIsPartial())
 
 
-				.legInitiatedBy(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()))
+				.legInitiatedBy(institutionalEntityRepository.getById(counterpartyTransactionDetails.getLegInitiatedBy()))
 
 				.createdBy(userRepository.getById(counterpartyTransactionDetails.getCreatedBy()))
 
