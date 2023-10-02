@@ -674,7 +674,7 @@ public class CounterPartyOperation implements Operation {
 			if(counterpartyTransactionDetails.getSource() == transaction.getSource().getId() ) {
 				log.info("Its a buyer entry ");
 				log.info("hence not modifying response intiatedBy");
-				
+				newTransactionDetails.setResponseInitiatedBy(counterPartyTransactionRepository.getById(counterpartyTransactionDetails.getCounterpartyDetailId()).getResponseInitiatedBy());
 			}else {
 				if(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()).getEntityType().getId() == 2L) {
 					log.info("Broker nego");
