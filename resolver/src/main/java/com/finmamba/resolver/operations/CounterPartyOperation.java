@@ -676,14 +676,8 @@ public class CounterPartyOperation implements Operation {
 				log.info("hence not modifying response intiatedBy");
 				
 			}else {
-				if(counterPartyTransactionRepository.findById(counterpartyTransactionDetails.getCounterpartyDetailId()).get()
-						.getResponseInitiatedBy()==null) {
-					newTransactionDetails.setResponseInitiatedBy
-					(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()));
-				}else {
-					log.info("Response initiated by already set.");
-					//log.info("Value set to " + newTransactionDetails.getResponseInitiatedBy().getLongName());
-				}
+				newTransactionDetails.setResponseInitiatedBy
+				(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()));
 			}
 		}
 
