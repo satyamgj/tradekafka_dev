@@ -676,8 +676,12 @@ public class CounterPartyOperation implements Operation {
 				log.info("hence not modifying response intiatedBy");
 				
 			}else {
-				newTransactionDetails.setResponseInitiatedBy
-				(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()));
+				if(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()).getEntityType().getId() == 2L) {
+					log.info("Broker nego");
+					newTransactionDetails.setResponseInitiatedBy(counterPartyTransactionRepository.getById(counterpartyTransactionDetails.getCounterpartyDetailId()).getResponseInitiatedBy());
+				}else {
+					newTransactionDetails.setResponseInitiatedBy(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()));
+				}
 			}
 		}
 
