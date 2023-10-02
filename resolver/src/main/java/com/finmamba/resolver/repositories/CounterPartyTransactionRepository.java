@@ -88,5 +88,4 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 			Collection<EventType> events
 			);
 
-	
 }

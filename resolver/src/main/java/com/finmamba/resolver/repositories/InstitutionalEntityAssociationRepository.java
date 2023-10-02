@@ -19,4 +19,6 @@ public interface InstitutionalEntityAssociationRepository extends JpaRepository<
 	
 	public List<InstitutionalEntityAssociation> findDestinationEntityByWillingToBuyAndSourceEntity(boolean willingToBuy,
 			InstitutionalEntity sourceEntity);
+	
+
 }

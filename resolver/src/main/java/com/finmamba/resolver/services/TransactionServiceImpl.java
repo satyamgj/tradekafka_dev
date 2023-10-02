@@ -11,7 +11,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
 import com.finmamba.entities.transaction.MatchingTable;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.kafka.starter.autoconfigure.rest.KafkaRestService;
@@ -19,10 +18,8 @@ import com.finmamba.kafka.starter.util.ApplicationProperties;
 import com.finmamba.models.bus.EventType;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.bus.SerialDataBusModel;
-import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
 import com.finmamba.models.dto.InstitutionalEntityDto;
 import com.finmamba.models.dto.QuoteRequestDto;
-import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.request.UserProfileModel;
 import com.finmamba.models.transaction.ConfirmRequest;
 import com.finmamba.models.transaction.LatestQuoteDetailRequest;

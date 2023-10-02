@@ -30,21 +30,19 @@ import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
 import com.finmamba.entities.transaction.Customer;
 import com.finmamba.entities.transaction.InstitutionalEntityAssociation;
 import com.finmamba.entities.transaction.MatchingTable;
+import com.finmamba.entities.transaction.TransactionBrokerDetails;
 import com.finmamba.entities.transaction.TransactionDetail;
 import com.finmamba.entities.transaction.User;
 import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.bus.EventType;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.bus.SerialDataBusModel;
-import com.finmamba.models.dto.BuySideTransactionDto;
 import com.finmamba.models.dto.ConfirmedOrderDto;
 import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
-import com.finmamba.models.dto.CounterpartyTransactionDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SellSideConfirmationDto;
-import com.finmamba.models.dto.SellSideTransactionDto;
+import com.finmamba.models.dto.TransactionDto;
 import com.finmamba.models.dto.buySideConfirmDto;
-import com.finmamba.models.matching.NewOrder;
 import com.finmamba.models.transaction.LatestQuoteDetailRequest;
 import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
@@ -65,6 +63,7 @@ import com.finmamba.resolver.repositories.QuoteRequestRepository;
 import com.finmamba.resolver.repositories.RecordStatusRepository;
 import com.finmamba.resolver.repositories.RequestTypeRepository;
 import com.finmamba.resolver.repositories.TenorRepository;
+import com.finmamba.resolver.repositories.TransactionBrokerDetailRepository;
 import com.finmamba.resolver.repositories.TransactionRepository;
 import com.finmamba.resolver.repositories.UserRepository;
 import com.finmamba.resolver.util.UniqueIdentifierGenerator;
@@ -145,6 +144,9 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 	@Autowired
 	OrderMatch match;
+	
+	@Autowired
+	TransactionBrokerDetailRepository transactionBrokerDetailRepository;
 
 //	@Autowired
 //	HistoryWriter historyWriter;
@@ -687,53 +689,66 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 		try {
 
-//			List<CounterPartyTransactionFetchingDto> buyTransaction = new ArrayList<>();
+			List<TransactionBrokerDetails> buyTransaction = new ArrayList<>();
 
 			Direction buy = directionRepository.getById(1L);
 
-			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(brokerId)).get();
+//			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(brokerId)).get();
+//
+//			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+//
+//			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+//
+//			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
+//
+//			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
+//
+//			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
+//
+//			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
+//
+//			events.add(inEventType);
+//
+//			events.add(inResponse);
+//
+//			events.add(inNegotiation);
+//
+//			events.add(inReject);
+//
+//			events.add(inAwait);
+//
+//			List<CounterpartyTransactionDetails> buyTransactions = counterPartyTransactionRepository
+//					.findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, buy, true, events,
+//							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
+//									"id"));
+//
+//			List<CounterPartyTransactionFetchingDto> buyTransactionList = new ArrayList();
+//
+//			for (CounterpartyTransactionDetails transaction : buyTransactions) {
+//
+//				buyTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
+//
+//			}
+//			
+//			List<InstitutionalEntityAssociation> listOfEntities = institutionalEntityAssociationRepository.findByDestinationEntityAndByWillingToBuyAndByWillingToSell
+//					(destination, true, true);
 
-			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+			buyTransaction = transactionBrokerDetailRepository.findAllByBrokerIdAndDirectionIdOrderByLastTransactionAtDesc(Long.valueOf(brokerId), buy,
+					preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
+							"id")
+					);
 
-			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+			List<TransactionDto> buyTransactionList = new ArrayList();
 
-			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
-
-			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
-
-			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
-
-			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
-
-			events.add(inEventType);
-
-			events.add(inResponse);
-
-			events.add(inNegotiation);
-
-			events.add(inReject);
-
-			events.add(inAwait);
-
-			List<CounterpartyTransactionDetails> buyTransactions = counterPartyTransactionRepository
-					.findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, buy, true, events,
-							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
-									"id"));
-
-			List<CounterPartyTransactionFetchingDto> buyTransactionList = new ArrayList();
-
-			for (CounterpartyTransactionDetails transaction : buyTransactions) {
-
-				buyTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
-
+			
+			for(TransactionBrokerDetails transaction: buyTransaction) {
+				buyTransactionList.add(modelMapper.map(transaction.getTransactionId(), TransactionDto.class));
 			}
-
+			
 			logTimeUpdate("findBuyInOrdersForBroker", "END");
 
 			return HttpResponseModel.builder().data(buyTransactionList)
-					.total(Integer.valueOf(String.valueOf(counterPartyTransactionRepository
-							.countByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, buy, true,
-									events))))
+					.total(transactionBrokerDetailRepository.countByBrokerIdAndDirectionId(Long.valueOf(brokerId), buy))
 					.build();
 
 		} catch (Exception e) {
@@ -754,47 +769,58 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(brokerId)).get();
 
-			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+//			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
+//
+//			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+//
+//			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
+//
+//			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
+//
+//			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
+//
+//			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
+//
+//			events.add(inEventType);
+//
+//			events.add(inResponse);
+//
+//			events.add(inNegotiation);
+//
+//			events.add(inReject);
+//
+//			events.add(inAwait);
+//
+//			List<CounterpartyTransactionDetails> sellTransactions = counterPartyTransactionRepository
+//					.findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, sell, true, events,
+//							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
+//									"id"));
+//
+//			List<CounterPartyTransactionFetchingDto> sellTransactionList = new ArrayList();
+//
+//			for (CounterpartyTransactionDetails transaction : sellTransactions) {
+//
+//				sellTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
+//
+//			}
 
-			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
+			List<TransactionBrokerDetails>sellTransactions = transactionBrokerDetailRepository.findAllByBrokerIdAndDirectionIdOrderByLastTransactionAtDesc(Long.valueOf(brokerId), sell,
+					preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
+							"id")
+					);
 
-			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
+			List<TransactionDto> sellTransactionList = new ArrayList();
 
-			com.finmamba.entities.staticdata.EventType inReject = eventTypeRepository.getById(7L);
-
-			com.finmamba.entities.staticdata.EventType inAwait = eventTypeRepository.getById(9L);
-
-			List<com.finmamba.entities.staticdata.EventType> events = new ArrayList();
-
-			events.add(inEventType);
-
-			events.add(inResponse);
-
-			events.add(inNegotiation);
-
-			events.add(inReject);
-
-			events.add(inAwait);
-
-			List<CounterpartyTransactionDetails> sellTransactions = counterPartyTransactionRepository
-					.findByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, sell, true, events,
-							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
-									"id"));
-
-			List<CounterPartyTransactionFetchingDto> sellTransactionList = new ArrayList();
-
-			for (CounterpartyTransactionDetails transaction : sellTransactions) {
-
-				sellTransactionList.add(modelMapper.map(transaction, CounterPartyTransactionFetchingDto.class));
-
+			
+			for(TransactionBrokerDetails transaction: sellTransactions) {
+				sellTransactionList.add(modelMapper.map(transaction.getTransactionId(), TransactionDto.class));
 			}
-
+			
+			
 			logTimeUpdate("findSellInOrdersForBroker", "END");
 
 			return HttpResponseModel.builder().data(sellTransactionList)
-					.total(Integer.valueOf(String.valueOf(counterPartyTransactionRepository
-							.countByDestinationIdAndDirectionIdAndIsRequestActiveAndEventTypeIn(destination, sell, true,
-									events))))
+					.total(transactionBrokerDetailRepository.countByBrokerIdAndDirectionId(Long.valueOf(brokerId), sell))
 					.build();
 
 		} catch (Exception e) {
