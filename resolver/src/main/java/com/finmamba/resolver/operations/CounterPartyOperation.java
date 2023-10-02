@@ -682,7 +682,7 @@ public class CounterPartyOperation implements Operation {
 					(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()));
 				}else {
 					log.info("Response initiated by already set.");
-					log.info("Value set to " + newTransactionDetails.getResponseInitiatedBy().getLongName());
+					//log.info("Value set to " + newTransactionDetails.getResponseInitiatedBy().getLongName());
 				}
 			}
 		}
@@ -1625,6 +1625,7 @@ public class CounterPartyOperation implements Operation {
 	private TransactionRequest convert(CounterpartyTransactionDetails counterpartyTransactionDetails) {
 
 		TransactionRequest request = TransactionRequest.builder()
+				.counterpartyDetailId(counterpartyTransactionDetails.getId())
 				.brokerCommissionIsPip(counterpartyTransactionDetails.getBrokerCommissionIsPip())
 				.buyAmount(counterpartyTransactionDetails.getBankBuyAmount())
 				.buySideBaseAmount(counterpartyTransactionDetails.getBuySideBaseAmount())
