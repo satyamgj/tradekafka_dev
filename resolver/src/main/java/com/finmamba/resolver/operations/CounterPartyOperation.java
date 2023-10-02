@@ -835,6 +835,28 @@ public class CounterPartyOperation implements Operation {
 				}
 				
 				
+				//Deactivating brokers request to source
+				List<CounterpartyTransactionDetails> prevBrokerToSourceTransactions = counterPartyTransactionRepository
+						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+
+								
+								institutionalEntityRepository.getById(request.getDestination()),
+								institutionalEntityRepository.getById(request.getSource()),
+								true,
+								transactionRepository.findById(request.getTransactionId()).get());
+
+				for (CounterpartyTransactionDetails transactions : prevBrokerToSourceTransactions) {
+					if (transactions != null) {
+						transactions.setRequestActive(false);
+//						responseInitiatedBy = transactions.getResponseInitiatedBy(); //Setting response Initiated by
+					} else {
+						log.info("No previous transaction found!");
+					}
+
+					counterPartyTransactionRepository.save(transactions);
+				}
+				
+				
 				
 				responseInitiatedBy = counterPartyTransactionRepository.getById(request.getCounterpartyDetailId()).getResponseInitiatedBy();
 				
