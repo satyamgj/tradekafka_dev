@@ -1628,6 +1628,7 @@ public class CounterPartyOperation implements Operation {
 				.counterpartyDetailId(counterpartyTransactionDetails.getId())
 				.brokerCommissionIsPip(counterpartyTransactionDetails.getBrokerCommissionIsPip())
 				.buyAmount(counterpartyTransactionDetails.getBankBuyAmount())
+				.buySideSpread(counterpartyTransactionDetails.getBuySideSpread())
 				.buySideBaseAmount(counterpartyTransactionDetails.getBuySideBaseAmount())
 				.buySideBrokerageBaseCurrency(counterpartyTransactionDetails.getBuySideBrokerageBaseCurrency().getId())
 				.buySideBrokerageCurrency(counterpartyTransactionDetails.getBuySideBrokerageCurrency().getId())
@@ -1650,6 +1651,7 @@ public class CounterPartyOperation implements Operation {
 						counterpartyTransactionDetails.getSellSideBrokerageBaseCurrency().getId())
 				.sellSideBaseAmount(counterpartyTransactionDetails.getSellSideBaseAmount())
 				.sellAmount(counterpartyTransactionDetails.getBankSellAmount())
+				.sendToBrokers(counterpartyTransactionDetails.getViaBroker())
 				.build();
 		return request;
 	}
