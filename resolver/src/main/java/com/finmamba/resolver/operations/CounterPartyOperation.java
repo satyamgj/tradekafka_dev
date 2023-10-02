@@ -854,10 +854,13 @@ public class CounterPartyOperation implements Operation {
 
 							CounterpartyTransactionDetails newCounterpartyTransactionDetails = addToCounterPartyTransactionTable(
 									IN_NEGOTIATION, newRequest);
+							
+							newCounterpartyTransactionDetails.setClientOutright(request.getDestinationOutright());
 
 							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);
 
 						}
+						
 
 					} else {
 						log.info("No previous transaction found!");
