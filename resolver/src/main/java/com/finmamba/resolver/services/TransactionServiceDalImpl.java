@@ -37,6 +37,7 @@ import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.bus.EventType;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.bus.SerialDataBusModel;
+import com.finmamba.models.dto.BrokerOrderDto;
 import com.finmamba.models.dto.ConfirmedOrderDto;
 import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
 import com.finmamba.models.dto.QuoteRequestDto;
@@ -738,11 +739,11 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 							"id")
 					);
 
-			List<TransactionDto> buyTransactionList = new ArrayList();
+			List<BrokerOrderDto> buyTransactionList = new ArrayList();
 
 			
 			for(TransactionBrokerDetails transaction: buyTransaction) {
-				buyTransactionList.add(modelMapper.map(transaction.getTransactionId(), TransactionDto.class));
+				buyTransactionList.add(modelMapper.map(transaction, BrokerOrderDto.class));
 			}
 			
 			logTimeUpdate("findBuyInOrdersForBroker", "END");
@@ -809,11 +810,11 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 							"id")
 					);
 
-			List<TransactionDto> sellTransactionList = new ArrayList();
+			List<BrokerOrderDto> sellTransactionList = new ArrayList();
 
 			
 			for(TransactionBrokerDetails transaction: sellTransactions) {
-				sellTransactionList.add(modelMapper.map(transaction.getTransactionId(), TransactionDto.class));
+				sellTransactionList.add(modelMapper.map(transaction, BrokerOrderDto.class));
 			}
 			
 			
