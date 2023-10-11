@@ -56,38 +56,34 @@ public class OrderMatch {
 
 		if (order.getDirection() == 1) {
 
-	
+			List<MatchingTable> sellOrders = matchingRepository
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+							order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+							IN_NEGOTIATION, order.getTransactionId());
 
-				List<MatchingTable> sellOrders = matchingRepository
-						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
-								order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
-								IN_NEGOTIATION, order.getTransactionId());
+			List<MatchingTable> inRequestOrders = matchingRepository
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
+							order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+							IN_REQUEST);
 
-				List<MatchingTable> inRequestOrders = matchingRepository
-						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
-								order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
-								IN_REQUEST);
-
-				matchOrders(Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
-						order);
-
+			matchOrders(Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
+					order);
 
 		} else {
-			
 
-				List<MatchingTable> sellOrders = matchingRepository
-						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
-								order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
-								IN_NEGOTIATION, order.getTransactionId());
+			List<MatchingTable> sellOrders = matchingRepository
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+							order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+							IN_NEGOTIATION, order.getTransactionId());
 
-				List<MatchingTable> inRequestOrders = matchingRepository
-						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
-								order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
-								IN_REQUEST);
+			List<MatchingTable> inRequestOrders = matchingRepository
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
+							order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+							IN_REQUEST);
 
-				matchOrders(Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
-						order);
-			
+			matchOrders(Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
+					order);
+
 		}
 	}
 
@@ -101,37 +97,33 @@ public class OrderMatch {
 
 		if (order.getDirection() == 1) {
 
+			List<MatchingTable> sellOrders = matchingRepository
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+							order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+							IN_NEGOTIATION, order.getTransactionId());
 
-				List<MatchingTable> sellOrders = matchingRepository
-						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
-								order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
-								IN_NEGOTIATION, order.getTransactionId());
+			List<MatchingTable> inRequestOrders = matchingRepository
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
+							order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+							IN_REQUEST);
 
-				List<MatchingTable> inRequestOrders = matchingRepository
-						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
-								order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
-								IN_REQUEST);
-
-				return fetchMatchedOrders(
-						Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
-						order);
-
+			return fetchMatchedOrders(
+					Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()), order);
 
 		} else {
-		
-				List<MatchingTable> sellOrders = matchingRepository
-						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
-								order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
-								IN_NEGOTIATION, order.getTransactionId());
 
-				List<MatchingTable> inRequestOrders = matchingRepository
-						.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
-								order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
-								IN_REQUEST);
+			List<MatchingTable> sellOrders = matchingRepository
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+							order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+							IN_NEGOTIATION, order.getTransactionId());
 
-				return fetchMatchedOrders(
-						Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()),
-						order);
+			List<MatchingTable> inRequestOrders = matchingRepository
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventType(
+							order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
+							IN_REQUEST);
+
+			return fetchMatchedOrders(
+					Stream.concat(sellOrders.stream(), inRequestOrders.stream()).collect(Collectors.toList()), order);
 
 		}
 
@@ -349,6 +341,7 @@ public class OrderMatch {
 		for (MatchingTable oppositeOrder : oppositeOrders) {
 
 			// Check if new Order buy condition and asking rate comparison
+
 			if (newOrder.getDirection() == 1 && (oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == -1
 					|| oppositeOrder.getAskingRate().compareTo(newOrder.getAskingRate()) == 0)) {
 
@@ -370,7 +363,8 @@ public class OrderMatch {
 
 					CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 							.findById(oppositeOrder.getOrderId()).get();
-					if (oppositeOrderTransaction.isRequestActive()) {
+					if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
+							.getId() != newOrderTransaction.getSourceId().getId()) {
 						matchedOrders.add(oppositeOrderTransaction);
 					}
 
@@ -397,7 +391,8 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()) {
+						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
 
@@ -452,7 +447,8 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()) {
+						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
 
@@ -484,7 +480,8 @@ public class OrderMatch {
 
 					CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 							.findById(oppositeOrder.getOrderId()).get();
-					if (oppositeOrderTransaction.isRequestActive()) {
+					if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+							.getId() != newOrderTransaction.getSourceId().getId()) {
 						matchedOrders.add(oppositeOrderTransaction);
 					}
 
@@ -511,7 +508,8 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()) {
+						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
 
@@ -540,7 +538,8 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()) {
+						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
 
@@ -566,7 +565,8 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()) {
+						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
 
