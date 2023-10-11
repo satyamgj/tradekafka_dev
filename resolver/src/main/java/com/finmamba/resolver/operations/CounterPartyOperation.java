@@ -906,7 +906,7 @@ public class CounterPartyOperation implements Operation {
 							CounterpartyTransactionDetails newCounterpartyTransactionDetails = addToCounterPartyTransactionTable(
 									IN_NEGOTIATION, newRequest);
 							
-							newCounterpartyTransactionDetails.setClientOutright(request.getDestinationOutright());
+							newCounterpartyTransactionDetails.setClientOutright(newRequest.getDestinationOutright());
 
 							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);
 
