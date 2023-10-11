@@ -743,7 +743,9 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			
 			for(TransactionBrokerDetails transaction: buyTransaction) {
-				buyTransactionList.add(modelMapper.map(transaction, BrokerOrderDto.class));
+				if(!transaction.getTransactionId().getIsConfirmed()) {
+					buyTransactionList.add(modelMapper.map(transaction, BrokerOrderDto.class));
+				}
 			}
 			
 			logTimeUpdate("findBuyInOrdersForBroker", "END");
@@ -814,7 +816,10 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 			
 			for(TransactionBrokerDetails transaction: sellTransactions) {
-				sellTransactionList.add(modelMapper.map(transaction, BrokerOrderDto.class));
+				
+				if(!transaction.getTransactionId().getIsConfirmed()) {
+					sellTransactionList.add(modelMapper.map(transaction, BrokerOrderDto.class));
+				}
 			}
 			
 			
@@ -878,9 +883,13 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 							institutionalEntityRepository.findById(latestQuoteDetailRequest.getDestinationId()).get(),
 							true, transactionRepository.findById(latestQuoteDetailRequest.getTransactionId()).get(),
 							events);
+			
+			
 
 			List<CounterPartyTransactionFetchingDto> latestOrder = new ArrayList<>();
 
+			
+			
 			
 			latestOrder.add(modelMapper.map(latestQuote.get(0), CounterPartyTransactionFetchingDto.class));
 			
