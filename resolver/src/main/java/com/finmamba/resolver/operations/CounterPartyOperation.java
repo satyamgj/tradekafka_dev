@@ -587,6 +587,20 @@ public class CounterPartyOperation implements Operation {
 
 					counterPartyTransactionRepository.save(transactionForCounterparty);
 
+					if(brokerDispatchRequest.getSendToBrokers()) {
+						
+						log.info("Sending to broker ->"); 
+						TransactionBrokerDetails transactionBrokerDetails = TransactionBrokerDetails.builder()
+									.brokerId(brokerDispatchRequest.getSource())
+									.directionId(directionRepository.findById(brokerDispatchRequest.getDirection()).get())
+									.isActive(true)
+									.lastTransactionAt(Instant.now())
+									.transactionId(transactionRepository.findById(brokerDispatchRequest.getTransactionId()).get())
+									.build();
+						
+						transactionBrokerDetailRepository.save(transactionBrokerDetails);
+					}
+					
 					// Publish on kafka topic
 					String kafkaTopic = counterparty.getRealmName() + "." + counterparty.getClientName() + "."
 							+ counterparty.getClientRoleName() + "." + counterparty.getGroupName();
