@@ -591,7 +591,7 @@ public class CounterPartyOperation implements Operation {
 						
 						log.info("Sending to broker ->"); 
 						TransactionBrokerDetails transactionBrokerDetails = TransactionBrokerDetails.builder()
-									.brokerId(brokerDispatchRequest.getSource())
+									.brokerId(counterparty.getId())
 									.directionId(directionRepository.findById(brokerDispatchRequest.getDirection()).get())
 									.isActive(true)
 									.lastTransactionAt(Instant.now())
