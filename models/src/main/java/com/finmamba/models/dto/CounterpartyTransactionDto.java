@@ -74,6 +74,7 @@ public class CounterpartyTransactionDto implements Serializable {
 
 	private BigDecimal sellSideConversionRate;
 
-	private String createdAt;
+	@JsonProperty(value = "lastTransactionAt")
+	private Instant createdAt;
 
 }
