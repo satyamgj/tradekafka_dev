@@ -14,7 +14,10 @@ public class BrokerOrderDto implements Serializable{
 
 	private TransactionDto transactionId;
 	
+	private CounterpartyTransactionDto counterpartyTransactionDto;
+	
 	private DirectionDto directionId;
+	
 	
 	private Instant lastTransactionAt;
 	
