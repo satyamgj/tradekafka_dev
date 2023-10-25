@@ -15,7 +15,7 @@ public interface BrokerToBrokerRepository extends JpaRepository<BrokerToBrokerTr
 
 	List<BrokerToBrokerTransactionDetails> findAllByDirectionIdAndBrokerIdAndIsActiveOrderByLastTransactionAtDesc(
 			Direction direction,
-			InstitutionalEntity broker,
+			Long broker,
 			Boolean isActive
 			);
 

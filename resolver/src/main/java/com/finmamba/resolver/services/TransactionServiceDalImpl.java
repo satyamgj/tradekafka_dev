@@ -1031,7 +1031,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			Direction buy = directionRepository.getById(1L);
 			
 			List<BrokerToBrokerTransactionDetails>buyOrders = brokerToBrokerRepository.findAllByDirectionIdAndBrokerIdAndIsActiveOrderByLastTransactionAtDesc
-					(buy, institutionalEntityRepository.findById(brokerId).get(),
+					(buy, brokerId,
 							true);
 			
 			return HttpResponseModel.builder().data(buyOrders).message("Fetched all buy orders via Broker!").build();
