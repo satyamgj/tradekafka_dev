@@ -1363,6 +1363,18 @@ public class CounterPartyOperation implements Operation {
 						.insertionTime(new Timestamp(System.currentTimeMillis())).build();
 
 				orderMatch.initiateMatchingAlgorithm(matchingTable);
+				
+				log.info("de-activating the entries sent by buyside broker");
+				
+				List<CounterpartyTransactionDetails>orders = counterPartyTransactionRepository.findAllByDestinationIdOrSourceIdAndIsRequestActiveAndTransactionId
+						(sellSideCounterPartyTransaction.getDestinationId(),buySideCounterPartyTransaction.getSourceId(), true, buyTransaction);
+				
+				if(orders.size()>0) {
+					for(CounterpartyTransactionDetails order:orders) {
+						order.setRequestActive(false);
+						counterPartyTransactionRepository.save(order);
+					}
+				}
 
 			} else if (sellSideCounterparty.getEntityType().getId() == 2L) {
 
@@ -1800,7 +1812,7 @@ public class CounterPartyOperation implements Operation {
 				.legInitiatedBy(counterpartyTransactionDetails.getLegInitiatedBy().getId())
 				.transactionId(counterpartyTransactionDetails.getTransactionId().getId())
 				.sourceOutright(counterpartyTransactionDetails.getTransactionId().getSourceOutright())
-				.source(counterpartyTransactionDetails.getSourceId().getId())
+				.source(counterpartyTransactionDetails.getDestinationId().getId())
 				.sendToBrokers(counterpartyTransactionDetails.getViaBroker())
 				.sellSideSpread(counterpartyTransactionDetails.getSellSideSpread())
 				.sellSideConversionRate(counterpartyTransactionDetails.getSellSideConversionRate())
