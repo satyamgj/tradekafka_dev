@@ -54,6 +54,8 @@ public interface TransactionService {
 	public HttpResponseModel intiateMatching(MatchingTable newOrder);
 	
 	public HttpResponseModel getLatestQuoteBySource(LatestQuoteDetailRequest latestQuoteDetailRequest);
+	
+	public HttpResponseModel getBuyOrdersViaBroker(Long brokerId);
 
 	
 }

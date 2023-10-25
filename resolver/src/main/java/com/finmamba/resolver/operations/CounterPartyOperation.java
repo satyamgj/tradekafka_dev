@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.finmamba.entities.configuration.EntityConfigurationSettings;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
+import com.finmamba.entities.transaction.BrokerToBrokerTransactionDetails;
 import com.finmamba.entities.transaction.ConfirmedOrderDetails;
 import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
 import com.finmamba.entities.transaction.MatchingTable;
@@ -23,6 +24,7 @@ import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SellSideTransactionDto;
 import com.finmamba.models.transaction.ConfirmRequest;
 import com.finmamba.models.transaction.TransactionRequest;
+import com.finmamba.resolver.repositories.BrokerToBrokerRepository;
 import com.finmamba.resolver.repositories.ConfirmationRepostory;
 import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 import com.finmamba.resolver.repositories.CurrencyRepository;
@@ -97,9 +99,12 @@ public class CounterPartyOperation implements Operation {
 
 	@Autowired
 	ProductRepository productRepository;
-	
+
 	@Autowired
 	TransactionBrokerDetailRepository transactionBrokerDetailRepository;
+
+	@Autowired
+	BrokerToBrokerRepository brokerToBrokerRepository;
 
 	String spread = "0.0001"; // Default: HARDCODED
 
@@ -126,12 +131,10 @@ public class CounterPartyOperation implements Operation {
 		String functionName = "dispatchRequestToBrokers";
 
 		logTimeUpdate(functionName, START);
-		
-		
 
 		try {
-			
-			TransactionDetail parent =  transactionRepository.findByTransactionId(quoteRequestDto.getTransactionId());
+
+			TransactionDetail parent = transactionRepository.findByTransactionId(quoteRequestDto.getTransactionId());
 
 			long sourceId = quoteRequestDto.getSource().getId();
 
@@ -477,19 +480,15 @@ public class CounterPartyOperation implements Operation {
 				listSavedQuote.add(counterpartyTransactionDto);
 
 				kafkaProducerService.send(listSavedQuote, kafkaTopic, null, null);
-				
+
 				log.info("adding to transaction broker details");
-				
-				TransactionBrokerDetails newRequest = TransactionBrokerDetails.builder()
-								.brokerId(broker.getId())
-								.transactionId(parent)
-								.directionId(parent.getBuySellDirection())
-								.isActive(true)
-								.lastTransactionAt(Instant.now())
-								.build();
-				
+
+				TransactionBrokerDetails newRequest = TransactionBrokerDetails.builder().brokerId(broker.getId())
+						.transactionId(parent).directionId(parent.getBuySellDirection()).isActive(true)
+						.lastTransactionAt(Instant.now()).build();
+
 				transactionBrokerDetailRepository.save(newRequest);
-				
+
 				logTimeUpdate(broker.getLongName(), END);
 
 			});
@@ -587,20 +586,22 @@ public class CounterPartyOperation implements Operation {
 
 					counterPartyTransactionRepository.save(transactionForCounterparty);
 
-					if(brokerDispatchRequest.getSendToBrokers()) {
-						
-						log.info("Sending to broker ->"); 
-						TransactionBrokerDetails transactionBrokerDetails = TransactionBrokerDetails.builder()
-									.brokerId(counterparty.getId())
-									.directionId(directionRepository.findById(brokerDispatchRequest.getDirection()).get())
-									.isActive(true)
-									.lastTransactionAt(Instant.now())
-									.transactionId(transactionRepository.findById(brokerDispatchRequest.getTransactionId()).get())
-									.build();
-						
-						transactionBrokerDetailRepository.save(transactionBrokerDetails);
+					if (brokerDispatchRequest.getSendToBrokers()) {
+
+						log.info("Sending to broker ->");
+						BrokerToBrokerTransactionDetails brokerToBrokerTransactionDetails = BrokerToBrokerTransactionDetails
+								.builder()
+								.sourceBrokerId(sourceEntity)
+								.brokerId(counterparty.getId())
+								.directionId(directionRepository.findById(brokerDispatchRequest.getDirection()).get())
+								.isActive(true).lastTransactionAt(Instant.now())
+								.transactionId(
+										transactionRepository.findById(brokerDispatchRequest.getTransactionId()).get())
+								.cpTransactionId(transactionForCounterparty).build();
+
+						brokerToBrokerRepository.save(brokerToBrokerTransactionDetails);
 					}
-					
+
 					// Publish on kafka topic
 					String kafkaTopic = counterparty.getRealmName() + "." + counterparty.getClientName() + "."
 							+ counterparty.getClientRoleName() + "." + counterparty.getGroupName();
@@ -637,19 +638,18 @@ public class CounterPartyOperation implements Operation {
 	public CounterpartyTransactionDetails addToCounterPartyTransactionTable(Long eventId,
 			TransactionRequest counterpartyTransactionDetails) {
 
-		TransactionDetail transaction = transactionRepository.findById(counterpartyTransactionDetails.getTransactionId()).get();
-		
+		TransactionDetail transaction = transactionRepository
+				.findById(counterpartyTransactionDetails.getTransactionId()).get();
+
 		CounterpartyTransactionDetails newTransactionDetails = CounterpartyTransactionDetails.builder()
 
 				.directionId(directionRepository.getById(counterpartyTransactionDetails.getDirection()))
 
 				.transactionId(transaction)
 
-				.buyCcy(transaction
-						.getBaseCurrency())
+				.buyCcy(transaction.getBaseCurrency())
 
-				.sellCcy(transaction
-						.getQuoteCurrency())
+				.sellCcy(transaction.getQuoteCurrency())
 
 				.sourceId(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()))
 
@@ -691,30 +691,33 @@ public class CounterPartyOperation implements Operation {
 
 				// .isPartial(counterpartyTransactionDetails.getIsPartial())
 
-
-				.legInitiatedBy(institutionalEntityRepository.getById(counterpartyTransactionDetails.getLegInitiatedBy()))
+				.legInitiatedBy(
+						institutionalEntityRepository.getById(counterpartyTransactionDetails.getLegInitiatedBy()))
 
 				.createdBy(userRepository.getById(counterpartyTransactionDetails.getCreatedBy()))
 
 				.build();
-		
-		if(eventId == ApplicationConstants.Event.IN_REQUEST.getEventId()
-			||
-			eventId == ApplicationConstants.Event.OUT_REQUEST.getEventId()
-				) {
+
+		if (eventId == ApplicationConstants.Event.IN_REQUEST.getEventId()
+				|| eventId == ApplicationConstants.Event.OUT_REQUEST.getEventId()) {
 			newTransactionDetails.setResponseInitiatedBy(null);
 
-		}else {
-			if(counterpartyTransactionDetails.getSource() == transaction.getSource().getId() ) {
+		} else {
+			if (counterpartyTransactionDetails.getSource() == transaction.getSource().getId()) {
 				log.info("Its a buyer entry ");
 				log.info("hence not modifying response intiatedBy");
-				newTransactionDetails.setResponseInitiatedBy(counterPartyTransactionRepository.getById(counterpartyTransactionDetails.getCounterpartyDetailId()).getResponseInitiatedBy());
-			}else {
-				if(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()).getEntityType().getId() == 2L) {
+				newTransactionDetails.setResponseInitiatedBy(counterPartyTransactionRepository
+						.getById(counterpartyTransactionDetails.getCounterpartyDetailId()).getResponseInitiatedBy());
+			} else {
+				if (institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()).getEntityType()
+						.getId() == 2L) {
 					log.info("Broker nego");
-					newTransactionDetails.setResponseInitiatedBy(counterPartyTransactionRepository.getById(counterpartyTransactionDetails.getCounterpartyDetailId()).getResponseInitiatedBy());
-				}else {
-					newTransactionDetails.setResponseInitiatedBy(institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()));
+					newTransactionDetails.setResponseInitiatedBy(counterPartyTransactionRepository
+							.getById(counterpartyTransactionDetails.getCounterpartyDetailId())
+							.getResponseInitiatedBy());
+				} else {
+					newTransactionDetails.setResponseInitiatedBy(
+							institutionalEntityRepository.getById(counterpartyTransactionDetails.getSource()));
 				}
 			}
 		}
@@ -731,7 +734,7 @@ public class CounterPartyOperation implements Operation {
 		try {
 
 			InstitutionalEntity responseInitiatedBy = null;
-			
+
 			InstitutionalEntity source = institutionalEntityRepository.getById(request.getSource());
 
 			log.info("Transaction triggered by Bank. Hence deactivating banks incoming request");
@@ -741,7 +744,7 @@ public class CounterPartyOperation implements Operation {
 
 							institutionalEntityRepository.getById(request.getDestination()), source, true,
 							transactionRepository.findById(request.getTransactionId()).get());
-			
+
 			for (CounterpartyTransactionDetails transactions : prevTransactions) {
 				if (transactions != null) {
 
@@ -754,15 +757,14 @@ public class CounterPartyOperation implements Operation {
 			}
 
 			TransactionDetail parentTransaction = transactionRepository.findById(request.getTransactionId()).get();
-			
-			responseInitiatedBy =  counterPartyTransactionRepository.findById(request.getCounterpartyDetailId()).get().getResponseInitiatedBy();
+
+			responseInitiatedBy = counterPartyTransactionRepository.findById(request.getCounterpartyDetailId()).get()
+					.getResponseInitiatedBy();
 
 			if (source.getId() == parentTransaction.getSource().getId()) {
-				
+
 				log.info("Confirmation initiated by Buyer");
 				log.info("Activating the negotiated party request");
-
-				
 
 				List<CounterpartyTransactionDetails> prevNegotiationTransactions = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(responseInitiatedBy,
@@ -790,13 +792,11 @@ public class CounterPartyOperation implements Operation {
 			counterPartyTransactionRepository.save(transactionForBroker);
 
 			InstitutionalEntity broker = institutionalEntityRepository.getById(request.getDestination());
-			
-			//Updating transactionbrokerdetail
+
+			// Updating transactionbrokerdetail
 			TransactionBrokerDetails brokerDetails = transactionBrokerDetailRepository.findByTransactionIdAndBrokerId(
-					transactionRepository.findById(request.getTransactionId()).get(), 
-					request.getDestination()
-					);
-			
+					transactionRepository.findById(request.getTransactionId()).get(), request.getDestination());
+
 			brokerDetails.setLastTransactionAt(Instant.now());
 			transactionBrokerDetailRepository.save(brokerDetails);
 
@@ -842,8 +842,6 @@ public class CounterPartyOperation implements Operation {
 		logTimeUpdate("insertOutNegotiation", START);
 
 		try {
-			
-			
 
 			InstitutionalEntity responseInitiatedBy = null;
 
@@ -852,12 +850,10 @@ public class CounterPartyOperation implements Operation {
 			 */
 			if (institutionalEntityRepository.getById(request.getSource()).getId() == transactionRepository
 					.findById(request.getTransactionId()).get().getSource().getId()) {
-				
+
 				log.info("Negotiation initiated by buySide");
 				log.info("activate negotiation from sell-side party");
 				log.info("Getting sell Side from key ResponseIntitiatedBy");
-
-			
 
 				log.info("De-activating latest quote sent to the broker");
 
@@ -878,16 +874,13 @@ public class CounterPartyOperation implements Operation {
 
 					counterPartyTransactionRepository.save(transactions);
 				}
-				
-				
-				//Deactivating brokers request to source
+
+				// Deactivating brokers request to source
 				List<CounterpartyTransactionDetails> prevBrokerToSourceTransactions = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
 
-								
 								institutionalEntityRepository.getById(request.getDestination()),
-								institutionalEntityRepository.getById(request.getSource()),
-								true,
+								institutionalEntityRepository.getById(request.getSource()), true,
 								transactionRepository.findById(request.getTransactionId()).get());
 
 				for (CounterpartyTransactionDetails transactions : prevBrokerToSourceTransactions) {
@@ -900,11 +893,10 @@ public class CounterPartyOperation implements Operation {
 
 					counterPartyTransactionRepository.save(transactions);
 				}
-				
-				
-				
-				responseInitiatedBy = counterPartyTransactionRepository.getById(request.getCounterpartyDetailId()).getResponseInitiatedBy();
-				
+
+				responseInitiatedBy = counterPartyTransactionRepository.getById(request.getCounterpartyDetailId())
+						.getResponseInitiatedBy();
+
 				List<CounterpartyTransactionDetails> prevNegotiationTransaction = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(responseInitiatedBy,
 								institutionalEntityRepository.getById(request.getDestination()), false,
@@ -919,30 +911,28 @@ public class CounterPartyOperation implements Operation {
 
 							CounterpartyTransactionDetails newCounterpartyTransactionDetails = addToCounterPartyTransactionTable(
 									IN_NEGOTIATION, newRequest);
-							
+
 							newCounterpartyTransactionDetails.setClientOutright(newRequest.getDestinationOutright());
 
 							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);
 
 						}
-						
 
 					} else {
 						log.info("No previous transaction found!");
 					}
 
 				}
-				
-				//Updating transactionbrokerdetail
-				TransactionBrokerDetails brokerDetails = transactionBrokerDetailRepository.findByTransactionIdAndBrokerId(
-						transactionRepository.findById(request.getTransactionId()).get(), 
-						request.getDestination()
-						);
-				
+
+				// Updating transactionbrokerdetail
+				TransactionBrokerDetails brokerDetails = transactionBrokerDetailRepository
+						.findByTransactionIdAndBrokerId(
+								transactionRepository.findById(request.getTransactionId()).get(),
+								request.getDestination());
+
 				brokerDetails.setLastTransactionAt(Instant.now());
 				transactionBrokerDetailRepository.save(brokerDetails);
-				
-				
+
 			} else if (institutionalEntityRepository.getById(request.getSource()).getEntityType().getId() == 1L) {
 				List<CounterpartyTransactionDetails> prevTransactions = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
@@ -960,30 +950,29 @@ public class CounterPartyOperation implements Operation {
 
 					counterPartyTransactionRepository.save(transactions);
 				}
-				
-				//Updating transactionbrokerdetail
-				TransactionBrokerDetails brokerDetails = transactionBrokerDetailRepository.findByTransactionIdAndBrokerId(
-						transactionRepository.findById(request.getTransactionId()).get(), 
-						request.getDestination()
-						);
-				
+
+				// Updating transactionbrokerdetail
+				TransactionBrokerDetails brokerDetails = transactionBrokerDetailRepository
+						.findByTransactionIdAndBrokerId(
+								transactionRepository.findById(request.getTransactionId()).get(),
+								request.getDestination());
+
 				brokerDetails.setLastTransactionAt(Instant.now());
 				transactionBrokerDetailRepository.save(brokerDetails);
-				
+
 			}
 
 			else if (institutionalEntityRepository.getById(request.getSource()).getEntityType().getId() == 2L) {
-				
+
 				log.info("Negotiation initiated by broker");
 				log.info("De-activate negotiation from sell-side party");
 				log.info("Getting sell Side from key ResponseIntitiatedBy");
-				
 
-				CounterpartyTransactionDetails responseTo = counterPartyTransactionRepository.findById(request.getCounterpartyDetailId()).get();
-				
+				CounterpartyTransactionDetails responseTo = counterPartyTransactionRepository
+						.findById(request.getCounterpartyDetailId()).get();
+
 				responseInitiatedBy = responseTo.getResponseInitiatedBy();
-				
-				
+
 				List<CounterpartyTransactionDetails> prevNegotiationTransaction = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(responseInitiatedBy,
 								institutionalEntityRepository.getById(request.getSource()), true,
@@ -1012,16 +1001,33 @@ public class CounterPartyOperation implements Operation {
 					}
 
 				}
-				
-				//Updating transactionbrokerdetail
-				TransactionBrokerDetails brokerDetails = transactionBrokerDetailRepository.findByTransactionIdAndBrokerId(
-						transactionRepository.findById(request.getTransactionId()).get(), 
-						request.getSource()
-						);
-				
+
+				// Updating transactionbrokerdetail
+				TransactionBrokerDetails brokerDetails = transactionBrokerDetailRepository
+						.findByTransactionIdAndBrokerId(
+								transactionRepository.findById(request.getTransactionId()).get(), request.getSource());
+
 				brokerDetails.setLastTransactionAt(Instant.now());
 				transactionBrokerDetailRepository.save(brokerDetails);
+
+			} else if (institutionalEntityRepository.getById(request.getDestination()).getEntityType().getId() == 2L) {
+
+				log.info("Sending negotiation to a broker");
+
+				log.info("deactivating previous sent requests");
+
+				List<CounterpartyTransactionDetails> prevTransaction = counterPartyTransactionRepository
+						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+								institutionalEntityRepository.getById(request.getSource()),
+								institutionalEntityRepository.getById(request.getDestination()), true,
+								transactionRepository.findById(request.getTransactionId()).get());
 				
+				for(CounterpartyTransactionDetails transaction : prevTransaction) {
+					transaction.setRequestActive(false);
+					counterPartyTransactionRepository.save(transaction);
+					
+				}
+
 			}
 
 			log.info("setting previous incoming request of bank as false");
@@ -1037,6 +1043,36 @@ public class CounterPartyOperation implements Operation {
 			counterPartyTransactionRepository.save(negotiatedTransactionForBroker);
 
 			InstitutionalEntity broker = institutionalEntityRepository.getById(request.getDestination());
+			
+			/*
+			 * Since Nego is point to point no need to run match algorithm
+			 */
+			MatchingTable matchingTable = MatchingTable.builder()
+					.askingRate(negotiatedTransactionForBroker.getClientOutright())
+					.destinationId(negotiatedTransactionForBroker.getDestinationId().getId())
+					.sourceId(negotiatedTransactionForBroker.getSourceId().getId())
+					.isPartial(negotiatedTransactionForBroker.getTransactionId().getIsPartial())
+					.orderId(negotiatedTransactionForBroker.getId())
+					.buyAmount(negotiatedTransactionForBroker.getBankBuyAmount())
+					.sellAmount(negotiatedTransactionForBroker.getBankSellAmount())
+					.direction(negotiatedTransactionForBroker.getDirectionId().getId())
+					.buyCurrencyId(negotiatedTransactionForBroker.getTransactionId().getBaseCurrency().getId())
+					.sellCurrencyId(negotiatedTransactionForBroker.getTransactionId().getQuoteCurrency().getId())
+					.eventType(IN_NEGOTIATION).transactionId(request.getTransactionId())
+					.insertionTime(new Timestamp(System.currentTimeMillis())).build();
+			
+			if(institutionalEntityRepository.getById(request.getDestination()).getEntityType().getId() == 2L) {
+				log.info("Updating broker to broker transaction");
+				BrokerToBrokerTransactionDetails brokerToBrokerTransaction = brokerToBrokerRepository.findByBrokerIdAndSourceBrokerIdAndTransactionId
+						(request.getSource(), request.getDestination(), 
+								transactionRepository.findById(request.getTransactionId()).get()
+								);
+				brokerToBrokerTransaction.setCpTransactionId(negotiatedTransactionForBroker);
+				brokerToBrokerTransaction.setLastTransactionAt(Instant.now());
+				brokerToBrokerRepository.save(brokerToBrokerTransaction);
+				matchingTable.setEventType(IN_REQUEST);
+			}
+			
 
 			// Publish on kafka topic
 			String kafkaTopic = broker.getRealmName() + "." + broker.getClientName() + "." + broker.getClientRoleName()
@@ -1054,22 +1090,7 @@ public class CounterPartyOperation implements Operation {
 
 			// Since we are matching only broker orders
 
-			/*
-			 * Since Nego is point to point no need to run match algorithm
-			 */
-			MatchingTable matchingTable = MatchingTable.builder()
-					.askingRate(negotiatedTransactionForBroker.getClientOutright())
-					.destinationId(negotiatedTransactionForBroker.getDestinationId().getId())
-					.sourceId(negotiatedTransactionForBroker.getSourceId().getId())
-					.isPartial(negotiatedTransactionForBroker.getTransactionId().getIsPartial())
-					.orderId(negotiatedTransactionForBroker.getId())
-					.buyAmount(negotiatedTransactionForBroker.getBankBuyAmount())
-					.sellAmount(negotiatedTransactionForBroker.getBankSellAmount())
-					.direction(negotiatedTransactionForBroker.getDirectionId().getId())
-					.buyCurrencyId(negotiatedTransactionForBroker.getTransactionId().getBaseCurrency().getId())
-					.sellCurrencyId(negotiatedTransactionForBroker.getTransactionId().getQuoteCurrency().getId())
-					.eventType(IN_NEGOTIATION).transactionId(request.getTransactionId())
-					.insertionTime(new Timestamp(System.currentTimeMillis())).build();
+			
 
 			orderMatch.initiateMatchingAlgorithm(matchingTable);
 
@@ -1115,11 +1136,12 @@ public class CounterPartyOperation implements Operation {
 					.findById(request.getTransactionId()).get().getSource().getId()) {
 
 				log.info("Reject sent by the buyer hence not deactivating previous active request to the broker");
-				
+
 				log.info("Re-activating response sent by selling counterparty");
-				
-			 	InstitutionalEntity responseInitiatedBy = counterPartyTransactionRepository.getById(request.getCounterpartyDetailId()).getResponseInitiatedBy();
-				
+
+				InstitutionalEntity responseInitiatedBy = counterPartyTransactionRepository
+						.getById(request.getCounterpartyDetailId()).getResponseInitiatedBy();
+
 				List<CounterpartyTransactionDetails> prevNegotiationTransaction = counterPartyTransactionRepository
 						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(responseInitiatedBy,
 								institutionalEntityRepository.getById(request.getDestination()), false,
@@ -1134,19 +1156,16 @@ public class CounterPartyOperation implements Operation {
 
 							CounterpartyTransactionDetails newCounterpartyTransactionDetails = addToCounterPartyTransactionTable(
 									IN_NEGOTIATION, newRequest);
-							
+
 							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);
 
 						}
-						
 
 					} else {
 						log.info("No previous transaction found!");
 					}
 
 				}
-				
-				
 
 			}
 
@@ -1218,17 +1237,13 @@ public class CounterPartyOperation implements Operation {
 				}
 			}
 
-			//Updating transactionbrokerdetail
+			// Updating transactionbrokerdetail
 			TransactionBrokerDetails brokerDetails = transactionBrokerDetailRepository.findByTransactionIdAndBrokerId(
-					transactionRepository.findById(request.getTransactionId()).get(), 
-					request.getDestination()
-					);
-			
+					transactionRepository.findById(request.getTransactionId()).get(), request.getDestination());
+
 			brokerDetails.setLastTransactionAt(Instant.now());
 			transactionBrokerDetailRepository.save(brokerDetails);
-			
-			
-			
+
 			CounterpartyTransactionDetails transactionForBank = addToCounterPartyTransactionTable(
 					ApplicationConstants.Event.OUT_REJECT.getEventId(), request);
 			counterPartyTransactionRepository.save(transactionForBank);
@@ -1296,20 +1311,25 @@ public class CounterPartyOperation implements Operation {
 			{
 				log.info("It seems broker has accepted a broker order");
 				log.info("Sending in-response to initial broker");
+				
+				//deactivating previous transaction for broker
+//				List<BrokerToBrokerTransactionDetails>transactions = brokerToBrokerRepository.find
 
 				CounterpartyTransactionDetails transactionBuyBroker = addToCounterPartyTransactionTable(
 						ApplicationConstants.Event.OUT_RESPONSE.getEventId(), convert(sellSideCounterPartyTransaction));
 
 				transactionBuyBroker.setSourceId(sellSideCounterPartyTransaction.getDestinationId());// sellBroker
 				transactionBuyBroker.setDestinationId(buySideCounterPartyTransaction.getSourceId()); // original broker
+				transactionBuyBroker.setViaBroker(true);
 
 				counterPartyTransactionRepository.save(transactionBuyBroker);
 
 				CounterpartyTransactionDetails transactionSellBroker = addToCounterPartyTransactionTable(
 						ApplicationConstants.Event.IN_RESPONSE.getEventId(), convert(sellSideCounterPartyTransaction));
 
-				transactionBuyBroker.setSourceId(sellSideCounterPartyTransaction.getDestinationId());
-				transactionBuyBroker.setDestinationId(buySideCounterPartyTransaction.getSourceId());
+				transactionSellBroker.setSourceId(sellSideCounterPartyTransaction.getDestinationId());
+				transactionSellBroker.setDestinationId(buySideCounterPartyTransaction.getSourceId());
+				transactionSellBroker.setViaBroker(true);
 
 				counterPartyTransactionRepository.save(transactionSellBroker);
 
@@ -1789,8 +1809,7 @@ public class CounterPartyOperation implements Operation {
 						counterpartyTransactionDetails.getSellSideBrokerageBaseCurrency().getId())
 				.sellSideBaseAmount(counterpartyTransactionDetails.getSellSideBaseAmount())
 				.sellAmount(counterpartyTransactionDetails.getBankSellAmount())
-				.sendToBrokers(counterpartyTransactionDetails.getViaBroker())
-				.build();
+				.sendToBrokers(counterpartyTransactionDetails.getViaBroker()).build();
 		return request;
 	}
 

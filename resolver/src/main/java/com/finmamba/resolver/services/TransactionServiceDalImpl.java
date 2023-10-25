@@ -25,6 +25,7 @@ import com.finmamba.entities.staticdata.Direction;
 import com.finmamba.entities.staticdata.InstitutionalEntity;
 import com.finmamba.entities.staticdata.Product;
 import com.finmamba.entities.staticdata.Tenor;
+import com.finmamba.entities.transaction.BrokerToBrokerTransactionDetails;
 import com.finmamba.entities.transaction.ConfirmedOrderDetails;
 import com.finmamba.entities.transaction.CounterpartyTransactionDetails;
 import com.finmamba.entities.transaction.Customer;
@@ -42,12 +43,12 @@ import com.finmamba.models.dto.ConfirmedOrderDto;
 import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
 import com.finmamba.models.dto.QuoteRequestDto;
 import com.finmamba.models.dto.SellSideConfirmationDto;
-import com.finmamba.models.dto.TransactionDto;
 import com.finmamba.models.dto.buySideConfirmDto;
 import com.finmamba.models.transaction.LatestQuoteDetailRequest;
 import com.finmamba.models.transaction.MarketDepthRequest;
 import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.resolver.exception.EntityNotFound;
+import com.finmamba.resolver.repositories.BrokerToBrokerRepository;
 import com.finmamba.resolver.repositories.ConfirmationRepostory;
 import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 import com.finmamba.resolver.repositories.CurrencyPairDetailsRepository;
@@ -148,6 +149,9 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 	
 	@Autowired
 	TransactionBrokerDetailRepository transactionBrokerDetailRepository;
+	
+	@Autowired
+	BrokerToBrokerRepository brokerToBrokerRepository;
 
 //	@Autowired
 //	HistoryWriter historyWriter;
@@ -1016,6 +1020,25 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			logTimeUpdate("findInOutForTransactionForBroker", "END");
 
 			return HttpResponseModel.builder().data(mapInOut).message(e.getMessage()).build();
+
+		}
+	}
+
+	@Override
+	public HttpResponseModel getBuyOrdersFromBroker(Long brokerId) {
+		try {
+			
+			Direction buy = directionRepository.getById(1L);
+			
+			List<BrokerToBrokerTransactionDetails>buyOrders = brokerToBrokerRepository.findAllByDirectionIdAndBrokerIdAndIsActiveOrderByLastTransactionAtDesc
+					(buy, institutionalEntityRepository.findById(brokerId).get(),
+							true);
+			
+			return HttpResponseModel.builder().data(buyOrders).message("Fetched all buy orders via Broker!").build();
+
+			
+		} catch (Exception e) {
+			return HttpResponseModel.builder().data(Collections.emptyList()).message(e.getMessage()).build();
 
 		}
 	}

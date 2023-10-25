@@ -283,6 +283,17 @@ public class TransactionDataController {
 		}
 	}
 	
+	@GetMapping("/getBuyBrokerOrders/{brokerId}")
+	public ResponseEntity<Object>getBuyBrokerOrders(@PathVariable("brokerId") Long brokerId){
+		try {
+			return new ResponseEntity<Object>(transactionService.getBuyOrdersViaBroker(brokerId),HttpStatus.OK);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new ResponseEntity<>(Collections.emptyList(), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
+	
+	
 	
 	
 	private void logTimeUpdate(String functionName, String status) {

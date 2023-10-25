@@ -46,4 +46,6 @@ public interface TransactionServiceDal {
 	HttpResponseModel intiateMatchingAlgorithms(MatchingTable order);
 	
 	HttpResponseModel getLatestQuoteBySource(LatestQuoteDetailRequest latestQuoteDetailRequest);
+	
+	HttpResponseModel getBuyOrdersFromBroker(Long brokerId);
 }

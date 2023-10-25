@@ -22,7 +22,6 @@ import com.finmamba.models.transaction.QuoteRequestModel;
 import com.finmamba.models.transaction.TransactionRequest;
 import com.finmamba.resolver.repositories.CounterPartyTransactionRepository;
 import com.finmamba.resolver.repositories.TransactionRepository;
-import com.finmamba.resolver.services.TransactionService;
 import com.finmamba.resolver.services.TransactionServiceImpl;
 import com.finmamba.resolver.util.ApplicationConstants;
 

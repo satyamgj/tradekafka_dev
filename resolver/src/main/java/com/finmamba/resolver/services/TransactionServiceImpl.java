@@ -347,5 +347,17 @@ public class TransactionServiceImpl implements TransactionService {
 		}
 	}
 
+	@Override
+	public HttpResponseModel getBuyOrdersViaBroker(Long brokerId) {
+		try {
+			return dal.getBuyOrdersFromBroker(brokerId);
+		} catch (Exception e) {
+			return HttpResponseModel.builder()
+					.data(Collections.emptyList())
+					.message("Something went wrong while fetching getBuyOrdersViaBroker. Please try again! " + e.getMessage())
+					.build();
+		}
+	}
+
 
 }
