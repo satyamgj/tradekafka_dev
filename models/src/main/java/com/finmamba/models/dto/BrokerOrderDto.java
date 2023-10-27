@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class BrokerOrderDto implements Serializable{
 
-//	private TransactionDto transactionId;
+	private TransactionDto transactionId;
 	
-	private CounterPartyTransactionFetchingDto cpTransactionId;
+	//private CounterPartyTransactionFetchingDto cpTransactionId;
 	
 	private DirectionDto directionId;
 	

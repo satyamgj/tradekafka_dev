@@ -39,6 +39,7 @@ import com.finmamba.models.bus.EventType;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.bus.SerialDataBusModel;
 import com.finmamba.models.dto.BrokerOrderDto;
+import com.finmamba.models.dto.BrokerToBrokerDto;
 import com.finmamba.models.dto.ConfirmedOrderDto;
 import com.finmamba.models.dto.CounterPartyTransactionFetchingDto;
 import com.finmamba.models.dto.QuoteRequestDto;
@@ -1036,7 +1037,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 					(buy, brokerId,
 							true);
 			
-			Type listType = new TypeToken<List<BrokerOrderDto>>() {
+			Type listType = new TypeToken<List<BrokerToBrokerDto>>() {
 			}.getType();
 			
 //			for(BrokerToBrokerTransactionDetails order: buyOrders) {
