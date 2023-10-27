@@ -1351,8 +1351,8 @@ public class CounterPartyOperation implements Operation {
 
 				MatchingTable matchingTable = MatchingTable.builder()
 						.askingRate(transactionBuyBroker.getClientOutright())
-						.destinationId(transactionBuyBroker.getDestinationId().getId())
-						.sourceId(transactionBuyBroker.getSourceId().getId())
+						.destinationId(buySideCounterPartyTransaction.getSourceId().getId())
+						.sourceId(sellSideCounterPartyTransaction.getDestinationId().getId())
 						.isPartial(transactionBuyBroker.getTransactionId().getIsPartial())
 						.orderId(transactionBuyBroker.getId()).buyAmount(transactionBuyBroker.getBankBuyAmount())
 						.sellAmount(transactionBuyBroker.getBankSellAmount())
@@ -1362,6 +1362,8 @@ public class CounterPartyOperation implements Operation {
 						.eventType(IN_NEGOTIATION).transactionId(transactionBuyBroker.getTransactionId().getId())
 						.insertionTime(new Timestamp(System.currentTimeMillis())).build();
 
+				
+				
 				orderMatch.initiateMatchingAlgorithm(matchingTable);
 				
 				log.info("de-activating the entries sent by buyside broker");
