@@ -56,6 +56,9 @@ public interface TransactionService {
 	public HttpResponseModel getLatestQuoteBySource(LatestQuoteDetailRequest latestQuoteDetailRequest);
 	
 	public HttpResponseModel getBuyOrdersViaBroker(Long brokerId);
+	
+	public HttpResponseModel getSellOrdersViaBroker(Long brokerId);
+
 
 	
 }

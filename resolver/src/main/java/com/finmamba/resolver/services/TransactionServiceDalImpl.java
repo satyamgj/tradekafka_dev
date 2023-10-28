@@ -1052,5 +1052,33 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 
 		}
 	}
+	
+	@Override
+	public HttpResponseModel getSellOrdersFromBroker(Long brokerId) {
+		try {
+			
+			java.util.ArrayList<BrokerOrderDto> orders = new ArrayList<>();
+			
+			Direction sell = directionRepository.getById(2L);
+			
+			List<BrokerToBrokerTransactionDetails>buyOrders = brokerToBrokerRepository.findAllByDirectionIdAndBrokerIdAndIsActiveOrderByLastTransactionAtDesc
+					(sell, brokerId,
+							true);
+			
+			Type listType = new TypeToken<List<BrokerToBrokerDto>>() {
+			}.getType();
+			
+//			for(BrokerToBrokerTransactionDetails order: buyOrders) {
+//				orders.add(modelMapper.map(order, listType));
+//			}
+			
+			return HttpResponseModel.builder().data(modelMapper.map(buyOrders, listType)).message("Fetched all buy orders via Broker!").build();
+
+			
+		} catch (Exception e) {
+			return HttpResponseModel.builder().data(Collections.emptyList()).message(e.getMessage()).build();
+
+		}
+	}
 
 }

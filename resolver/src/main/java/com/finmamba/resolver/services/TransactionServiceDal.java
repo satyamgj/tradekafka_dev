@@ -48,4 +48,6 @@ public interface TransactionServiceDal {
 	HttpResponseModel getLatestQuoteBySource(LatestQuoteDetailRequest latestQuoteDetailRequest);
 	
 	HttpResponseModel getBuyOrdersFromBroker(Long brokerId);
+	
+	HttpResponseModel getSellOrdersFromBroker(Long brokerId);
 }
