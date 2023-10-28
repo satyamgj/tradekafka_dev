@@ -18,6 +18,7 @@ public class BrokerToBrokerDto implements Serializable{
 	
 	private DirectionDto directionId;
 	
+	private Long statusId;
 	
 	private Instant lastTransactionAt;
 	
