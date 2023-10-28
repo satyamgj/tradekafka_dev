@@ -75,6 +75,9 @@ public class MatchingTable implements Serializable{
 	
 	@Column(name="transaction_id")
 	private Long transactionId;
+	
+	@Column(name="for_transaction_id")
+	private Long forTransactionId;
 
 
 }

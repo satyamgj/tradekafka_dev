@@ -57,7 +57,7 @@ public class OrderMatch {
 		if (order.getDirection() == 1) {
 
 			List<MatchingTable> sellOrders = matchingRepository
-					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndForTransactionId(
 							order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
 							IN_NEGOTIATION, order.getTransactionId());
 
@@ -72,7 +72,7 @@ public class OrderMatch {
 		} else {
 
 			List<MatchingTable> sellOrders = matchingRepository
-					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndForTransactionId(
 							order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
 							IN_NEGOTIATION, order.getTransactionId());
 
@@ -98,7 +98,7 @@ public class OrderMatch {
 		if (order.getDirection() == 1) {
 
 			List<MatchingTable> sellOrders = matchingRepository
-					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndForTransactionId(
 							order.getDestinationId(), SELL, order.getBuyCurrencyId(), order.getSellCurrencyId(),
 							IN_NEGOTIATION, order.getTransactionId());
 
@@ -113,7 +113,7 @@ public class OrderMatch {
 		} else {
 
 			List<MatchingTable> sellOrders = matchingRepository
-					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndTransactionId(
+					.findByDestinationIdAndDirectionAndBuyCurrencyIdAndSellCurrencyIdAndEventTypeAndForTransactionId(
 							order.getDestinationId(), BUY, order.getBuyCurrencyId(), order.getSellCurrencyId(),
 							IN_NEGOTIATION, order.getTransactionId());
 
