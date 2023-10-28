@@ -1427,12 +1427,10 @@ public class CounterPartyOperation implements Operation {
 				if (orders.size() > 0) {
 					for (CounterpartyTransactionDetails order : orders) {
 						
-						//Deactivating only if its an In-Request
-						//i.e deactivating the broker side 
-						if(order.getEventType().getId() == IN_REQUEST) {
+					
 							order.setRequestActive(false);
 							counterPartyTransactionRepository.save(order);
-						}	
+						
 					}
 				}
 
