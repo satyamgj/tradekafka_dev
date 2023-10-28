@@ -59,6 +59,9 @@ public class BrokerToBrokerTransactionDetails implements Serializable{
 	@Column(name = "is_active")
 	private boolean isActive;
 	
+	@Column(name="status_id")
+	private Long statusId;
+	
 	@Column(name = "last_transaction_at")
 	private Instant lastTransactionAt;
 }

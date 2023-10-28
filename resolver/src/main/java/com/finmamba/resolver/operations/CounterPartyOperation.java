@@ -119,6 +119,10 @@ public class CounterPartyOperation implements Operation {
 	private static final Long IN_REQUEST = 1L;
 
 	private static final Long IN_NEGOTIATION = 5L;
+	
+	private static final Long OUT_RESPONSE = 4L;
+	
+	private static final Long IN_REJECT = 7L;
 
 	/****
 	 * @apiNote : To dispatch quoteRequest to the brokers i.e IN_REQUEST for all
@@ -599,7 +603,9 @@ public class CounterPartyOperation implements Operation {
 								.isActive(true).lastTransactionAt(Instant.now())
 								.transactionId(
 										transactionRepository.findById(brokerDispatchRequest.getTransactionId()).get())
-								.cpTransactionId(transactionForCounterparty).build();
+								.cpTransactionId(transactionForCounterparty)
+								.statusId(IN_REQUEST)
+								.build();
 
 						brokerToBrokerRepository.save(brokerToBrokerTransactionDetails);
 					}
@@ -1214,7 +1220,44 @@ public class CounterPartyOperation implements Operation {
 				 * 
 				 * }
 				 */
-				log.info("Reject not allowed from broker entity");
+				log.info("Reject not allowed from broker entity for bank transactions");
+				log.info("It seems its rejecting broker to broker request");
+				
+				
+				BrokerToBrokerTransactionDetails brokerTransactionDetails = brokerToBrokerRepository
+						.findByBrokerIdAndSourceBrokerIdAndTransactionId(request.getDestination(), request.getSource()
+								,transactionRepository.findById(request.getTransactionId()).get()
+								);
+				
+				if(brokerTransactionDetails == null) {
+					log.info("Seems you have sent incorrect transactionID");
+				}
+				else {
+					brokerTransactionDetails.setStatusId(IN_REJECT);
+					brokerToBrokerRepository.save(brokerTransactionDetails);
+					
+				}
+				//Also Deactivating the broker broker In-response requests
+				List<CounterpartyTransactionDetails> prevTransactions = counterPartyTransactionRepository
+						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+
+								institutionalEntityRepository.getById(request.getDestination()),
+								institutionalEntityRepository.getById(request.getSource()), true,
+								counterPartyTransactionRepository.findById(request.getCounterpartyDetailId()).get().getTransactionId())
+								;
+
+				for (CounterpartyTransactionDetails transactions : prevTransactions) {
+					if (transactions != null) {
+
+						transactions.setRequestActive(false);
+						counterPartyTransactionRepository.save(transactions);
+					} else {
+						log.info("Not out coming request from bank. Seems to be on brokers side.");
+					}
+
+				}
+				
+				
 			} else {
 
 				log.info("Transaction triggered by Bank. Hence deactivating banks incoming request");
@@ -1365,6 +1408,14 @@ public class CounterPartyOperation implements Operation {
 						.insertionTime(new Timestamp(System.currentTimeMillis())).build();
 
 				orderMatch.initiateMatchingAlgorithm(matchingTable);
+				
+				log.info("Changing status of broker to broker request to out response");
+				BrokerToBrokerTransactionDetails brokerToBrokerTransactionDetails = brokerToBrokerRepository
+						.findByBrokerIdAndSourceBrokerIdAndTransactionId(sellSideCounterPartyTransaction.getDestinationId().getId(), buySideCounterPartyTransaction.getSourceId().getId(), buyTransaction);
+				
+				//Deactivating broker to broker request
+				brokerToBrokerTransactionDetails.setStatusId(OUT_RESPONSE);
+				brokerToBrokerRepository.save(brokerToBrokerTransactionDetails);
 
 				log.info("de-activating the entries sent by buyside broker");
 
@@ -1375,8 +1426,13 @@ public class CounterPartyOperation implements Operation {
 
 				if (orders.size() > 0) {
 					for (CounterpartyTransactionDetails order : orders) {
-						order.setRequestActive(false);
-						counterPartyTransactionRepository.save(order);
+						
+						//Deactivating only if its an In-Request
+						//i.e deactivating the broker side 
+						if(order.getEventType().getId() == IN_REQUEST) {
+							order.setRequestActive(false);
+							counterPartyTransactionRepository.save(order);
+						}	
 					}
 				}
 
