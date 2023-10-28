@@ -1439,6 +1439,14 @@ public class CounterPartyOperation implements Operation {
 
 				}
 
+				log.info("Deactivating broker to broker request");
+				BrokerToBrokerTransactionDetails brokerToBrokerTransactionDetails = brokerToBrokerRepository
+						.findByBrokerIdAndSourceBrokerIdAndTransactionId(sellSideCounterPartyTransaction.getSourceId().getId(), broker.getId(), buyTransaction);
+				
+				//Deactivating broker to broker request
+				brokerToBrokerTransactionDetails.setActive(false);
+				brokerToBrokerRepository.save(brokerToBrokerTransactionDetails);
+				
 				log.info("Broker-to-broker confirmation completed.");
 
 			} else {
