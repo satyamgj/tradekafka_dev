@@ -362,7 +362,7 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	public HttpResponseModel getSellOrdersViaBroker(Long brokerId) {
 		try {
-			return dal.getBuyOrdersFromBroker(brokerId);
+			return dal.getSellOrdersFromBroker(brokerId);
 		} catch (Exception e) {
 			return HttpResponseModel.builder()
 					.data(Collections.emptyList())
