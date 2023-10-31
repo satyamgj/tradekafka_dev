@@ -167,26 +167,10 @@ public class OrderMatch {
 				// Case 1: both isPartial true
 				if (newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
 
-					String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-							+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-							+ oppositeOrder.getAskingRate();
-
-					String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
-
-					log.info(matchMessage);
-
-					log.info("Sending to " + "realm_"
-							+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
-
-					kafkaProducerService.send(matchMessage, topic, null, null);
-
-				}
-				// case 2: only buy order is partial allowed and not sell order not
-				else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
-							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == -1) {
-						// i.e match -> if buy amount equals with sell order buy amount
-						// & if buy amt is greater than sell order amount
+					CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+							.findById(oppositeOrder.getOrderId()).get();
+					if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
+							.getId() != newOrderTransaction.getSourceId().getId()) {
 
 						String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
 								+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
@@ -200,7 +184,37 @@ public class OrderMatch {
 								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
 						kafkaProducerService.send(matchMessage, topic, null, null);
+					}
 
+				}
+				// case 2: only buy order is partial allowed and not sell order not
+				else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
+					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
+							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == -1) {
+						// i.e match -> if buy amount equals with sell order buy amount
+						// & if buy amt is greater than sell order amount
+
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
+
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
+
+							String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+									+ oppositeOrder.getAskingRate();
+
+							String topic = "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+
+							log.info(matchMessage);
+
+							log.info("Sending to " + "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+							kafkaProducerService.send(matchMessage, topic, null, null);
+
+						}
 					}
 
 				}
@@ -211,19 +225,26 @@ public class OrderMatch {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is less than sell order amount
 
-						String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-								+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-								+ oppositeOrder.getAskingRate();
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
 
-						String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 
-						log.info(matchMessage);
+							String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+									+ oppositeOrder.getAskingRate();
 
-						log.info("Sending to " + "realm_"
-								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+							String topic = "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
 
-						kafkaProducerService.send(matchMessage, topic, null, null);
+							log.info(matchMessage);
 
+							log.info("Sending to " + "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+							kafkaProducerService.send(matchMessage, topic, null, null);
+						}
 					}
 				}
 				// case 4: both partial fill not allowed
@@ -231,19 +252,27 @@ public class OrderMatch {
 					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0) {
 						// i.e match -> if buy amount equals with sell order buy amount
 
-						String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-								+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-								+ oppositeOrder.getAskingRate();
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
 
-						String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 
-						log.info(matchMessage);
+							String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+									+ oppositeOrder.getAskingRate();
 
-						log.info("Sending to " + "realm_"
-								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+							String topic = "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
 
-						kafkaProducerService.send(matchMessage, topic, null, null);
+							log.info(matchMessage);
 
+							log.info("Sending to " + "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+
+							kafkaProducerService.send(matchMessage, topic, null, null);
+
+						}
 					}
 
 				}
@@ -263,20 +292,26 @@ public class OrderMatch {
 							|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == -1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is greater than sell order amount
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
 
-						String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-								+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-								+ oppositeOrder.getAskingRate();
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 
-						String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+							String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+									+ oppositeOrder.getAskingRate();
 
-						log.info(matchMessage);
+							String topic = "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
 
-						log.info("Sending to " + "realm_"
-								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+							log.info(matchMessage);
 
-						kafkaProducerService.send(matchMessage, topic, null, null);
+							log.info("Sending to " + "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
+							kafkaProducerService.send(matchMessage, topic, null, null);
+						}
 					}
 
 				}
@@ -287,19 +322,25 @@ public class OrderMatch {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is less than sell order amount
 
-						String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-								+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-								+ oppositeOrder.getAskingRate();
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
 
-						String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+							String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+									+ oppositeOrder.getAskingRate();
 
-						log.info(matchMessage);
+							String topic = "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
 
-						log.info("Sending to " + "realm_"
-								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+							log.info(matchMessage);
 
-						kafkaProducerService.send(matchMessage, topic, null, null);
+							log.info("Sending to " + "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
+							kafkaProducerService.send(matchMessage, topic, null, null);
+						}
 					}
 				}
 				// case 4: both partial fill not allowed
@@ -307,19 +348,26 @@ public class OrderMatch {
 					if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0) {
 						// i.e match -> if buy amount equals with sell order buy amount
 
-						String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
-								+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
-								+ oppositeOrder.getAskingRate();
+						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
+								.findById(oppositeOrder.getOrderId()).get();
 
-						String topic = "realm_" + newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
+								.getId() != newOrderTransaction.getSourceId().getId()) {
+							String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
+									+ newOrder.getAskingRate() + " with " + oppositeOrder.getOrderId() + " @ price "
+									+ oppositeOrder.getAskingRate();
 
-						log.info(matchMessage);
+							String topic = "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase();
 
-						log.info("Sending to " + "realm_"
-								+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
+							log.info(matchMessage);
 
-						kafkaProducerService.send(matchMessage, topic, null, null);
+							log.info("Sending to " + "realm_"
+									+ newOrderTransaction.getDestinationId().getRealmName().toLowerCase());
 
+							kafkaProducerService.send(matchMessage, topic, null, null);
+
+						}
 					}
 
 				}
@@ -391,7 +439,7 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
@@ -447,7 +495,7 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
@@ -480,7 +528,7 @@ public class OrderMatch {
 
 					CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 							.findById(oppositeOrder.getOrderId()).get();
-					if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+					if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 							.getId() != newOrderTransaction.getSourceId().getId()) {
 						matchedOrders.add(oppositeOrderTransaction);
 					}
@@ -508,7 +556,7 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
@@ -538,7 +586,7 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}
@@ -565,7 +613,7 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						if (oppositeOrderTransaction.isRequestActive()&& oppositeOrderTransaction.getSourceId()
+						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 								.getId() != newOrderTransaction.getSourceId().getId()) {
 							matchedOrders.add(oppositeOrderTransaction);
 						}

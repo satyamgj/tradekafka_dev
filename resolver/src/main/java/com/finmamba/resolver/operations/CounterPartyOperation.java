@@ -833,6 +833,7 @@ public class CounterPartyOperation implements Operation {
 					.sellCurrencyId(transactionForBroker.getTransactionId().getQuoteCurrency().getId())
 					.eventType(IN_NEGOTIATION).transactionId(request.getTransactionId())
 					.transactionId(request.getTransactionId()).insertionTime(new Timestamp(System.currentTimeMillis()))
+					
 					.build();
 
 			orderMatch.initiateMatchingAlgorithm(matchingTable);
@@ -921,7 +922,7 @@ public class CounterPartyOperation implements Operation {
 							CounterpartyTransactionDetails newCounterpartyTransactionDetails = addToCounterPartyTransactionTable(
 									IN_NEGOTIATION, newRequest);
 
-							newCounterpartyTransactionDetails.setClientOutright(newRequest.getDestinationOutright());
+							//newCounterpartyTransactionDetails.setClientOutright(newRequest.getDestinationOutright());
 
 							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);
 
