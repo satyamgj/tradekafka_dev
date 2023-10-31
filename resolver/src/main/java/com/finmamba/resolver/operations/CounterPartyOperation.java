@@ -1510,6 +1510,14 @@ public class CounterPartyOperation implements Operation {
 
 					buyTransaction.setIsConfirmed(true);
 					transactionRepository.save(buyTransaction);
+					
+					ConfirmedOrderDetails buyConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
+							.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
+							.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction)
+							.sellSideId(sellSideCounterparty).buySideId(buySideCounterparty).transactionId(buyTransaction)
+							.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
+
+					confirmationRepostory.save(buyConfirm);
 
 				}
 
@@ -1517,6 +1525,13 @@ public class CounterPartyOperation implements Operation {
 
 					sellTransaction.setIsConfirmed(true);
 					transactionRepository.save(sellTransaction);
+					
+					ConfirmedOrderDetails sellConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
+							.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
+							.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction)
+							.sellSideId(sellSideCounterparty).buySideId(buySideCounterparty).transactionId(sellTransaction)
+							.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
+					confirmationRepostory.save(sellConfirm);
 
 				}
 
@@ -1561,20 +1576,9 @@ public class CounterPartyOperation implements Operation {
 				 * }
 				 */
 
-				ConfirmedOrderDetails buyConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
-						.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
-						.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction)
-						.sellSideId(sellSideCounterparty).buySideId(buySideCounterparty).transactionId(buyTransaction)
-						.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
 
-				confirmationRepostory.save(buyConfirm);
 
-				ConfirmedOrderDetails sellConfirm = ConfirmedOrderDetails.builder().brokerId(broker)
-						.buySideCounterpartyTransactionId(buySideCounterPartyTransaction)
-						.sellSideCounterpartyTransactionId(sellSideCounterPartyTransaction)
-						.sellSideId(sellSideCounterparty).buySideId(buySideCounterparty).transactionId(sellTransaction)
-						.createdBy(userRepository.findById(confirmRequest.getCreatedBy()).get()).build();
-				confirmationRepostory.save(sellConfirm);
+
 
 				// Deactivating counterPartyBroker-Broker transaction
 
