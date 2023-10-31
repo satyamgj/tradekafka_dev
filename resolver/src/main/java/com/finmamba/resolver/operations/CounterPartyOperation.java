@@ -1071,6 +1071,8 @@ public class CounterPartyOperation implements Operation {
 					.forTransactionId(request.getTransactionId()) // Always negotiation will happen for single
 																	// transactionId
 					.insertionTime(new Timestamp(System.currentTimeMillis())).build();
+			
+			orderMatch.initiateMatchingAlgorithm(matchingTable);
 
 			if (institutionalEntityRepository.getById(request.getDestination()).getEntityType().getId() == 2L) {
 				log.info("Updating broker to broker transaction");
