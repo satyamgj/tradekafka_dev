@@ -584,7 +584,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			events.add(inAwait);
 
 			List<CounterpartyTransactionDetails> transactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndEventTypeIn(destination, events,
+					.findAllByDestinationIdAndIsRequestActiveAndEventTypeIn(destination,true, events,
 
 							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
 									"id"));
