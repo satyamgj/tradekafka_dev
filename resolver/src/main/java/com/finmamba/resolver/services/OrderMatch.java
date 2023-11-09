@@ -169,11 +169,12 @@ public class OrderMatch {
 
 					CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 							.findById(oppositeOrder.getOrderId()).get();
-					
-					if(!oppositeOrderTransaction.isRequestActive()) {
+
+					if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
+							.getId() == newOrderTransaction.getSourceId().getId()) {
 						continue;
 					}
-					
+
 					if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 							.getId() != newOrderTransaction.getSourceId().getId()) {
 
@@ -202,10 +203,11 @@ public class OrderMatch {
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
 
-						if(!oppositeOrderTransaction.isRequestActive()) {
+						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
+								.getId() == newOrderTransaction.getSourceId().getId()) {
 							continue;
 						}
-						
+
 						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 								.getId() != newOrderTransaction.getSourceId().getId()) {
 
@@ -237,10 +239,11 @@ public class OrderMatch {
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
 
-						if(!oppositeOrderTransaction.isRequestActive()) {
+						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
+								.getId() == newOrderTransaction.getSourceId().getId()) {
 							continue;
 						}
-						
+
 						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 								.getId() != newOrderTransaction.getSourceId().getId()) {
 
@@ -267,8 +270,9 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						
-						if(!oppositeOrderTransaction.isRequestActive()) {
+
+						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
+								.getId() == newOrderTransaction.getSourceId().getId()) {
 							continue;
 						}
 
@@ -311,8 +315,9 @@ public class OrderMatch {
 						// & if buy amt is greater than sell order amount
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						
-						if(!oppositeOrderTransaction.isRequestActive()) {
+
+						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
+								.getId() == newOrderTransaction.getSourceId().getId()) {
 							continue;
 						}
 
@@ -345,11 +350,12 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						
-						if(!oppositeOrderTransaction.isRequestActive()) {
+
+						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
+								.getId() == newOrderTransaction.getSourceId().getId()) {
 							continue;
 						}
-						
+
 						if (oppositeOrderTransaction.isRequestActive() && oppositeOrderTransaction.getSourceId()
 								.getId() != newOrderTransaction.getSourceId().getId()) {
 
@@ -376,8 +382,9 @@ public class OrderMatch {
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
 								.findById(oppositeOrder.getOrderId()).get();
-						
-						if(!oppositeOrderTransaction.isRequestActive()) {
+
+						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
+								.getId() == newOrderTransaction.getSourceId().getId()) {
 							continue;
 						}
 
