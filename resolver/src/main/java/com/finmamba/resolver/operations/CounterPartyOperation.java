@@ -832,7 +832,9 @@ public class CounterPartyOperation implements Operation {
 					.buyCurrencyId(transactionForBroker.getTransactionId().getBaseCurrency().getId())
 					.sellCurrencyId(transactionForBroker.getTransactionId().getQuoteCurrency().getId())
 					.eventType(IN_NEGOTIATION).transactionId(request.getTransactionId())
-					.transactionId(request.getTransactionId()).insertionTime(new Timestamp(System.currentTimeMillis()))
+					.transactionId(request.getTransactionId())
+					.forTransactionId(request.getTransactionId())
+					.insertionTime(new Timestamp(System.currentTimeMillis()))
 					
 					.build();
 
