@@ -195,8 +195,8 @@ public class OrderMatch {
 				}
 				// case 2: only buy order is partial allowed and not sell order not
 				else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
-							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == -1) {
+					if (oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == 0
+							|| oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == -1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is greater than sell order amount
 
@@ -231,8 +231,8 @@ public class OrderMatch {
 				}
 				// case 3: only sell order is partial fill allowed.
 				else if (!newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
-							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 1) {
+					if (oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == 0
+							|| oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == 1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is less than sell order amount
 
@@ -265,7 +265,7 @@ public class OrderMatch {
 				}
 				// case 4: both partial fill not allowed
 				else if (!newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0) {
+					if (oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == 0) {
 						// i.e match -> if buy amount equals with sell order buy amount
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
@@ -309,8 +309,8 @@ public class OrderMatch {
 				}
 				// case 2: only buy order is partial allowed and not sell order not
 				else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0
-							|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == -1) {
+					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == 0
+							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == -1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is greater than sell order amount
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
@@ -343,8 +343,8 @@ public class OrderMatch {
 				}
 				// case 3: only sell order is partial fill allowed.
 				else if (!newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0
-							|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 1) {
+					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == 0
+							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == 1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is less than sell order amount
 
@@ -377,7 +377,7 @@ public class OrderMatch {
 				}
 				// case 4: both partial fill not allowed
 				else if (!newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0) {
+					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == 0) {
 						// i.e match -> if buy amount equals with sell order buy amount
 
 						CounterpartyTransactionDetails oppositeOrderTransaction = counterPartyTransactionRepository
@@ -456,8 +456,8 @@ public class OrderMatch {
 				}
 				// case 2: only buy order is partial allowed and not sell order not
 				else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
-							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == -1) {
+					if (oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == 0
+							|| oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == -1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is greater than sell order amount
 
@@ -486,8 +486,8 @@ public class OrderMatch {
 				}
 				// case 3: only sell order is partial fill allowed.
 				else if (!newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0
-							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 1) {
+					if (oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == 0
+							|| oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == 1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is less than sell order amount
 
@@ -514,7 +514,7 @@ public class OrderMatch {
 				}
 				// case 4: both partial fill not allowed
 				else if (!newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getBuyAmount()) == 0) {
+					if (oppositeOrder.getSellAmount().compareTo(newOrder.getBuyAmount()) == 0) {
 						// i.e match -> if buy amount equals with sell order buy amount
 
 						String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
@@ -573,8 +573,8 @@ public class OrderMatch {
 				}
 				// case 2: only buy order is partial allowed and not sell order not
 				else if (newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0
-							|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == -1) {
+					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == 0
+							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == -1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is greater than sell order amount
 
@@ -603,8 +603,8 @@ public class OrderMatch {
 				}
 				// case 3: only sell order is partial fill allowed.
 				else if (!newOrder.getIsPartial() && oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0
-							|| oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 1) {
+					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == 0
+							|| oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == 1) {
 						// i.e match -> if buy amount equals with sell order buy amount
 						// & if buy amt is less than sell order amount
 
@@ -632,7 +632,7 @@ public class OrderMatch {
 				}
 				// case 4: both partial fill not allowed
 				else if (!newOrder.getIsPartial() && !oppositeOrder.getIsPartial()) {
-					if (oppositeOrder.getSellAmount().compareTo(newOrder.getSellAmount()) == 0) {
+					if (oppositeOrder.getBuyAmount().compareTo(newOrder.getSellAmount()) == 0) {
 						// i.e match -> if buy amount equals with sell order buy amount
 
 						String matchMessage = "Order matched buy Id: " + newOrder.getOrderId() + "@ price "
