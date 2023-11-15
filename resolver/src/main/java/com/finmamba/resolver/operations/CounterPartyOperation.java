@@ -870,7 +870,7 @@ public class CounterPartyOperation implements Operation {
 				log.info("De-activating latest quote sent to the broker");
 
 				List<CounterpartyTransactionDetails> prevTransactions = counterPartyTransactionRepository
-						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionId(
+						.findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionIdOrderByIdDesc(
 
 								institutionalEntityRepository.getById(request.getSource()),
 								institutionalEntityRepository.getById(request.getDestination()), true,

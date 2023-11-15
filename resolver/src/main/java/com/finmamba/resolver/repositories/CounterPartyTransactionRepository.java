@@ -31,6 +31,12 @@ public interface CounterPartyTransactionRepository extends JpaRepository<Counter
 			Boolean isRequestActive,
 			TransactionDetail transactionId);
 	
+	List<CounterpartyTransactionDetails> findBySourceIdAndDestinationIdAndIsRequestActiveAndTransactionIdOrderByIdDesc(
+			InstitutionalEntity source,
+			InstitutionalEntity destination,
+			Boolean isRequestActive,
+			TransactionDetail transactionId);
+	
 	List<CounterpartyTransactionDetails> findAllByDestinationIdAndIsRequestActiveAndEventTypeIn(InstitutionalEntity destination,
 																		Boolean isRequestActive,
 																		Collection<EventType> events,
