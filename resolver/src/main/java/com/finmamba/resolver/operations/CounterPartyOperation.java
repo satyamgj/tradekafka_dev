@@ -1060,7 +1060,7 @@ public class CounterPartyOperation implements Operation {
 					ApplicationConstants.Event.IN_NEGOTIATION.getEventId(), request);
 			counterPartyTransactionRepository.save(negotiatedTransactionForBroker);
 
-			InstitutionalEntity broker = institutionalEntityRepository.getById(request.getDestination());
+			InstitutionalEntity broker = institutionalEntityRepository.findById(request.getDestination()).get();
 
 			/*
 			 * Since Nego is point to point no need to run match algorithm
