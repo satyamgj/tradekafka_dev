@@ -925,6 +925,11 @@ public class CounterPartyOperation implements Operation {
 									IN_NEGOTIATION, newRequest);
 							
 						//	newCounterpartyTransactionDetails.setSourceId(institutionalEntityRepository.getById(request.getSource()));
+						
+							newCounterpartyTransactionDetails.setDirectionId(directionRepository.findById(request.getDirection()).get());
+							newCounterpartyTransactionDetails.setBankBuyAmount(request.getBuyAmount());
+							newCounterpartyTransactionDetails.setBankSellAmount(request.getSellAmount());
+	
 							newCounterpartyTransactionDetails.setClientOutright(newRequest.getDestinationOutright());
 
 							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);
