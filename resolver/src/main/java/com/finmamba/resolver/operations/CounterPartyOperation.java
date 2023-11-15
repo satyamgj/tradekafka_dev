@@ -1893,7 +1893,7 @@ public class CounterPartyOperation implements Operation {
 				.legInitiatedBy(counterpartyTransactionDetails.getLegInitiatedBy().getId())
 				.transactionId(counterpartyTransactionDetails.getTransactionId().getId())
 				.sourceOutright(counterpartyTransactionDetails.getTransactionId().getSourceOutright())
-				.source(counterpartyTransactionDetails.getDestinationId().getId())
+				.source(counterpartyTransactionDetails.getSourceId().getId())
 				.sendToBrokers(counterpartyTransactionDetails.getViaBroker())
 				.sellSideSpread(counterpartyTransactionDetails.getSellSideSpread())
 				.sellSideConversionRate(counterpartyTransactionDetails.getSellSideConversionRate())
