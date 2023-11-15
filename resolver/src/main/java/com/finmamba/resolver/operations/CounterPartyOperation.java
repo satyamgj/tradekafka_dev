@@ -934,6 +934,7 @@ public class CounterPartyOperation implements Operation {
 
 							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);
 
+							break;
 						}
 
 					} else {
@@ -1050,7 +1051,7 @@ public class CounterPartyOperation implements Operation {
 
 			log.info("setting previous incoming request of bank as false");
 
-			log.info("Updating the transaction");
+			log.info("Updating the transactionc");
 
 			CounterpartyTransactionDetails negotiatedTransactionForBank = addToCounterPartyTransactionTable(
 					ApplicationConstants.Event.OUT_NEGOTIATION.getEventId(), request);
@@ -1083,7 +1084,10 @@ public class CounterPartyOperation implements Operation {
 			
 			orderMatch.initiateMatchingAlgorithm(matchingTable);
 
-			if (institutionalEntityRepository.getById(request.getDestination()).getEntityType().getId() == 2L) {
+			if (institutionalEntityRepository.getById(request.getDestination()).getEntityType().getId() == 2L
+					&& 
+					institutionalEntityRepository.getById(request.getSource()).getEntityType().getId() == 2L
+					) {
 				log.info("Updating broker to broker transaction");
 				BrokerToBrokerTransactionDetails brokerToBrokerTransaction = brokerToBrokerRepository
 						.findByBrokerIdAndSourceBrokerIdAndTransactionId(request.getSource(), request.getDestination(),
