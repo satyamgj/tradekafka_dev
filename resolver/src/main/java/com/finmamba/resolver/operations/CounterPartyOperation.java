@@ -930,7 +930,7 @@ public class CounterPartyOperation implements Operation {
 							newCounterpartyTransactionDetails.setBankBuyAmount(request.getBuyAmount());
 							newCounterpartyTransactionDetails.setBankSellAmount(request.getSellAmount());
 	
-							newCounterpartyTransactionDetails.setClientOutright(newRequest.getDestinationOutright());
+							newCounterpartyTransactionDetails.setClientOutright(request.getDestinationOutright());
 
 							counterPartyTransactionRepository.save(newCounterpartyTransactionDetails);
 
