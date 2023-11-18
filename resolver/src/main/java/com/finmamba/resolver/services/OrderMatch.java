@@ -43,6 +43,18 @@ public class OrderMatch {
 
 	private static final Long IN_REQUEST = 1L;
 	private static final Long IN_NEGOTIATION = 5L;
+	
+	@Async
+	public void deleteFromMatchingTable(Long orderId) {
+		
+		if(matchingRepository.findByOrderId(orderId) != null) {
+			log.info("Deleting order Id " + orderId +  " from matching table");
+			matchingRepository.deleteByOrderId(orderId);	
+		}
+		else {
+			log.info("Order Id " + orderId +  " deleted from matching table");
+		}
+	}
 
 	@Async
 	public void initiateMatchingAlgorithm(MatchingTable order) {
@@ -172,6 +184,7 @@ public class OrderMatch {
 
 					if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
 							.getId() == newOrderTransaction.getSourceId().getId()) {
+						deleteFromMatchingTable(oppositeOrder.getId());
 						continue;
 					}
 
@@ -205,6 +218,8 @@ public class OrderMatch {
 
 						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
 								.getId() == newOrderTransaction.getSourceId().getId()) {
+							deleteFromMatchingTable(oppositeOrder.getId());
+
 							continue;
 						}
 
@@ -241,6 +256,8 @@ public class OrderMatch {
 
 						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
 								.getId() == newOrderTransaction.getSourceId().getId()) {
+							deleteFromMatchingTable(oppositeOrder.getId());
+
 							continue;
 						}
 
@@ -273,6 +290,8 @@ public class OrderMatch {
 
 						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
 								.getId() == newOrderTransaction.getSourceId().getId()) {
+							deleteFromMatchingTable(oppositeOrder.getId());
+
 							continue;
 						}
 
@@ -318,6 +337,8 @@ public class OrderMatch {
 
 						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
 								.getId() == newOrderTransaction.getSourceId().getId()) {
+							deleteFromMatchingTable(oppositeOrder.getId());
+
 							continue;
 						}
 
@@ -353,6 +374,8 @@ public class OrderMatch {
 
 						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
 								.getId() == newOrderTransaction.getSourceId().getId()) {
+							deleteFromMatchingTable(oppositeOrder.getId());
+
 							continue;
 						}
 
@@ -385,6 +408,8 @@ public class OrderMatch {
 
 						if (!oppositeOrderTransaction.isRequestActive() || oppositeOrderTransaction.getSourceId()
 								.getId() == newOrderTransaction.getSourceId().getId()) {
+							deleteFromMatchingTable(oppositeOrder.getId());
+
 							continue;
 						}
 
