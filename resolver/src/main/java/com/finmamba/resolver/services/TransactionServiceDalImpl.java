@@ -562,7 +562,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			InstitutionalEntity destination = institutionalEntityRepository.findById(Long.valueOf(institutionId)).get();
 
 			com.finmamba.entities.staticdata.EventType inEventType = eventTypeRepository.getById(1L);
-
+			
 			com.finmamba.entities.staticdata.EventType inResponse = eventTypeRepository.getById(3L);
 
 			com.finmamba.entities.staticdata.EventType inNegotiation = eventTypeRepository.getById(5L);
@@ -584,7 +584,7 @@ public class TransactionServiceDalImpl implements TransactionServiceDal {
 			events.add(inAwait);
 
 			List<CounterpartyTransactionDetails> transactions = counterPartyTransactionRepository
-					.findAllByDestinationIdAndIsRequestActiveAndEventTypeIn(destination,true, events,
+					.findAllByDestinationIdAndEventTypeIn(destination, events,
 
 							preparePageRequest(page, pageSize, org.springframework.data.domain.Sort.Direction.ASC,
 									"id"));
