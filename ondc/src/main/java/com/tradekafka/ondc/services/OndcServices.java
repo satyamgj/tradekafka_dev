@@ -1,5 +1,7 @@
 package com.tradekafka.ondc.services;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -59,6 +61,7 @@ public class OndcServices implements IOndcServices {
 
 	@Autowired
 	SellerCatalogueRepository catalogueRepository;
+	
 
 	@Override
 	public HttpResponseModel quoteRequest(QuoteRequest quoteRequest) {
@@ -123,11 +126,28 @@ public class OndcServices implements IOndcServices {
 	}
 
 	static void startTime(String funcName) {
-		log.info(funcName + " started at - > " + System.currentTimeMillis());
+		 // Get the current date and time
+        LocalDateTime currentDateTime = LocalDateTime.now();
+
+        // Define a format for displaying the date and time
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        // Format the current date and time using the defined format
+        String formattedDateTime = currentDateTime.format(formatter);
+        
+		log.info(funcName + " started at - > " + formattedDateTime);
 	}
 
 	static void endTime(String funcName) {
-		log.info(funcName + " ended at - > " + System.currentTimeMillis());
+		 // Get the current date and time
+        LocalDateTime currentDateTime = LocalDateTime.now();
+
+        // Define a format for displaying the date and time
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        // Format the current date and time using the defined format
+        String formattedDateTime = currentDateTime.format(formatter);
+		log.info(funcName + " ended at - > " + formattedDateTime);
 
 	}
 
@@ -148,8 +168,10 @@ public class OndcServices implements IOndcServices {
 				confirmRequestRepository.save(confirmTransaction);
 				buyTrxn.setIsConfirmed(true);
 				buyTrxn.setIsActive(false);
+				buyTrxn.setPayableAmount(buyTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
 				sellTrxn.setIsConfirmed(true);
 				sellTrxn.setIsActive(false);
+				sellTrxn.setPayableAmount(sellTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
 				quoteRequestRepository.saveAndFlush(buyTrxn);
 				quoteRequestRepository.saveAndFlush(sellTrxn);
 
