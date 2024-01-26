@@ -10,7 +10,7 @@ import lombok.Data;
 
 /**
  * 
- * @author Swanand Limaye
+ * @author Satyam Gijare
  * @apiNote Data contract to wrap exception details.
  */
 

@@ -1,0 +1,311 @@
+package com.tradekafka.ondc.services;
+
+import java.util.List;
+
+import javax.transaction.Transactional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+import com.finmamba.entities.ondc.ConfirmedTransactions;
+import com.finmamba.entities.ondc.MatchingTransactions;
+import com.finmamba.entities.ondc.RequestedOrders;
+import com.finmamba.entities.staticdata.Currency;
+import com.finmamba.entities.transaction.User;
+import com.finmamba.models.bus.HttpResponseModel;
+import com.finmamba.models.ondc.ConfirmRequest;
+import com.finmamba.models.ondc.OrderForMatchEngine;
+import com.finmamba.models.ondc.QuoteRequest;
+import com.finmamba.models.ondc.SellerCatalogue;
+import com.tradekafka.ondc.repository.ConfirmRequestRepository;
+import com.tradekafka.ondc.repository.CurrencyRepository;
+import com.tradekafka.ondc.repository.DirectionRepository;
+import com.tradekafka.ondc.repository.MatchingTransactionRepository;
+import com.tradekafka.ondc.repository.QuoteRequestRepository;
+import com.tradekafka.ondc.repository.RequestOrderRepository;
+import com.tradekafka.ondc.repository.SellerCatalogueRepository;
+import com.tradekafka.ondc.repository.UserRepository;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Service
+@Slf4j
+public class OndcServices implements IOndcServices {
+
+	@Autowired
+	DirectionRepository directionRepository;
+
+	@Autowired
+	CurrencyRepository currencyRepository;
+
+	@Autowired
+	UserRepository userRepository;
+
+	@Autowired
+	QuoteRequestRepository quoteRequestRepository;
+
+	@Autowired
+	RequestOrderRepository requestOrderRepository;
+
+	@Autowired
+	IMatchingService matchingService;
+
+	@Autowired
+	MatchingTransactionRepository matchingTransactionRepository;
+
+	@Autowired
+	ConfirmRequestRepository confirmRequestRepository;
+
+	@Autowired
+	SellerCatalogueRepository catalogueRepository;
+
+	@Override
+	public HttpResponseModel quoteRequest(QuoteRequest quoteRequest) {
+		try {
+			startTime("quoteRequest");
+			
+			log.info("Will hit RBI API for validity check");
+
+			Currency baseCurrency = currencyRepository.findById(quoteRequest.getBaseCurrencyId()).get();
+			Currency quoteCurrency = currencyRepository.findById(quoteRequest.getQuoteCurrencyId()).get();
+
+			com.finmamba.entities.ondc.QuoteRequest newRequest = com.finmamba.entities.ondc.QuoteRequest.builder()
+					.amount(quoteRequest.getAmount()).baseCurrency(baseCurrency).quoteCurrency(quoteCurrency)
+					.buyUserId(userRepository.getById(quoteRequest.getUserId()))
+					.directionId(directionRepository.getById(quoteRequest.getDirectionId())).isActive(true)
+					.isConfirmed(false).isMatched(false).responseYN(quoteRequest.getResponseYN())
+					.askingRate(quoteRequest.getAskingRate()).build();
+
+			quoteRequestRepository.save(newRequest);
+
+			if (quoteRequest.getResponseYN().equalsIgnoreCase("N")) {
+				log.info("Broadcasting to sellers acc to sell catalogue");
+				
+				broadcastToSellers(baseCurrency, quoteCurrency, newRequest);
+
+				log.info("Also initiating matching for this new order");
+
+				OrderForMatchEngine newOrderForMatchEngine = OrderForMatchEngine.builder()
+						.amount(quoteRequest.getAmount()).askingRate(quoteRequest.getAskingRate())
+						.baseCurrency(baseCurrency.getIsoCode()).quoteCurrency(quoteCurrency.getIsoCode())
+						.directionId(quoteRequest.getDirectionId()).quoteRequestId(newRequest.getId())
+						.initiatorId(quoteRequest.getUserId()).build();
+
+				matchingService.matchingEngine(newOrderForMatchEngine);
+
+			} else {
+				log.info("This seems to be a response from seller " + quoteRequest.getUserId() + " for quote "
+						+ quoteRequest.getResponseTo());
+				log.info("Will push this order to matching table");
+
+				com.finmamba.entities.ondc.QuoteRequest request = quoteRequestRepository
+						.findById(quoteRequest.getResponseTo()).get();
+				MatchingTransactions newMatch = MatchingTransactions.builder().buyTxnId(request).sellTxnId(newRequest)
+						.build();
+				matchingTransactionRepository.save(newMatch);
+			}
+
+			endTime("quoteRequest");
+
+			return HttpResponseModel.builder()
+					// .data(newRequest)
+					.message("Quote Request sent successfully").build();
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.info("Exception occured inside quoteRequest " + e.getMessage());
+			return HttpResponseModel.builder().data(null).message("Something went wrong while sending your quote")
+					.status(304).build();
+		} finally {
+			endTime("quoteRequest");
+		}
+	}
+
+	static void startTime(String funcName) {
+		log.info(funcName + " started at - > " + System.currentTimeMillis());
+	}
+
+	static void endTime(String funcName) {
+		log.info(funcName + " ended at - > " + System.currentTimeMillis());
+
+	}
+
+	@Transactional
+	@Override
+	public HttpResponseModel confirmRequest(ConfirmRequest confirmRequest) {
+		try {
+
+			com.finmamba.entities.ondc.QuoteRequest buyTrxn = quoteRequestRepository
+					.findById(confirmRequest.getBuyTrxnId()).get();
+			com.finmamba.entities.ondc.QuoteRequest sellTrxn = quoteRequestRepository
+					.findById(confirmRequest.getSellTrxnId()).get();
+
+			if (!buyTrxn.getIsConfirmed() && !sellTrxn.getIsConfirmed()) {
+				ConfirmedTransactions confirmTransaction = ConfirmedTransactions.builder().buyTxnId(buyTrxn)
+						.sellTxnId(sellTrxn).rate(sellTrxn.getAskingRate()).build();
+
+				confirmRequestRepository.save(confirmTransaction);
+				buyTrxn.setIsConfirmed(true);
+				buyTrxn.setIsActive(false);
+				sellTrxn.setIsConfirmed(true);
+				sellTrxn.setIsActive(false);
+				quoteRequestRepository.saveAndFlush(buyTrxn);
+				quoteRequestRepository.saveAndFlush(sellTrxn);
+
+				OrderForMatchEngine buyOrder = OrderForMatchEngine.builder()
+						.baseCurrency(buyTrxn.getBaseCurrency().getIsoCode())
+						.quoteCurrency(buyTrxn.getQuoteCurrency().getIsoCode())
+						.directionId(buyTrxn.getDirectionId().getId()).build();
+				matchingService.removeConfirmedOrder(buyOrder);
+
+				OrderForMatchEngine sellOrder = OrderForMatchEngine.builder()
+						.baseCurrency(sellTrxn.getBaseCurrency().getIsoCode())
+						.quoteCurrency(sellTrxn.getQuoteCurrency().getIsoCode())
+						.directionId(sellTrxn.getDirectionId().getId()).build();
+				matchingService.removeConfirmedOrder(sellOrder);
+
+			} else {
+				log.info("Price not available. Please select different quote price.");
+				return HttpResponseModel.builder().data(null)
+						.message("Price not available. Please select different quote price ").status(304).build();
+
+			}
+
+			return HttpResponseModel.builder().data(null).message("Quote confirmed successfully!").build();
+
+		} catch (Exception e) {
+			log.info("Exception occured inside confirmRequest " + e.getMessage());
+			return HttpResponseModel.builder().data(null).message("Something went wrong while sending your quote")
+					.status(304).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel fetchMyRequests(Long userId) {
+		try {
+
+			User user = userRepository.findById(userId).get();
+
+			return HttpResponseModel.builder().data(quoteRequestRepository.findByBuyUserId(user))
+					.message("Fetched quote requests successfully!").build();
+
+		} catch (Exception e) {
+			log.info("Exception occured inside fetchMyRequest " + e.getMessage());
+			return HttpResponseModel.builder().data(null)
+					.message("Something went wrong while fetching your active quotes").status(304).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel fetchMatchedRequests(Long quoteId) {
+		try {
+
+			com.finmamba.entities.ondc.QuoteRequest quote = quoteRequestRepository.findById(quoteId).get();
+
+			return HttpResponseModel.builder().data(matchingTransactionRepository.findByBuyTxnId(quote))
+					.message("Fetched quote requests successfully!").build();
+
+		} catch (Exception e) {
+			log.info("Exception occured inside fetchMatchedRequest " + e.getMessage());
+			return HttpResponseModel.builder().data(null).message("Something went wrong while fetching matched quotes")
+					.status(304).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel fetchConfirmedQuotes(Long userId) {
+		try {
+
+			User user = userRepository.findById(userId).get();
+			return HttpResponseModel.builder().data(quoteRequestRepository.findByBuyUserIdAndIsConfirmed(user, true))
+					.message("Fetched quote requests successfully!").build();
+
+		} catch (Exception e) {
+			log.info("Exception occured inside fetchConfirmedQuotes " + e.getMessage());
+			return HttpResponseModel.builder().data(null).message("Something went wrong while sending your quote")
+					.status(304).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel addSellerCatalogue(SellerCatalogue catalogue) {
+		try {
+
+			User user = userRepository.findById(catalogue.getUserId()).get();
+			Currency buyCcy = currencyRepository.findById(catalogue.getBaseCcyId()).get();
+			Currency sellCcy = currencyRepository.findById(catalogue.getQuoteCcyId()).get();
+
+			com.finmamba.entities.ondc.SellerCatalogue newEntry = com.finmamba.entities.ondc.SellerCatalogue.builder()
+					.baseCurrency(buyCcy).quoteCurrency(sellCcy).userId(user).build();
+
+			catalogueRepository.save(newEntry);
+			return HttpResponseModel.builder()
+					// .data(quoteRequestRepository.findByBuyUserIdAndIsConfirmed(user,true))
+					.message("added to catalogue successfully!").build();
+
+		} catch (Exception e) {
+			log.info("Exception occured inside addSellerCatalogue " + e.getMessage());
+			return HttpResponseModel.builder().data(null)
+					.message("Something went wrong while adding to your seller catalogue").status(304).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel fetchSellerCatalogue(Long userId) {
+		try {
+			User user = userRepository.findById(userId).get();
+			return HttpResponseModel.builder().data(catalogueRepository.findByUserId(user))
+					.message("Fetched sell catalogues successfully!").build();
+
+		} catch (Exception e) {
+			log.info("Exception occured inside fetchConfirmedQuotes " + e.getMessage());
+			return HttpResponseModel.builder().data(null)
+					.message("Something went wrong while fetching your seller catalogue").status(304).build();
+		}
+	}
+
+	@Async
+	@Override
+	public void broadcastToSellers(Currency buyCcy, Currency sellCcy,
+			com.finmamba.entities.ondc.QuoteRequest quoteRequest) {
+		try {
+
+			String ccyPair = buyCcy.getIsoCode() + "/" + sellCcy.getIsoCode();
+
+			List<com.finmamba.entities.ondc.SellerCatalogue> sellers = catalogueRepository
+					.findByBaseCurrencyAndQuoteCurrency(buyCcy, sellCcy);
+			if (sellers.size() > 0) {
+
+				log.info("Found " + sellers.size() + " sellers for " + ccyPair);
+
+				for (com.finmamba.entities.ondc.SellerCatalogue seller : sellers) {
+					RequestedOrders newRequest = RequestedOrders.builder().quoteRequestId(quoteRequest)
+							.userId(seller.getUserId()).build();
+					requestOrderRepository.save(newRequest);
+				}
+			} else {
+				log.info("Found no sellers for " + ccyPair);
+			}
+
+		} catch (Exception e) {
+			log.info("Exception occured inside broadcastToSellers " + e.getMessage());
+
+		}
+	}
+
+	@Override
+	public HttpResponseModel fetchRequestedQuotes(Long userId) {
+		try {
+			
+			User user = userRepository.findById(userId).get();
+			return HttpResponseModel.builder().data(requestOrderRepository.findByUserId(user))
+					.message("Fetched quote requests successfully!").build();
+			
+		} catch (Exception e) {
+			log.info("Exception occured inside fetchRequestedQuotes " + e.getMessage());
+			return HttpResponseModel.builder().data(null)
+					.message("Something went wrong while fetching your seller catalogue").status(304).build();
+		}
+	}
+}
