@@ -2,7 +2,9 @@ package com.tradekafka.ondc.services;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.transaction.Transactional;
 
@@ -14,6 +16,7 @@ import com.finmamba.entities.ondc.ConfirmedTransactions;
 import com.finmamba.entities.ondc.MatchingTransactions;
 import com.finmamba.entities.ondc.RequestedOrders;
 import com.finmamba.entities.staticdata.Currency;
+import com.finmamba.entities.staticdata.Direction;
 import com.finmamba.entities.transaction.User;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.ondc.ConfirmRequest;
@@ -35,11 +38,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OndcServices implements IOndcServices {
 
-	@Autowired
-	DirectionRepository directionRepository;
+//	@Autowired
+//	DirectionRepository directionRepository;
 
-	@Autowired
-	CurrencyRepository currencyRepository;
+//	@Autowired
+//	CurrencyRepository currencyRepository;
 
 	@Autowired
 	UserRepository userRepository;
@@ -62,6 +65,24 @@ public class OndcServices implements IOndcServices {
 	@Autowired
 	SellerCatalogueRepository catalogueRepository;
 	
+	private final CurrencyStaticMap currencyStaticMap;
+
+	private final DirectionStaticData directionStaticData;
+	
+	Map<Long, Currency>ccy = new HashMap<>();
+	Map<Long, Direction>direction = new HashMap<>();
+	
+	
+	OndcServices(CurrencyStaticMap currencyStaticMap, DirectionStaticData directionStaticData){
+		this.currencyStaticMap = currencyStaticMap;
+		this.directionStaticData = directionStaticData;
+		
+		ccy = this.currencyStaticMap.getCurrencyMap();
+		direction = directionStaticData.getDirectionMap();
+	}
+	
+	
+	
 
 	@Override
 	public HttpResponseModel quoteRequest(QuoteRequest quoteRequest) {
@@ -69,14 +90,20 @@ public class OndcServices implements IOndcServices {
 			startTime("quoteRequest");
 			
 			log.info("Will hit RBI API for validity check");
+			
+			
 
-			Currency baseCurrency = currencyRepository.findById(quoteRequest.getBaseCurrencyId()).get();
-			Currency quoteCurrency = currencyRepository.findById(quoteRequest.getQuoteCurrencyId()).get();
+//			Currency baseCurrency = currencyRepository.findById(quoteRequest.getBaseCurrencyId()).get();
+//			Currency quoteCurrency = currencyRepository.findById(quoteRequest.getQuoteCurrencyId()).get();
+			
+			Currency baseCurrency = ccy.get(quoteRequest.getBaseCurrencyId());
+			Currency quoteCurrency = ccy.get(quoteRequest.getQuoteCurrencyId());
+			
 
 			com.finmamba.entities.ondc.QuoteRequest newRequest = com.finmamba.entities.ondc.QuoteRequest.builder()
 					.amount(quoteRequest.getAmount()).baseCurrency(baseCurrency).quoteCurrency(quoteCurrency)
 					.buyUserId(userRepository.getById(quoteRequest.getUserId()))
-					.directionId(directionRepository.getById(quoteRequest.getDirectionId())).isActive(true)
+					.directionId(direction.get(quoteRequest.getDirectionId())).isActive(true)
 					.isConfirmed(false).isMatched(false).responseYN(quoteRequest.getResponseYN())
 					.askingRate(quoteRequest.getAskingRate()).build();
 
@@ -255,8 +282,8 @@ public class OndcServices implements IOndcServices {
 		try {
 
 			User user = userRepository.findById(catalogue.getUserId()).get();
-			Currency buyCcy = currencyRepository.findById(catalogue.getBaseCcyId()).get();
-			Currency sellCcy = currencyRepository.findById(catalogue.getQuoteCcyId()).get();
+			Currency buyCcy = ccy.get(catalogue.getBaseCcyId());
+			Currency sellCcy = ccy.get(catalogue.getQuoteCcyId());
 
 			com.finmamba.entities.ondc.SellerCatalogue newEntry = com.finmamba.entities.ondc.SellerCatalogue.builder()
 					.baseCurrency(buyCcy).quoteCurrency(sellCcy).userId(user).build();
