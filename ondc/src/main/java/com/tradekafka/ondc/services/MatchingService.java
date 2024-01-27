@@ -190,18 +190,12 @@ public class MatchingService implements IMatchingService {
 				quoteRequestRepository.saveAndFlush(sellQuote);
 			}
 
-			if (direction == "BUY") {
-				MatchingTransactions newMatch = MatchingTransactions.builder().buyTxnId(buyQuote).sellTxnId(sellQuote)
-						.isActive(true)
-						.build();
-				matchingTransactionRepository.save(newMatch);
-
-			} else {
-				MatchingTransactions newMatch = MatchingTransactions.builder().buyTxnId(sellQuote).sellTxnId(buyQuote)
-						.isActive(true)
-						.build();
-				matchingTransactionRepository.save(newMatch);
-			}
+			MatchingTransactions newMatch = MatchingTransactions.builder().buyTxnId(buyQuote).sellTxnId(sellQuote)
+					.isActive(true)
+					.build();
+			matchingTransactionRepository.save(newMatch);
+			
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			log.info("Exception occured in executeTrade -> " + e.getMessage());
