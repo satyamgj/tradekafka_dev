@@ -1,5 +1,7 @@
 package com.tradekafka.ondc.services;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +31,8 @@ public class MatchingService implements IMatchingService {
 
 	@Autowired
 	MatchingTransactionRepository matchingTransactionRepository;
+	
+
 
 	static final Long BUYID = 1L;
 	static final Long SELLID = 2L;
@@ -45,6 +49,7 @@ public class MatchingService implements IMatchingService {
 	@Override
 	public void matchingEngine(OrderForMatchEngine orderForMatchEngine) {
 		// TODO Auto-generated method stub
+		startTime("matchingEngine");
 		try {
 			String key = orderForMatchEngine.getBaseCurrency() + orderForMatchEngine.getQuoteCurrency();
 
@@ -89,8 +94,14 @@ public class MatchingService implements IMatchingService {
 				}
 			}
 
+			endTime("matchingEngine");
+
+			
 		} catch (Exception e) {
+			
 			log.info("Exception occured in matchingEngine -> " + e.getMessage());
+			endTime("matchingEngine");
+
 		}
 
 	}
@@ -248,6 +259,91 @@ public class MatchingService implements IMatchingService {
 
 		} catch (Exception e) {
 			log.info("Exception occured in matchingEngine -> " + e.getMessage());
+		}
+		
+	}
+	static void startTime(String funcName) {
+		// Get the current date and time
+		LocalDateTime currentDateTime = LocalDateTime.now();
+
+		// Define a format for displaying the date and time
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+		// Format the current date and time using the defined format
+		String formattedDateTime = currentDateTime.format(formatter);
+
+		log.info(funcName + " started at - > " + formattedDateTime);
+	}
+
+	static void endTime(String funcName) {
+		// Get the current date and time
+		LocalDateTime currentDateTime = LocalDateTime.now();
+
+		// Define a format for displaying the date and time
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+		// Format the current date and time using the defined format
+		String formattedDateTime = currentDateTime.format(formatter);
+		log.info(funcName + " ended at - > " + formattedDateTime);
+
+	}
+
+	@Override
+	public void initializeBuyOrderQueue(List<OrderForMatchEngine> buyOrders) {
+		try {
+			
+			startTime("initializeBuyOrderQueue");
+			
+			for(OrderForMatchEngine order : buyOrders) {
+			
+				String key = order.getBaseCurrency() + order.getQuoteCurrency();
+				List<OrderForMatchEngine> buyOrdersForCcy = buyOrdersMap.get(key);
+				if(buyOrdersForCcy !=null) {
+					buyOrdersForCcy.add(order);
+					buyOrdersMap.put(key, buyOrders);
+				}else {
+					List<OrderForMatchEngine>newList = new ArrayList<>();
+					newList.add(order);
+					buyOrdersMap.put(key, newList);
+
+				}
+			}
+			
+			endTime("initializeBuyOrderQueue");
+			
+		} catch (Exception e) {
+			
+			log.info("exception occured inside initializeBuyOrderQueue " + e.getMessage());
+
+		}
+		
+	}
+
+	@Override
+	public void initializeSellOrderQueue(List<OrderForMatchEngine> sellOrders) {
+
+		try {
+			startTime("initializeSellOrderQueue");
+			
+			for(OrderForMatchEngine order : sellOrders) {
+			
+				String key = order.getBaseCurrency() + order.getQuoteCurrency();
+				List<OrderForMatchEngine> sellOrdersForCcy = sellOrdersMap.get(key);
+				if(sellOrdersForCcy !=null) {
+					sellOrdersForCcy.add(order);
+					sellOrdersMap.put(key, sellOrders);
+				}else {
+					List<OrderForMatchEngine>newList = new ArrayList<>();
+					newList.add(order);
+					sellOrdersMap.put(key, newList);
+
+				}
+			}
+			
+			endTime("initializeSellOrderQueue");
+		} catch (Exception e) {
+
+			log.info("exception occured inside initializeSellOrderQueue " + e.getMessage());
 		}
 		
 	}

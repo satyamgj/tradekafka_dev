@@ -24,8 +24,6 @@ import com.finmamba.models.ondc.OrderForMatchEngine;
 import com.finmamba.models.ondc.QuoteRequest;
 import com.finmamba.models.ondc.SellerCatalogue;
 import com.tradekafka.ondc.repository.ConfirmRequestRepository;
-import com.tradekafka.ondc.repository.CurrencyRepository;
-import com.tradekafka.ondc.repository.DirectionRepository;
 import com.tradekafka.ondc.repository.MatchingTransactionRepository;
 import com.tradekafka.ondc.repository.QuoteRequestRepository;
 import com.tradekafka.ondc.repository.RequestOrderRepository;
@@ -38,11 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OndcServices implements IOndcServices {
 
-//	@Autowired
-//	DirectionRepository directionRepository;
-
-//	@Autowired
-//	CurrencyRepository currencyRepository;
 
 	@Autowired
 	UserRepository userRepository;
@@ -64,54 +57,47 @@ public class OndcServices implements IOndcServices {
 
 	@Autowired
 	SellerCatalogueRepository catalogueRepository;
-	
+
 	private final CurrencyStaticMap currencyStaticMap;
 
 	private final DirectionStaticData directionStaticData;
-	
-	Map<Long, Currency>ccy = new HashMap<>();
-	Map<Long, Direction>direction = new HashMap<>();
-	
-	
-	OndcServices(CurrencyStaticMap currencyStaticMap, DirectionStaticData directionStaticData){
+
+	Map<Long, Currency> ccy = new HashMap<>();
+	Map<Long, Direction> direction = new HashMap<>();
+
+	OndcServices(CurrencyStaticMap currencyStaticMap, DirectionStaticData directionStaticData) {
 		this.currencyStaticMap = currencyStaticMap;
 		this.directionStaticData = directionStaticData;
-		
+
 		ccy = this.currencyStaticMap.getCurrencyMap();
 		direction = directionStaticData.getDirectionMap();
 	}
-	
-	
-	
 
 	@Override
 	public HttpResponseModel quoteRequest(QuoteRequest quoteRequest) {
 		try {
 			startTime("quoteRequest");
-			
+
 			log.info("Will hit RBI API for validity check");
-			
-			
 
 //			Currency baseCurrency = currencyRepository.findById(quoteRequest.getBaseCurrencyId()).get();
 //			Currency quoteCurrency = currencyRepository.findById(quoteRequest.getQuoteCurrencyId()).get();
-			
+
 			Currency baseCurrency = ccy.get(quoteRequest.getBaseCurrencyId());
 			Currency quoteCurrency = ccy.get(quoteRequest.getQuoteCurrencyId());
-			
 
 			com.finmamba.entities.ondc.QuoteRequest newRequest = com.finmamba.entities.ondc.QuoteRequest.builder()
 					.amount(quoteRequest.getAmount()).baseCurrency(baseCurrency).quoteCurrency(quoteCurrency)
 					.buyUserId(userRepository.getById(quoteRequest.getUserId()))
-					.directionId(direction.get(quoteRequest.getDirectionId())).isActive(true)
-					.isConfirmed(false).isMatched(false).responseYN(quoteRequest.getResponseYN())
-					.askingRate(quoteRequest.getAskingRate()).build();
+					.directionId(direction.get(quoteRequest.getDirectionId())).isActive(true).isConfirmed(false)
+					.isMatched(false).responseYN(quoteRequest.getResponseYN()).askingRate(quoteRequest.getAskingRate())
+					.build();
 
 			quoteRequestRepository.save(newRequest);
 
 			if (quoteRequest.getResponseYN().equalsIgnoreCase("N")) {
 				log.info("Broadcasting to sellers acc to sell catalogue");
-				
+
 				broadcastToSellers(baseCurrency, quoteCurrency, newRequest);
 
 				log.info("Also initiating matching for this new order");
@@ -153,27 +139,27 @@ public class OndcServices implements IOndcServices {
 	}
 
 	static void startTime(String funcName) {
-		 // Get the current date and time
-        LocalDateTime currentDateTime = LocalDateTime.now();
+		// Get the current date and time
+		LocalDateTime currentDateTime = LocalDateTime.now();
 
-        // Define a format for displaying the date and time
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		// Define a format for displaying the date and time
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        // Format the current date and time using the defined format
-        String formattedDateTime = currentDateTime.format(formatter);
-        
+		// Format the current date and time using the defined format
+		String formattedDateTime = currentDateTime.format(formatter);
+
 		log.info(funcName + " started at - > " + formattedDateTime);
 	}
 
 	static void endTime(String funcName) {
-		 // Get the current date and time
-        LocalDateTime currentDateTime = LocalDateTime.now();
+		// Get the current date and time
+		LocalDateTime currentDateTime = LocalDateTime.now();
 
-        // Define a format for displaying the date and time
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		// Define a format for displaying the date and time
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        // Format the current date and time using the defined format
-        String formattedDateTime = currentDateTime.format(formatter);
+		// Format the current date and time using the defined format
+		String formattedDateTime = currentDateTime.format(formatter);
 		log.info(funcName + " ended at - > " + formattedDateTime);
 
 	}
@@ -182,6 +168,8 @@ public class OndcServices implements IOndcServices {
 	@Override
 	public HttpResponseModel confirmRequest(ConfirmRequest confirmRequest) {
 		try {
+
+			startTime("confirmRequest");
 
 			com.finmamba.entities.ondc.QuoteRequest buyTrxn = quoteRequestRepository
 					.findById(confirmRequest.getBuyTrxnId()).get();
@@ -221,10 +209,15 @@ public class OndcServices implements IOndcServices {
 
 			}
 
+			endTime("confirmRequest");
+
 			return HttpResponseModel.builder().data(null).message("Quote confirmed successfully!").build();
 
 		} catch (Exception e) {
 			log.info("Exception occured inside confirmRequest " + e.getMessage());
+
+			endTime("confirmRequest");
+
 			return HttpResponseModel.builder().data(null).message("Something went wrong while sending your quote")
 					.status(304).build();
 		}
@@ -241,6 +234,7 @@ public class OndcServices implements IOndcServices {
 
 		} catch (Exception e) {
 			log.info("Exception occured inside fetchMyRequest " + e.getMessage());
+
 			return HttpResponseModel.builder().data(null)
 					.message("Something went wrong while fetching your active quotes").status(304).build();
 		}
@@ -257,6 +251,8 @@ public class OndcServices implements IOndcServices {
 
 		} catch (Exception e) {
 			log.info("Exception occured inside fetchMatchedRequest " + e.getMessage());
+			endTime("fetchMatchedRequests");
+
 			return HttpResponseModel.builder().data(null).message("Something went wrong while fetching matched quotes")
 					.status(304).build();
 		}
@@ -267,6 +263,7 @@ public class OndcServices implements IOndcServices {
 		try {
 
 			User user = userRepository.findById(userId).get();
+
 			return HttpResponseModel.builder().data(quoteRequestRepository.findByBuyUserIdAndIsConfirmed(user, true))
 					.message("Fetched quote requests successfully!").build();
 
@@ -281,12 +278,16 @@ public class OndcServices implements IOndcServices {
 	public HttpResponseModel addSellerCatalogue(SellerCatalogue catalogue) {
 		try {
 
+			startTime("addSellerCatalogue");
+
 			User user = userRepository.findById(catalogue.getUserId()).get();
 			Currency buyCcy = ccy.get(catalogue.getBaseCcyId());
 			Currency sellCcy = ccy.get(catalogue.getQuoteCcyId());
 
 			com.finmamba.entities.ondc.SellerCatalogue newEntry = com.finmamba.entities.ondc.SellerCatalogue.builder()
 					.baseCurrency(buyCcy).quoteCurrency(sellCcy).userId(user).build();
+
+			endTime("addSellerCatalogue");
 
 			catalogueRepository.save(newEntry);
 			return HttpResponseModel.builder()
@@ -295,6 +296,9 @@ public class OndcServices implements IOndcServices {
 
 		} catch (Exception e) {
 			log.info("Exception occured inside addSellerCatalogue " + e.getMessage());
+
+			endTime("addSellerCatalogue");
+
 			return HttpResponseModel.builder().data(null)
 					.message("Something went wrong while adding to your seller catalogue").status(304).build();
 		}
@@ -320,6 +324,8 @@ public class OndcServices implements IOndcServices {
 			com.finmamba.entities.ondc.QuoteRequest quoteRequest) {
 		try {
 
+			startTime("broadcastToSellers");
+
 			String ccyPair = buyCcy.getIsoCode() + "/" + sellCcy.getIsoCode();
 
 			List<com.finmamba.entities.ondc.SellerCatalogue> sellers = catalogueRepository
@@ -337,8 +343,12 @@ public class OndcServices implements IOndcServices {
 				log.info("Found no sellers for " + ccyPair);
 			}
 
+			endTime("broadcastToSellers");
+
 		} catch (Exception e) {
 			log.info("Exception occured inside broadcastToSellers " + e.getMessage());
+
+			endTime("broadcastToSellers");
 
 		}
 	}
@@ -346,11 +356,11 @@ public class OndcServices implements IOndcServices {
 	@Override
 	public HttpResponseModel fetchRequestedQuotes(Long userId) {
 		try {
-			
+
 			User user = userRepository.findById(userId).get();
 			return HttpResponseModel.builder().data(requestOrderRepository.findByUserId(user))
 					.message("Fetched quote requests successfully!").build();
-			
+
 		} catch (Exception e) {
 			log.info("Exception occured inside fetchRequestedQuotes " + e.getMessage());
 			return HttpResponseModel.builder().data(null)
