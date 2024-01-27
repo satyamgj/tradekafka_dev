@@ -12,4 +12,5 @@ import com.finmamba.entities.ondc.QuoteRequest;
 public interface MatchingTransactionRepository extends JpaRepository<MatchingTransactions, Long>{
 
 	List<MatchingTransactions> findByBuyTxnId(QuoteRequest buyTransaction);
+	List<MatchingTransactions> findBySellTxnId(QuoteRequest sellTransaction);
 }

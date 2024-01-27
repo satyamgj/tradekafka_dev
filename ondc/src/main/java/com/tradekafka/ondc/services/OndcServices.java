@@ -264,8 +264,14 @@ public class OndcServices implements IOndcServices {
 
 			com.finmamba.entities.ondc.QuoteRequest quote = quoteRequestRepository.findById(quoteId).get();
 
-			return HttpResponseModel.builder().data(matchingTransactionRepository.findByBuyTxnId(quote))
-					.message("Fetched quote requests successfully!").build();
+			if(quote.getDirectionId().getId() == 1) {
+				return HttpResponseModel.builder().data(matchingTransactionRepository.findByBuyTxnId(quote))
+						.message("Fetched quote requests successfully!").build();
+			}else {
+				return HttpResponseModel.builder().data(matchingTransactionRepository.findBySellTxnId(quote))
+						.message("Fetched quote requests successfully!").build();
+			}
+			
 
 		} catch (Exception e) {
 			log.info("Exception occured inside fetchMatchedRequest " + e.getMessage());
