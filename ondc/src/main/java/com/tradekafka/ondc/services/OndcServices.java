@@ -247,7 +247,7 @@ public class OndcServices implements IOndcServices {
 
 			User user = userRepository.findById(userId).get();
 
-			return HttpResponseModel.builder().data(quoteRequestRepository.findByBuyUserId(user))
+			return HttpResponseModel.builder().data(quoteRequestRepository.findByBuyUserIdAndIsConfirmed(user,false))
 					.message("Fetched quote requests successfully!").build();
 
 		} catch (Exception e) {
