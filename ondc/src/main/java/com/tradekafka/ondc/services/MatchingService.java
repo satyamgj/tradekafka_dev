@@ -175,6 +175,8 @@ public class MatchingService implements IMatchingService {
 			System.out.println("Trade Matched - Buy: " + buyOrder.getAmount() + " " + buyOrder.getBaseCurrency()
 					+ ", Sell: " + sellOrder.getAmount() + " " + sellOrder.getBaseCurrency() + " at rate "
 					+ sellOrder.getAskingRate());
+			
+			log.info("buyorderId -> " + buyOrder.getQuoteRequestId() + " sellQuote->" + sellOrder.getQuoteRequestId() );
 
 			log.info("Adding trades in matching table");
 
