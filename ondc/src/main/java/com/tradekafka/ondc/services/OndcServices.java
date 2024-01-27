@@ -89,6 +89,7 @@ public class OndcServices implements IOndcServices {
 			com.finmamba.entities.ondc.QuoteRequest newRequest = com.finmamba.entities.ondc.QuoteRequest.builder()
 					.amount(quoteRequest.getAmount()).baseCurrency(baseCurrency).quoteCurrency(quoteCurrency)
 					.buyUserId(userRepository.getById(quoteRequest.getUserId()))
+					.payableCcy(null)
 					.directionId(direction.get(quoteRequest.getDirectionId())).isActive(true).isConfirmed(false)
 					.isMatched(false).responseYN(quoteRequest.getResponseYN()).askingRate(quoteRequest.getAskingRate())
 					.build();
