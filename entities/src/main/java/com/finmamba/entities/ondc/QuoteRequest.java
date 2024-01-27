@@ -75,6 +75,9 @@ public class QuoteRequest implements Serializable{
 	@Column(name= "payable_amount")
 	private BigDecimal payableAmount;
 	
+	@Column(name="payable_ccy")
+	private Currency payableCcy;
+	
 	@Column(name="responseYN")
 	private String responseYN;
 	

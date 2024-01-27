@@ -183,10 +183,27 @@ public class OndcServices implements IOndcServices {
 				confirmRequestRepository.save(confirmTransaction);
 				buyTrxn.setIsConfirmed(true);
 				buyTrxn.setIsActive(false);
-				buyTrxn.setPayableAmount(buyTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
+				//buyTrxn.setPayableAmount(buyTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
 				sellTrxn.setIsConfirmed(true);
 				sellTrxn.setIsActive(false);
-				sellTrxn.setPayableAmount(sellTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
+				//sellTrxn.setPayableAmount(sellTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
+				
+				if(buyTrxn.getDirectionId().getId()==2) {
+					buyTrxn.setPayableAmount(buyTrxn.getAmount());
+					buyTrxn.setPayableCcy(buyTrxn.getBaseCurrency());
+				}else {
+					buyTrxn.setPayableAmount(buyTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
+					buyTrxn.setPayableCcy(buyTrxn.getQuoteCurrency());
+				}
+				
+				if(sellTrxn.getDirectionId().getId()==2) {
+					sellTrxn.setPayableAmount(sellTrxn.getAmount());
+					sellTrxn.setPayableCcy(sellTrxn.getBaseCurrency());
+				}else {
+					sellTrxn.setPayableAmount(sellTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
+					sellTrxn.setPayableCcy(sellTrxn.getQuoteCurrency());
+				}
+				
 				quoteRequestRepository.saveAndFlush(buyTrxn);
 				quoteRequestRepository.saveAndFlush(sellTrxn);
 
