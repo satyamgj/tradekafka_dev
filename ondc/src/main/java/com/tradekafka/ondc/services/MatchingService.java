@@ -167,7 +167,7 @@ public class MatchingService implements IMatchingService {
 	@Override
 	public boolean matchConditions(OrderForMatchEngine buyOrder, OrderForMatchEngine sellOrder) {
 		return 	buyOrder.getInitiatorId() != sellOrder.getInitiatorId()
-				&&buyOrder.getBaseCurrency().equals(sellOrder.getBaseCurrency())
+				&& buyOrder.getBaseCurrency().equals(sellOrder.getBaseCurrency())
 				&& buyOrder.getQuoteCurrency().equals(sellOrder.getQuoteCurrency())
 				&& buyOrder.getAskingRate().compareTo(sellOrder.getAskingRate()) >= 0
 				&& buyOrder.getAmount().compareTo(sellOrder.getAmount()) >= 0
@@ -187,26 +187,7 @@ public class MatchingService implements IMatchingService {
 			+ ", Sell: " + sellOrder.getAmount() + " " + sellOrder.getBaseCurrency() + " at rate "
 			+ sellOrder.getAskingRate();
 			
-			//sending notification to buyer
 			
-			MatchNotification notificationToBuyOrder =  MatchNotification.builder()
-					.message(message)
-					.userId(buyOrder.getInitiatorId())
-					.build()
-					;
-			
-			kafkaProducerService.send(notificationToBuyOrder, topic, null, null);
-
-			
-		//sending notification to seller
-			
-			MatchNotification notificationToSellOrder =  MatchNotification.builder()
-					.message(message)
-					.userId(sellOrder.getInitiatorId())
-					.build()
-					;
-			
-			kafkaProducerService.send(notificationToSellOrder, topic, null, null);
 			
 			log.info("buyorderId -> " + buyOrder.getQuoteRequestId() + " sellQuote->" + sellOrder.getQuoteRequestId() );
 
@@ -229,7 +210,26 @@ public class MatchingService implements IMatchingService {
 					.build();
 			matchingTransactionRepository.save(newMatch);
 			
+//sending notification to buyer
 			
+			MatchNotification notificationToBuyOrder =  MatchNotification.builder()
+					.message(message)
+					.userId(buyOrder.getInitiatorId())
+					.build()
+					;
+			
+			kafkaProducerService.send(notificationToBuyOrder, topic, null, null);
+
+			
+		//sending notification to seller
+			
+			MatchNotification notificationToSellOrder =  MatchNotification.builder()
+					.message(message)
+					.userId(sellOrder.getInitiatorId())
+					.build()
+					;
+			
+			kafkaProducerService.send(notificationToSellOrder, topic, null, null);
 			
 			
 		} catch (Exception e) {
