@@ -191,7 +191,7 @@ public class OndcServices implements IOndcServices {
 				
 				if(buyTrxn.getDirectionId().getId()==2) {
 					buyTrxn.setPayableAmount(buyTrxn.getAmount());
-					buyTrxn.setPayableCcy(buyTrxn.getBaseCurrency());
+					buyTrxn.setPayableCcy(buyTrxn.getQuoteCurrency());
 				}else {
 					buyTrxn.setPayableAmount(buyTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
 					buyTrxn.setPayableCcy(buyTrxn.getQuoteCurrency());
@@ -199,7 +199,7 @@ public class OndcServices implements IOndcServices {
 				
 				if(sellTrxn.getDirectionId().getId()==2) {
 					sellTrxn.setPayableAmount(sellTrxn.getAmount());
-					sellTrxn.setPayableCcy(sellTrxn.getBaseCurrency());
+					sellTrxn.setPayableCcy(sellTrxn.getQuoteCurrency());
 				}else {
 					sellTrxn.setPayableAmount(sellTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
 					sellTrxn.setPayableCcy(sellTrxn.getQuoteCurrency());
