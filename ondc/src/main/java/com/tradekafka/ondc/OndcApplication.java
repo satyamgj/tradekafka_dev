@@ -7,10 +7,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 
 import com.finmamba.entities.staticdata.interfaces.ImportEntities;
 import com.finmamba.kafka.starter.EnableKafkaProducer;
-import com.finmamba.kafka.starter.EnableKafkaRest;
 
 @SpringBootApplication
-//@EnableKafkaProducer
+@EnableKafkaProducer
 //@EnableKafkaRest
 @ImportEntities
 //@EnableKafkaConsumer
