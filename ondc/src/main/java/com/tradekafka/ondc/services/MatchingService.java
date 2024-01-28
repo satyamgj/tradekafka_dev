@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 
 import com.finmamba.entities.ondc.MatchingTransactions;
 import com.finmamba.entities.ondc.QuoteRequest;
+import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
+import com.finmamba.models.ondc.MatchNotification;
 import com.finmamba.models.ondc.OrderForMatchEngine;
 import com.tradekafka.ondc.repository.MatchingTransactionRepository;
 import com.tradekafka.ondc.repository.QuoteRequestRepository;
@@ -31,6 +33,11 @@ public class MatchingService implements IMatchingService {
 
 	@Autowired
 	MatchingTransactionRepository matchingTransactionRepository;
+	
+	@Autowired
+	KafkaProducerService kafkaProducerService;
+	
+	private static final String topic = "notification";
 	
 
 
@@ -176,6 +183,31 @@ public class MatchingService implements IMatchingService {
 					+ ", Sell: " + sellOrder.getAmount() + " " + sellOrder.getBaseCurrency() + " at rate "
 					+ sellOrder.getAskingRate());
 			
+			String message = "Trade Matched - Buy: " + buyOrder.getAmount() + " " + buyOrder.getBaseCurrency()
+			+ ", Sell: " + sellOrder.getAmount() + " " + sellOrder.getBaseCurrency() + " at rate "
+			+ sellOrder.getAskingRate();
+			
+			//sending notification to buyer
+			
+			MatchNotification notificationToBuyOrder =  MatchNotification.builder()
+					.message(message)
+					.userId(buyOrder.getInitiatorId())
+					.build()
+					;
+			
+			kafkaProducerService.send(notificationToBuyOrder, topic, null, null);
+
+			
+		//sending notification to seller
+			
+			MatchNotification notificationToSellOrder =  MatchNotification.builder()
+					.message(message)
+					.userId(sellOrder.getInitiatorId())
+					.build()
+					;
+			
+			kafkaProducerService.send(notificationToSellOrder, topic, null, null);
+			
 			log.info("buyorderId -> " + buyOrder.getQuoteRequestId() + " sellQuote->" + sellOrder.getQuoteRequestId() );
 
 			log.info("Adding trades in matching table");
@@ -196,6 +228,8 @@ public class MatchingService implements IMatchingService {
 					.isActive(true)
 					.build();
 			matchingTransactionRepository.save(newMatch);
+			
+			
 			
 			
 		} catch (Exception e) {
