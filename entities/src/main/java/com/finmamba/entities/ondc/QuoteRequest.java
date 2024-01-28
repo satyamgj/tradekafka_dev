@@ -75,9 +75,17 @@ public class QuoteRequest implements Serializable{
 	@Column(name= "payable_amount")
 	private BigDecimal payableAmount;
 	
+	@Column(name= "receivable_amount")
+	private BigDecimal receivableAmount;
+	
 	@OneToOne
 	@JoinColumn(name="payable_ccy", referencedColumnName = "id")
 	private Currency payableCcy;
+	
+	@OneToOne
+	@JoinColumn(name="receivable_ccy", referencedColumnName = "id")
+	private Currency receivableCcy;
+	
 	
 	@Column(name="responseYN")
 	private String responseYN;

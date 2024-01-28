@@ -191,18 +191,26 @@ public class OndcServices implements IOndcServices {
 				
 				if(buyTrxn.getDirectionId().getId()==2) {
 					buyTrxn.setPayableAmount(buyTrxn.getAmount());
-					buyTrxn.setPayableCcy(buyTrxn.getQuoteCurrency());
+					buyTrxn.setPayableCcy(buyTrxn.getBaseCurrency());
+					buyTrxn.setReceivableAmount(buyTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
+					buyTrxn.setReceivableCcy(buyTrxn.getQuoteCurrency());
 				}else {
 					buyTrxn.setPayableAmount(buyTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
 					buyTrxn.setPayableCcy(buyTrxn.getQuoteCurrency());
+					buyTrxn.setReceivableAmount(buyTrxn.getAmount());
+					buyTrxn.setReceivableCcy(buyTrxn.getBaseCurrency());
 				}
 				
 				if(sellTrxn.getDirectionId().getId()==2) {
 					sellTrxn.setPayableAmount(sellTrxn.getAmount());
-					sellTrxn.setPayableCcy(sellTrxn.getQuoteCurrency());
+					sellTrxn.setPayableCcy(sellTrxn.getBaseCurrency());
+					sellTrxn.setReceivableAmount(buyTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
+					sellTrxn.setReceivableCcy(buyTrxn.getQuoteCurrency());
 				}else {
 					sellTrxn.setPayableAmount(sellTrxn.getAmount().multiply(sellTrxn.getAskingRate()));
 					sellTrxn.setPayableCcy(sellTrxn.getQuoteCurrency());
+					sellTrxn.setReceivableAmount(sellTrxn.getAmount());
+					sellTrxn.setReceivableCcy(sellTrxn.getBaseCurrency());
 				}
 				
 				buyTrxn.setFinalPrice(sellTrxn.getAskingRate());

@@ -167,8 +167,8 @@ public class MatchingService implements IMatchingService {
 	@Override
 	public boolean matchConditions(OrderForMatchEngine buyOrder, OrderForMatchEngine sellOrder) {
 		return 	buyOrder.getInitiatorId() != sellOrder.getInitiatorId()
-				&&buyOrder.getBaseCurrency().equals(sellOrder.getQuoteCurrency())
-				&& buyOrder.getQuoteCurrency().equals(sellOrder.getBaseCurrency())
+				&&buyOrder.getBaseCurrency().equals(sellOrder.getBaseCurrency())
+				&& buyOrder.getQuoteCurrency().equals(sellOrder.getQuoteCurrency())
 				&& buyOrder.getAskingRate().compareTo(sellOrder.getAskingRate()) >= 0
 				&& buyOrder.getAmount().compareTo(sellOrder.getAmount()) >= 0
 				;
