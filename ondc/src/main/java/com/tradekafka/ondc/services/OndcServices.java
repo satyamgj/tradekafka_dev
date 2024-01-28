@@ -205,6 +205,9 @@ public class OndcServices implements IOndcServices {
 					sellTrxn.setPayableCcy(sellTrxn.getQuoteCurrency());
 				}
 				
+				buyTrxn.setFinalPrice(sellTrxn.getAskingRate());
+				sellTrxn.setFinalPrice(sellTrxn.getAskingRate());
+				
 				quoteRequestRepository.saveAndFlush(buyTrxn);
 				quoteRequestRepository.saveAndFlush(sellTrxn);
 

@@ -85,6 +85,9 @@ public class QuoteRequest implements Serializable{
 	@Column(name="asking_rate")
 	private BigDecimal askingRate;
 	
+	@Column(name="final_price")
+	private BigDecimal finalPrice;
+	
 	@Column(name="inserted_at", insertable = false)
 	private Timestamp insertedAt;
 	
