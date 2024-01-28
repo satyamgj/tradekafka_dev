@@ -97,9 +97,14 @@ public class OndcServices implements IOndcServices {
 			quoteRequestRepository.save(newRequest);
 
 			if (quoteRequest.getResponseYN().equalsIgnoreCase("N")) {
-				log.info("Broadcasting to sellers acc to sell catalogue");
 
-				broadcastToSellers(baseCurrency, quoteCurrency, newRequest);
+				if(quoteRequest.getDirectionId() == 1L) {
+
+					log.info("Broadcasting to sellers acc to sell catalogue");
+
+					broadcastToSellers(baseCurrency, quoteCurrency, newRequest);
+
+				}
 
 				log.info("Also initiating matching for this new order");
 
