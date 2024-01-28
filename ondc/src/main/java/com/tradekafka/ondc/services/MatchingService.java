@@ -118,7 +118,7 @@ public class MatchingService implements IMatchingService {
 
 		boolean matched = false;
 		
-		String key =  buyOrder.getQuoteCurrency()+buyOrder.getBaseCurrency() ;
+		String key =  buyOrder.getBaseCurrency()+buyOrder.getQuoteCurrency() ;
 
 
 		List<OrderForMatchEngine> sellOrders = sellOrdersMap.get(key);
@@ -143,7 +143,7 @@ public class MatchingService implements IMatchingService {
 
 		boolean matched = false;
 		
-		String key =  sellOrder.getQuoteCurrency()+sellOrder.getBaseCurrency();
+		String key =  sellOrder.getBaseCurrency()+sellOrder.getQuoteCurrency();
 
 
 		List<OrderForMatchEngine> buyOrders = buyOrdersMap.get(key);
