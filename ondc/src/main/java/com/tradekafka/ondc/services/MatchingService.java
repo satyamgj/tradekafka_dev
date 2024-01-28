@@ -192,7 +192,11 @@ public class MatchingService implements IMatchingService {
 			log.info("buyorderId -> " + buyOrder.getQuoteRequestId() + " sellQuote->" + sellOrder.getQuoteRequestId() );
 
 			log.info("Adding trades in matching table");
-
+			
+			if( quoteRequestRepository.existsById(sellOrder.getQuoteRequestId()) && quoteRequestRepository.existsById(buyOrder.getQuoteRequestId()) )
+			{
+				
+			
 			QuoteRequest buyQuote = quoteRequestRepository.findById(buyOrder.getQuoteRequestId()).get();
 			QuoteRequest sellQuote = quoteRequestRepository.findById(sellOrder.getQuoteRequestId()).get();
 
@@ -230,7 +234,7 @@ public class MatchingService implements IMatchingService {
 					;
 			
 			kafkaProducerService.send(notificationToSellOrder, topic, null, null);
-			
+			}
 			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
