@@ -13,4 +13,6 @@ public interface MatchingTransactionRepository extends JpaRepository<MatchingTra
 
 	List<MatchingTransactions> findByBuyTxnId(QuoteRequest buyTransaction);
 	List<MatchingTransactions> findBySellTxnId(QuoteRequest sellTransaction);
+	
+	Boolean existsByBuyTxnIdAndSellTxnId(QuoteRequest buyTransaction,QuoteRequest sellTransaction );
 }

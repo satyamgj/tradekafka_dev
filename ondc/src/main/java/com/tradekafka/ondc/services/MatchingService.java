@@ -209,10 +209,13 @@ public class MatchingService implements IMatchingService {
 				quoteRequestRepository.saveAndFlush(sellQuote);
 			}
 
-			MatchingTransactions newMatch = MatchingTransactions.builder().buyTxnId(buyQuote).sellTxnId(sellQuote)
-					.isActive(true)
-					.build();
-			matchingTransactionRepository.save(newMatch);
+			if(!matchingTransactionRepository.existsByBuyTxnIdAndSellTxnId(buyQuote, sellQuote)) {
+				MatchingTransactions newMatch = MatchingTransactions.builder().buyTxnId(buyQuote).sellTxnId(sellQuote)
+						.isActive(true)
+						.build();
+				matchingTransactionRepository.save(newMatch);
+			}
+			
 			
 //sending notification to buyer
 			
