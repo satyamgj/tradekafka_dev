@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.finmamba.entities.ondc.SellerCatalogue;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.ondc.ConfirmRequest;
 import com.finmamba.models.ondc.QuoteRequest;

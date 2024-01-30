@@ -86,16 +86,24 @@ public class OndcServices implements IOndcServices {
 			Currency baseCurrency = ccy.get(quoteRequest.getBaseCurrencyId());
 			Currency quoteCurrency = ccy.get(quoteRequest.getQuoteCurrencyId());
 
+			User dealPlacer = userRepository.getById(quoteRequest.getUserId());
+			
 			com.finmamba.entities.ondc.QuoteRequest newRequest = com.finmamba.entities.ondc.QuoteRequest.builder()
 					.amount(quoteRequest.getAmount()).baseCurrency(baseCurrency).quoteCurrency(quoteCurrency)
-					.buyUserId(userRepository.getById(quoteRequest.getUserId()))
+					.buyUserId(dealPlacer)
 					.payableCcy(null)
 					.directionId(direction.get(quoteRequest.getDirectionId())).isActive(true).isConfirmed(false)
 					.isMatched(false).responseYN(quoteRequest.getResponseYN()).askingRate(quoteRequest.getAskingRate())
 					.build();
 
 			if(quoteRequest.getResponseYN() == "Y" ) {
-				newRequest.setResponseTo(quoteRequestRepository.findById(quoteRequest.getResponseTo()).get());
+				com.finmamba.entities.ondc.QuoteRequest responseTo = quoteRequestRepository.findById(quoteRequest.getResponseTo()).get();
+				newRequest.setResponseTo(responseTo);
+				RequestedOrders request = requestOrderRepository.findByUserIdAndQuoteRequestId(dealPlacer, responseTo);
+				if(request!=null) {
+					request.setIsActive(false);
+					requestOrderRepository.save(request);
+				}
 			}
 			
 			quoteRequestRepository.save(newRequest);
@@ -380,6 +388,7 @@ public class OndcServices implements IOndcServices {
 
 				for (com.finmamba.entities.ondc.SellerCatalogue seller : sellers) {
 					RequestedOrders newRequest = RequestedOrders.builder().quoteRequestId(quoteRequest)
+							.isActive(true)
 							.userId(seller.getUserId()).build();
 					requestOrderRepository.save(newRequest);
 				}

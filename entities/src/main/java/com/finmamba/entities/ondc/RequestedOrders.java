@@ -46,4 +46,8 @@ public class RequestedOrders implements Serializable{
 	@OneToOne
 	@JoinColumn(name = "quote_request_id", referencedColumnName = "id")
 	private QuoteRequest quoteRequestId;
+	
+	@Column(name="is_active")
+	private Boolean isActive;
+	
 }
