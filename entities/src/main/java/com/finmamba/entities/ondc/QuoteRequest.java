@@ -90,6 +90,10 @@ public class QuoteRequest implements Serializable{
 	@Column(name="responseYN")
 	private String responseYN;
 	
+	@OneToOne
+	@JoinColumn(name="response_to")
+	private QuoteRequest responseTo;
+	
 	@Column(name="asking_rate")
 	private BigDecimal askingRate;
 	

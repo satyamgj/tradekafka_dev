@@ -42,7 +42,7 @@ public class OrdersForMatching {
         {
             List<OrderForMatchEngine> buyOrders = new ArrayList<>();
             List<QuoteRequest>activeBuyOrders = quoteRequestRepository
-            		.findByDirectionIdAndIsConfirmed(directionRepository.findById(1L).get(), false);
+            		.findByDirectionIdAndIsConfirmedAndResponseYN(directionRepository.findById(1L).get(), false, "N");
             for(QuoteRequest quoteRequest : activeBuyOrders) {
             	OrderForMatchEngine newOrderForMatching = OrderForMatchEngine.builder()
 						.amount(quoteRequest.getAmount()).askingRate(quoteRequest.getAskingRate())
@@ -60,7 +60,7 @@ public class OrdersForMatching {
         {
             List<OrderForMatchEngine> sellOrders = new ArrayList<>();
             List<QuoteRequest>activeSellOrders = quoteRequestRepository
-            		.findByDirectionIdAndIsConfirmed(directionRepository.findById(2L).get(), false);
+            		.findByDirectionIdAndIsConfirmedAndResponseYN(directionRepository.findById(2L).get(), false, "N");
             for(QuoteRequest quoteRequest : activeSellOrders) {
             	OrderForMatchEngine newOrderForMatching = OrderForMatchEngine.builder()
 						.amount(quoteRequest.getAmount()).askingRate(quoteRequest.getAskingRate())

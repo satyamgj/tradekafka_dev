@@ -13,5 +13,6 @@ import com.finmamba.entities.transaction.User;
 public interface QuoteRequestRepository extends JpaRepository<QuoteRequest, Long>{
 	List<QuoteRequest> findByBuyUserId(User userId);
 	List<QuoteRequest> findByBuyUserIdAndIsConfirmed(User user, Boolean isConfirmed);
-	List<QuoteRequest> findByDirectionIdAndIsConfirmed(Direction direction, Boolean isConfirmed);
+	List<QuoteRequest> findByDirectionIdAndIsConfirmedAndResponseYN(Direction direction, Boolean isConfirmed, String responseYN);
+	Boolean existsByResponseToAndBuyUserId(QuoteRequest respondedQuote, User buyUserId);
 }

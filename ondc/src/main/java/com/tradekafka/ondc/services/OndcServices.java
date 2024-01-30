@@ -94,6 +94,10 @@ public class OndcServices implements IOndcServices {
 					.isMatched(false).responseYN(quoteRequest.getResponseYN()).askingRate(quoteRequest.getAskingRate())
 					.build();
 
+			if(quoteRequest.getResponseYN() == "Y" ) {
+				newRequest.setResponseTo(quoteRequestRepository.findById(quoteRequest.getResponseTo()).get());
+			}
+			
 			quoteRequestRepository.save(newRequest);
 
 			if (quoteRequest.getResponseYN().equalsIgnoreCase("N")) {
@@ -405,6 +409,25 @@ public class OndcServices implements IOndcServices {
 			log.info("Exception occured inside fetchRequestedQuotes " + e.getMessage());
 			return HttpResponseModel.builder().data(null)
 					.message("Something went wrong while fetching your seller catalogue").status(304).build();
+		}
+	}
+
+	@Override
+	public HttpResponseModel alreadyRespondedToQuote(Long userId, Long quoteId) {
+		try {
+			User user = userRepository.findById(userId).get();
+			com.finmamba.entities.ondc.QuoteRequest quote = quoteRequestRepository.findById(quoteId).get();
+			
+			Boolean alreadyResponded = quoteRequestRepository.existsByResponseToAndBuyUserId(quote, user);
+			
+			
+			return HttpResponseModel.builder().data(alreadyResponded)
+					.message("Fetched response status successfully!").build();
+			
+		} catch (Exception e) {
+			log.info("Exception occured inside alreadyRespondedToQuote " + e.getMessage());
+			return HttpResponseModel.builder().data(false)
+					.message("Something went wrong while executing alreadyRespondedToQuote method").status(304).build();
 		}
 	}
 }

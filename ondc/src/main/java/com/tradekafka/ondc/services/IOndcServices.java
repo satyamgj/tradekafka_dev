@@ -17,6 +17,6 @@ public interface IOndcServices {
 	public HttpResponseModel fetchSellerCatalogue(Long userId);
 	public void broadcastToSellers(Currency buyCcy, Currency sellCcy, com.finmamba.entities.ondc.QuoteRequest quoteRequest);
 	public HttpResponseModel fetchRequestedQuotes(Long userId);
-	
+	public HttpResponseModel alreadyRespondedToQuote(Long userId, Long quoteId);
 }
 

@@ -90,5 +90,11 @@ public class OndcApiController {
 						HttpStatus.OK );
 	}
 	
-	
+	@GetMapping("responded/{userId}/Toquote/{quoteId}")
+	public ResponseEntity<Object> alreadyRespondedToQuote(@PathVariable("userId")Long userId, @PathVariable("quoteId")Long quoteId){
+		HttpResponseModel response  = ondcServices.alreadyRespondedToQuote(userId,quoteId);
+		return new ResponseEntity<>(
+				response,
+						HttpStatus.OK );
+	}
 }
