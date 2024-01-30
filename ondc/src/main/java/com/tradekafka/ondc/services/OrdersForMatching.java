@@ -36,6 +36,7 @@ public class OrdersForMatching {
 		
 		log.info("Triggered @postConstruct call initializeOrderQueueForMatching ");
 		  // Fetch buy and sell orders from the database asynchronously
+		
         CompletableFuture<List<OrderForMatchEngine>> buyOrdersFuture = CompletableFuture.supplyAsync(() -> 
         	
         {
@@ -82,6 +83,6 @@ public class OrdersForMatching {
         
 		log.info("Completed initializing Order Queue");
 
-	}
+}
 	
 }

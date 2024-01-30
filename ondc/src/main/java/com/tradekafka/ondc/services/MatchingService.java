@@ -338,7 +338,7 @@ public class MatchingService implements IMatchingService {
 					List<OrderForMatchEngine> buyOrdersForCcy = buyOrdersMap.get(key);
 					if(buyOrdersForCcy !=null) {
 						buyOrdersForCcy.add(order);
-						buyOrdersMap.put(key, buyOrders);
+						buyOrdersMap.put(key, buyOrdersForCcy);
 					}else {
 						List<OrderForMatchEngine>newList = new ArrayList<>();
 						newList.add(order);
@@ -375,7 +375,7 @@ public class MatchingService implements IMatchingService {
 					List<OrderForMatchEngine> sellOrdersForCcy = sellOrdersMap.get(key);
 					if(sellOrdersForCcy !=null) {
 						sellOrdersForCcy.add(order);
-						sellOrdersMap.put(key, sellOrders);
+						sellOrdersMap.put(key, sellOrdersForCcy);
 					}else {
 						List<OrderForMatchEngine>newList = new ArrayList<>();
 						newList.add(order);
