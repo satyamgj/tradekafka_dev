@@ -225,7 +225,7 @@ public class MatchingService implements IMatchingService {
 					.build()
 					;
 			
-			kafkaProducerService.send(notificationToBuyOrder, topic, null, null);
+			pushNotification(notificationToBuyOrder);
 
 			
 		//sending notification to seller
@@ -236,7 +236,7 @@ public class MatchingService implements IMatchingService {
 					.build()
 					;
 			
-			kafkaProducerService.send(notificationToSellOrder, topic, null, null);
+			pushNotification(notificationToSellOrder);
 			}
 			
 		} catch (Exception e) {
@@ -394,6 +394,22 @@ public class MatchingService implements IMatchingService {
 		} catch (Exception e) {
 
 			log.info("exception occured inside initializeSellOrderQueue " + e.getMessage());
+		}
+		
+	}
+
+	@Async
+	@Override
+	public void pushNotification(MatchNotification matchNotification) {
+		try {
+			kafkaProducerService.send(matchNotification, topic, null, null);
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.info("exception occured inside pushNotification " + e.getMessage());
+
+		}finally {
+			log.info("Sent " + matchNotification.getMessage() + " to userId -> " + matchNotification.getUserId());
 		}
 		
 	}
