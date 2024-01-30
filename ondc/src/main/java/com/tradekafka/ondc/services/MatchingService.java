@@ -67,7 +67,7 @@ public class MatchingService implements IMatchingService {
 				// First will let go this order via matching algo
 				Boolean matched = matchBuyOrder(orderForMatchEngine);
 
-				if (!matched) {
+				//if (!matched) {
 					List<OrderForMatchEngine> buyOrders = buyOrdersMap.get(key);
 					if(buyOrders !=null) {
 						buyOrders.add(orderForMatchEngine);
@@ -78,7 +78,7 @@ public class MatchingService implements IMatchingService {
 						buyOrdersMap.put(key, newList);
 
 					}
-				}
+				//}
 
 			} else {
 				log.info("Received a new sell order for ccy pair " + orderForMatchEngine.getBaseCurrency() + "/"
@@ -87,7 +87,7 @@ public class MatchingService implements IMatchingService {
 				// First will let go this order via matching algo
 				Boolean matched = matchSellOrder(orderForMatchEngine);
 
-				if (!matched) {
+				//if (!matched) {
 
 					List<OrderForMatchEngine> sellOrders = sellOrdersMap.get(key);
 					if(sellOrders!=null) {
@@ -98,7 +98,7 @@ public class MatchingService implements IMatchingService {
 						newList.add(orderForMatchEngine);
 						sellOrdersMap.put(key, newList);
 					}
-				}
+				//}
 			}
 
 			endTime("matchingEngine");
@@ -331,20 +331,26 @@ public class MatchingService implements IMatchingService {
 			
 			startTime("initializeBuyOrderQueue");
 			
-			for(OrderForMatchEngine order : buyOrders) {
-			
-				String key = order.getBaseCurrency() + order.getQuoteCurrency();
-				List<OrderForMatchEngine> buyOrdersForCcy = buyOrdersMap.get(key);
-				if(buyOrdersForCcy !=null) {
-					buyOrdersForCcy.add(order);
-					buyOrdersMap.put(key, buyOrders);
-				}else {
-					List<OrderForMatchEngine>newList = new ArrayList<>();
-					newList.add(order);
-					buyOrdersMap.put(key, newList);
+			if(buyOrders.size() > 0) {
+				for(OrderForMatchEngine order : buyOrders) {
+					
+					String key = order.getBaseCurrency() + order.getQuoteCurrency();
+					List<OrderForMatchEngine> buyOrdersForCcy = buyOrdersMap.get(key);
+					if(buyOrdersForCcy !=null) {
+						buyOrdersForCcy.add(order);
+						buyOrdersMap.put(key, buyOrders);
+					}else {
+						List<OrderForMatchEngine>newList = new ArrayList<>();
+						newList.add(order);
+						buyOrdersMap.put(key, newList);
 
-				}
+					}
+				}	
+			}else {
+				log.info("No active buy Orders found in DB. ");
 			}
+			
+			
 			
 			endTime("initializeBuyOrderQueue");
 			
@@ -362,20 +368,27 @@ public class MatchingService implements IMatchingService {
 		try {
 			startTime("initializeSellOrderQueue");
 			
-			for(OrderForMatchEngine order : sellOrders) {
-			
-				String key = order.getBaseCurrency() + order.getQuoteCurrency();
-				List<OrderForMatchEngine> sellOrdersForCcy = sellOrdersMap.get(key);
-				if(sellOrdersForCcy !=null) {
-					sellOrdersForCcy.add(order);
-					sellOrdersMap.put(key, sellOrders);
-				}else {
-					List<OrderForMatchEngine>newList = new ArrayList<>();
-					newList.add(order);
-					sellOrdersMap.put(key, newList);
+			if(sellOrders.size() > 0) {
+				for(OrderForMatchEngine order : sellOrders) {
+					
+					String key = order.getBaseCurrency() + order.getQuoteCurrency();
+					List<OrderForMatchEngine> sellOrdersForCcy = sellOrdersMap.get(key);
+					if(sellOrdersForCcy !=null) {
+						sellOrdersForCcy.add(order);
+						sellOrdersMap.put(key, sellOrders);
+					}else {
+						List<OrderForMatchEngine>newList = new ArrayList<>();
+						newList.add(order);
+						sellOrdersMap.put(key, newList);
 
+					}
 				}
+			}else {
+				log.info("No active sell Orders found in DB. ");
+
 			}
+			
+			
 			
 			endTime("initializeSellOrderQueue");
 		} catch (Exception e) {
