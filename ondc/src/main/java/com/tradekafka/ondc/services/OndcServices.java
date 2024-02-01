@@ -409,19 +409,24 @@ public class OndcServices implements IOndcServices {
 				log.info("Found " + sellers.size() + " sellers for " + ccyPair);
 
 				for (com.finmamba.entities.ondc.SellerCatalogue seller : sellers) {
-					RequestedOrders newRequest = RequestedOrders.builder().quoteRequestId(quoteRequest)
-							.isActive(true)
-							.userId(seller.getUserId()).build();
-					requestOrderRepository.save(newRequest);
 					
-					MatchNotification notificationToUser= MatchNotification.builder()
-							.userId(seller.getUserId().getId())
-							.message("Received a new order for ccy " + ccyPair + " @ " + quoteRequest.getAskingRate() 
-								+ " for amount " + quoteRequest.getAmount()
-									)
-							.build();
+					if(seller.getUserId().getId()!=quoteRequest.getBuyUserId().getId()) {
+						RequestedOrders newRequest = RequestedOrders.builder().quoteRequestId(quoteRequest)
+								.isActive(true)
+								.userId(seller.getUserId()).build();
+						requestOrderRepository.save(newRequest);
+						
+						MatchNotification notificationToUser= MatchNotification.builder()
+								.userId(seller.getUserId().getId())
+								.message("Received a new order for ccy " + ccyPair + " @ " + quoteRequest.getAskingRate() 
+									+ " for amount " + quoteRequest.getAmount()
+										)
+								.build();
+						
+						pushNotification(notificationToUser);
+					}
 					
-					pushNotification(notificationToUser);
+					
 				}
 			} else {
 				log.info("Found no sellers for " + ccyPair);
