@@ -96,7 +96,7 @@ public class OndcServices implements IOndcServices {
 					.isMatched(false).responseYN(quoteRequest.getResponseYN()).askingRate(quoteRequest.getAskingRate())
 					.build();
 
-			if(quoteRequest.getResponseYN() == "Y" ) {
+			if(quoteRequest.getResponseYN().equalsIgnoreCase( "Y") ) {
 				com.finmamba.entities.ondc.QuoteRequest responseTo = quoteRequestRepository.findById(quoteRequest.getResponseTo()).get();
 				newRequest.setResponseTo(responseTo);
 				RequestedOrders request = requestOrderRepository.findByUserIdAndQuoteRequestId(dealPlacer, responseTo);
