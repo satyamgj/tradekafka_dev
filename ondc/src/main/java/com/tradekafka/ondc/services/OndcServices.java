@@ -153,7 +153,7 @@ public class OndcServices implements IOndcServices {
 				
 				MatchNotification notificationToUser= MatchNotification.builder()
 						.userId(request.getBuyUserId().getId())
-						.message("Received a response quote from seller for ccy " + baseCurrency + "/" + quoteCurrency
+						.message("Received a response quote from seller for ccy " + baseCurrency.getIsoCode() + "/" + quoteCurrency.getIsoCode()
 								+ " @ " + quoteRequest.getAskingRate() 
 							+ " for amount " + quoteRequest.getAmount()
 								)
