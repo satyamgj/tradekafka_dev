@@ -144,6 +144,9 @@ public class OndcServices implements IOndcServices {
 
 				com.finmamba.entities.ondc.QuoteRequest request = quoteRequestRepository
 						.findById(quoteRequest.getResponseTo()).get();
+				request.setIsMatched(true);
+				quoteRequestRepository.save(request);
+				
 				MatchingTransactions newMatch = MatchingTransactions.builder().buyTxnId(request).sellTxnId(newRequest)
 						.build();
 				matchingTransactionRepository.save(newMatch);
