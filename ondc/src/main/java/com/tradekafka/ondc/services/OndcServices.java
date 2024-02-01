@@ -150,6 +150,16 @@ public class OndcServices implements IOndcServices {
 				MatchingTransactions newMatch = MatchingTransactions.builder().buyTxnId(request).sellTxnId(newRequest)
 						.build();
 				matchingTransactionRepository.save(newMatch);
+				
+				MatchNotification notificationToUser= MatchNotification.builder()
+						.userId(request.getBuyUserId().getId())
+						.message("Received a response quote from seller for ccy " + baseCurrency + "/" + quoteCurrency
+								+ " @ " + quoteRequest.getAskingRate() 
+							+ " for amount " + quoteRequest.getAmount()
+								)
+						.build();
+				
+				pushNotification(notificationToUser);
 			}
 
 			endTime("quoteRequest");
