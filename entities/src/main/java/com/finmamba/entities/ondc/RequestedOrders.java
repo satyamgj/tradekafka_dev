@@ -1,6 +1,7 @@
 package com.finmamba.entities.ondc;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -49,5 +50,8 @@ public class RequestedOrders implements Serializable{
 	
 	@Column(name="is_active")
 	private Boolean isActive;
+	
+	@Column(name="response_rate")
+	private BigDecimal responseRate;
 	
 }

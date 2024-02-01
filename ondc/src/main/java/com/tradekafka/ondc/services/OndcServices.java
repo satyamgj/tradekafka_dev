@@ -18,8 +18,10 @@ import com.finmamba.entities.ondc.RequestedOrders;
 import com.finmamba.entities.staticdata.Currency;
 import com.finmamba.entities.staticdata.Direction;
 import com.finmamba.entities.transaction.User;
+import com.finmamba.kafka.starter.autoconfigure.producer.KafkaProducerService;
 import com.finmamba.models.bus.HttpResponseModel;
 import com.finmamba.models.ondc.ConfirmRequest;
+import com.finmamba.models.ondc.MatchNotification;
 import com.finmamba.models.ondc.OrderForMatchEngine;
 import com.finmamba.models.ondc.QuoteRequest;
 import com.finmamba.models.ondc.SellerCatalogue;
@@ -57,6 +59,11 @@ public class OndcServices implements IOndcServices {
 
 	@Autowired
 	SellerCatalogueRepository catalogueRepository;
+	
+	@Autowired
+	KafkaProducerService kafkaProducerService;
+	
+	private static final String topic = "notification";
 
 	private final CurrencyStaticMap currencyStaticMap;
 
@@ -102,7 +109,9 @@ public class OndcServices implements IOndcServices {
 				RequestedOrders request = requestOrderRepository.findByUserIdAndQuoteRequestId(dealPlacer, responseTo);
 				if(request!=null) {
 					request.setIsActive(false);
+					request.setResponseRate(quoteRequest.getAskingRate());
 					requestOrderRepository.save(request);
+				
 				}
 			}
 			
@@ -391,6 +400,15 @@ public class OndcServices implements IOndcServices {
 							.isActive(true)
 							.userId(seller.getUserId()).build();
 					requestOrderRepository.save(newRequest);
+					
+					MatchNotification notificationToUser= MatchNotification.builder()
+							.userId(seller.getUserId().getId())
+							.message("Received a new order for ccy " + ccyPair + " @ " + quoteRequest.getAskingRate() 
+								+ " for amount " + quoteRequest.getAmount()
+									)
+							.build();
+					
+					pushNotification(notificationToUser);
 				}
 			} else {
 				log.info("Found no sellers for " + ccyPair);
@@ -438,5 +456,23 @@ public class OndcServices implements IOndcServices {
 			return HttpResponseModel.builder().data(false)
 					.message("Something went wrong while executing alreadyRespondedToQuote method").status(304).build();
 		}
+		
+		
+	}
+	
+
+	@Async
+	public void pushNotification(MatchNotification matchNotification) {
+		try {
+			kafkaProducerService.send(matchNotification, topic, null, null);
+
+		} catch (Exception e) {
+			// TODO: handle exception
+			log.info("exception occured inside pushNotification " + e.getMessage());
+
+		}finally {
+			log.info("Sent " + matchNotification.getMessage() + " to userId -> " + matchNotification.getUserId());
+		}
+		
 	}
 }
