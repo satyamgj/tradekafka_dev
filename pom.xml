@@ -33,6 +33,7 @@
 		<module>reports-microservice</module>
 		<module>nonflow-microservice</module>
 		<module>ondc</module>
+		<module>rate-simulator</module>
 		<!--module>rate-simulator</module-->
 		<!--module>notification</module>
 		<module>custom-data-microservice</module>
